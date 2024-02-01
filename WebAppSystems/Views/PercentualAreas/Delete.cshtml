@@ -1,0 +1,43 @@
+﻿@model WebAppSystems.Models.PercentualArea
+
+@{
+    ViewData["Title"] = "Delete";
+}
+
+<h1>Exclusão</h1>
+
+<h3>Você tem certeza?</h3>
+<div class="card">
+    <div class="card-body">
+        <form asp-action="Delete">
+            <h4>Percentual Cliente/Area</h4>
+            <hr />
+            <dl class="row">
+                <dt class="col-sm-2">
+                    Cliente
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.Client.Name)
+                </dd>
+                <dt class="col-sm-2">
+                    Área
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.Department.Name)
+                </dd>
+                <dt class="col-sm-2">
+                    @Html.DisplayNameFor(model => model.Percentual)
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.Percentual)
+                </dd>
+            </dl>
+
+            <form asp-action="Delete">
+                <input type="hidden" asp-for="Id" />
+                <input type="submit" value="Delete" class="btn btn-danger" />
+                <a asp-action="Index" class="btn btn-secondary">Voltar</a>
+            </form>
+        </form>
+    </div>
+</div>

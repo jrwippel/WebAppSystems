@@ -1,0 +1,222 @@
+﻿@model IEnumerable<WebAppSystems.Models.ViewModels.MensalistaHoursViewModel>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+@functions {
+    public static string FormatHours(double hours)
+    {
+        int wholeHours = (int)hours;
+        int minutes = (int)Math.Round((hours - wholeHours) * 60);
+        return $"{wholeHours:D2}:{minutes:D2}";
+    }
+}
+
+
+@{
+    ViewData["Title"] = "Resultados";
+    var selectedClientId = ViewData["clientId"]?.ToString();
+    var selectedAttorneyId = ViewData["attorneyId"]?.ToString();
+    var selectedDepartmentId = ViewData["departmentId"]?.ToString();
+    var todayFormatted = DateTime.Now.ToString("MM/yyyy");
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<style>
+    .btn-container button {
+        margin: 0; /* Remove todas as margens */
+        padding: 10px 15px; /* Ajuste os valores se necessário */
+    }
+</style>
+
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <form class="navbar-form" role="search" asp-controller="Mensalista" asp-action="SimpleSearch" method="get">
+            <div class="form-row">
+                <div class="form-group col-md-2">
+                    <label for="monthYear">Mês/Ano</label>                                        
+                    <input type="text" class="form-control" name="monthYearString" id="monthYear" value="@(ViewData["inputMonthYear"] ?? todayFormatted)" onblur="formatInput(this)" />
+                </div>
+
+
+                <div class="form-group col-md-3">
+                    <label for="clientId">Cliente</label>
+                    <select class="form-control" name="clientId" id="clientId">
+                        <option value="">Todos</option>
+                        @foreach (var client in ViewBag.Clients)
+                        {
+                            if (client.Id.ToString() == selectedClientId)
+                            {
+                                <option value="@client.Id" selected>@client.Name</option>
+                            }
+                            else
+                            {
+                                <option value="@client.Id">@client.Name</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group col-md-3">
+                    <label for="departmentId">Área</label>
+                    <select class="form-control" name="departmentId" id="departmentId" required>
+                        <option value="">Selecionar</option>
+                        @foreach (var department in ViewBag.Department)
+                        {
+                            if (department.Id.ToString() == selectedDepartmentId)
+                            {
+                                <option value="@department.Id" selected>@department.Name</option>
+                            }
+                            else
+                            {
+                                <option value="@department.Id">@department.Name</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <!-- Botões -->
+                <div class="form-group col-md-2 btn-container">
+                    <label>&nbsp;</label><br>
+                    <button type="submit" class="btn btn-primary" onclick="return validateForm()">Visualizar</button>
+                    <button type="submit" formaction="@Url.Action("DownloadReport")" class="btn btn-secondary" style="padding: 10px 15px;">Gerar CSV</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</nav>
+
+<div class="panel panel-primary">
+    <div class="panel-body">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr class="success">
+                    <th>
+                        Cliente
+                    </th>
+                    <th>
+                        Mensal Bruto
+                    </th>
+                    <th>
+                        Tributos
+                    </th>
+                    <th>
+                        Com. Parceiro
+                    </th>
+                    <th>
+                        Com. Sócio
+                    </th>
+                    <th>
+                        Mensal Liq
+                    </th>
+                    <th>
+                        %
+                    </th>
+                    <th>
+                        Valor Área Bruto
+                    </th>
+                    <th>
+                        Valor Área Liq
+                    </th>
+                    <th>
+                        Ação
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+
+                    <tr>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Mensalista.Client.Name)
+                        </td>
+                        <td>
+                            @item.Mensalista.ValorMensalBruto.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("pt-BR"))
+                        </td>
+                        <td>
+                            @item.Tributos.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("pt-BR"))
+                        </td>
+                        <td>
+                            @item.Mensalista.ComissaoParceiro.ToString(",0", System.Globalization.CultureInfo.GetCultureInfo("pt-BR"))
+                        </td>
+                        <td>
+                            @item.Mensalista.ComissaoSocio.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("pt-BR"))
+                        </td>
+                        <td>
+                            @item.ValorMensalLiquido.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("pt-BR"))
+                        </td>
+                        <td>
+                            @($"{item.Percentual:0} %")
+                        </td>
+                        <td>
+                            @item.ValorAreaBruto.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("pt-BR"))
+                        </td>
+                        <td>
+                            @item.ValorAreaLiquido.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("pt-BR"))
+                        </td>
+                        <td>
+                            <!-- Botão Mês -->
+                            <a href="@Url.Action("ResultadoMes", "Mensalista", new { id = item.Mensalista.Id, monthYear = ViewData["inputMonthYear"], clientId = ViewData["clientId"], departmentId = ViewData["departmentId"] })"
+                               class="btn btn-outline-secondary btn-sm icon-btn" title="Visualizar Resultado do Mês">
+                                <i class="fas fa-calendar-day fa-xs"></i>
+                            </a>
+
+                            <!-- Botão Média -->
+                            <a href="@Url.Action("ResultadoMedia", "Mensalista", new { id = item.Mensalista.Id, monthYear = ViewData["inputMonthYear"], clientId = ViewData["clientId"], departmentId = ViewData["departmentId"] })"
+                               class="btn btn-outline-secondary btn-sm icon-btn" title="Visualizar Resultado Médio">
+                                <i class="fas fa-chart-line fa-xs"></i>
+                            </a>
+
+                            <!-- Botão Acumulado -->
+                            <a href="@Url.Action("ResultadoAcumulado", "Mensalista", new { id = item.Mensalista.Id, monthYear = ViewData["inputMonthYear"], clientId = ViewData["clientId"], departmentId = ViewData["departmentId"] })"
+                               class="btn btn-outline-secondary btn-sm icon-btn" title="Visualizar Resultado Acumulado">
+                                <i class="fas fa-layer-group fa-xs"></i>
+                            </a>
+
+                        </td>
+
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    function validateForm() {
+        var departmentValue = document.getElementById("departmentId").value;
+        if (departmentValue === "") {
+            alert("Por favor, selecione um departamento.");
+            return false;
+        }
+        return true;
+    }
+    // Função para atualizar os valores do formulário oculto e enviar o formulário
+    function exportToCsv() {
+        var minDate = document.getElementById("minDate").value;
+        var maxDate = document.getElementById("maxDate").value;
+        var clientId = document.getElementById("clientId").value;        
+        var departmentId = document.getElementById("departmentId").value;
+
+        document.getElementById("exportMinDate").value = minDate;
+        document.getElementById("exportMaxDate").value = maxDate;
+        document.getElementById("exportClientId").value = clientId;        
+        document.getElementById("exportDepartmentId").value = departmentId;
+    }
+
+    function formatDate(input) {
+        // Se o usuário digitou 6 caracteres (MMYYYY)
+        if (input.value.length === 6) {
+            // Adicionar uma barra após os primeiros 2 caracteres
+            input.value = input.value.substring(0, 2) + "/" + input.value.substring(2, 6);
+        }
+    }
+
+    function formatInput(input) {
+        let value = input.value;
+        if (value.length == 6) {
+            input.value = value.substring(0, 2) + '/' + value.substring(2, 6);
+        }
+    }
+
+</script>

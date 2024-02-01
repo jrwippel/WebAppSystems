@@ -1,0 +1,169 @@
+﻿@model IEnumerable<WebAppSystems.Models.ProcessRecord>
+
+@{
+    ViewData["Title"] = "Relatório de Horas";
+    var selectedClientId = ViewData["clientId"]?.ToString();
+    var selectedAttorneyId = ViewData["attorneyId"]?.ToString();
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <form class="navbar-form" role="search" asp-controller="ProcessRecord" asp-action="SimpleSearch" method="get">
+            <div class="form-row">
+                <!-- Data Inicial -->
+                <div class="form-group col-md-2">
+                    <label for="minDate">Data Inicial</label>
+                    <input type="date" class="form-control" name="minDate" id="minDate" value=@ViewData["minDate"] />
+                </div>
+
+                <!-- Data Final -->
+                <div class="form-group col-md-2">
+                    <label for="maxDate">Data Final</label>
+                    <input type="date" class="form-control" name="maxDate" id="maxDate" value=@ViewData["maxDate"] />
+                </div>
+
+                <!-- Cliente -->
+                <div class="form-group col-md-3">
+                    <label for="clientId">Cliente</label>
+                    <select class="form-control" name="clientId" id="clientId">
+                        <option value="">Todos</option>
+                        @foreach (var client in ViewBag.Clients)
+                        {
+                            var isSelectedClient = client.Id.ToString() == selectedClientId ? "selected" : "";
+                            @if (client.Id.ToString() == selectedClientId)
+                            {
+                                <option value="@client.Id" selected>@client.Name</option>
+                            }
+                            else
+                            {
+                                <option value="@client.Id">@client.Name</option>
+                            }
+
+                        }
+                    </select>
+                </div>
+
+                <!-- Usuário -->
+                <div class="form-group col-md-3">
+                    <label for="attorneyId">Usuário</label>
+                    <select class="form-control" name="attorneyId" id="attorneyId">
+                        <option value="">Todos</option>
+                        @foreach (var attorney in ViewBag.Attorneys)
+                        {
+                            var isSelectedAttorney = attorney.Id.ToString() == selectedAttorneyId ? "selected" : "";
+                            @if (attorney.Id.ToString() == selectedAttorneyId)
+                            {
+                                <option value="@attorney.Id" selected>@attorney.Name</option>
+                            }
+                            else
+                            {
+                                <option value="@attorney.Id">@attorney.Name</option>
+                            }
+
+                        }
+
+                    </select>
+                </div>
+
+                <!-- Botões -->
+                <div class="form-group col-md-2">
+                    <label>&nbsp;</label><br>
+                    <button type="submit" class="btn btn-primary mr-1">Visualizar</button>
+                    <button type="submit" formaction="@Url.Action("DownloadReport")" class="btn btn-secondary">Gerar CSV</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</nav>
+
+
+
+<div class="panel panel-primary">
+    <div class="panel-body">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr class="success">
+                    <th>
+                        Data
+                    </th>
+                    <th>
+                        Usuário
+                    </th>
+                    <th>
+                        Area
+                    </th>
+                    <th>
+                        Total Horas
+                    </th>
+                    <th>
+                        Cliente
+                    </th>
+                    <th>
+                        Solicitante
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Date)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Attorney.Name)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Department.Name)
+                        </td>
+                        <td>
+                            @item.CalculoHoras()
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Client.Name)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Solicitante)
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="panel-heading">
+        @{
+            TimeSpan totalHours = TimeSpan.Zero;
+            foreach (var item in Model)
+            {
+                totalHours += item.CalculoHorasTotal();
+            }
+            int totalDays = (int)totalHours.TotalDays;
+            TimeSpan correctedTotalHours = totalHours - TimeSpan.FromDays(totalDays);
+        }
+        <h3 class="panel-title">Total de Horas = @($"{totalDays * 24 + correctedTotalHours.Hours}:{correctedTotalHours.Minutes:00}")</h3>
+    </div>
+</div>
+
+<script>
+    // Função para atualizar os valores do formulário oculto e enviar o formulário
+    function exportToCsv() {
+        var minDate = document.getElementById("minDate").value;
+        var maxDate = document.getElementById("maxDate").value;
+        var clientId = document.getElementById("clientId").value;
+        var attorneyId = document.getElementById("attorneyId").value;
+
+        document.getElementById("exportMinDate").value = minDate;
+        document.getElementById("exportMaxDate").value = maxDate;
+        document.getElementById("exportClientId").value = clientId;
+        document.getElementById("exportAttorneyId").value = attorneyId;
+
+        document.getElementById("exportCsvForm").submit();
+    }
+
+    // Vincular a função exportToCsv ao evento click do botão
+    document.getElementById("exportCsvBtn").addEventListener("click", exportToCsv);
+
+
+</script>

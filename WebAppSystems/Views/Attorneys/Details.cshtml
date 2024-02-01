@@ -1,0 +1,53 @@
+﻿@model Attorney
+
+@{
+    ViewData["Title"] = "Detalhes";
+}
+<h1>Detalhes</h1>
+
+<hr />
+
+<div class="card">
+    <div class="card-body">
+        <h4 class="card-title">Usuários</h4>
+        <hr />
+        <form asp-action="Create">
+            <dl class="row">
+                <dt class="col-sm-2">
+                    Nome
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.Name)
+                </dd>
+                <dt class="col-sm-2">
+                    Email
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.Email)
+                </dd>
+                <dt class="col-sm-2">
+                    Data Nascimento
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.BirthDate)
+                </dd>
+                <dt class="col-sm-2">
+                    Telefone
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.Phone)
+                </dd>
+                <dt class="col-sm-2">
+                    Área
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.Department.Name)
+                </dd>
+            </dl>
+            <div>
+                <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-primary">Editar</a>
+                <a asp-action="Index" class="btn btn-secondary">Voltar</a>
+            </div>
+        </form>
+    </div>
+</div>

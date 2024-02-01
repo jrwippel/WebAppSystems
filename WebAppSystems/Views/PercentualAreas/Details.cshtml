@@ -1,0 +1,43 @@
+﻿@model WebAppSystems.Models.PercentualArea
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h1>Detalhes</h1>
+
+<hr />
+
+<div class="card">
+    <div class="card-body">
+        <h4 class="card-title">Percentual por Cliente/Área</h4>
+        <hr />
+        <form asp-action="Create">
+            <dl class="row">
+                <dt class="col-sm-2">
+                    Cliente
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.Client.Name)
+                </dd>
+                <dt class="col-sm-2">
+                    Área
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.Department.Name)
+                </dd>
+                <dt class="col-sm-2">
+                    @Html.DisplayNameFor(model => model.Percentual)
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.Percentual)
+                </dd>
+            </dl>
+            <div>
+                <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-primary">Editar</a>
+                <a asp-action="Index" class="btn btn-secondary">Voltar</a>
+            </div>
+        </form>
+    </div>
+</div>
+

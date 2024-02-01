@@ -1,0 +1,69 @@
+﻿@model WebAppSystems.Models.Client
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h1>Detalhes</h1>
+
+<hr />
+
+<div class="card">
+    <div class="card-body">
+        <h4 class="card-title">Clientes</h4>
+        <hr />
+        <form asp-action="Create">
+            <div class="row">
+                <div class="col-sm-6">
+                    <dl>
+                        <dt>
+                            @Html.DisplayNameFor(model => model.Name)
+                        </dt>
+                        <dd>
+                            @Html.DisplayFor(model => model.Name)
+                        </dd>
+                        <dt>
+                            @Html.DisplayNameFor(model => model.Document)
+                        </dt>
+                        <dd>
+                            @Html.DisplayFor(model => model.Document)
+                        </dd>
+                        <dt>
+                            @Html.DisplayNameFor(model => model.Email)
+                        </dt>
+                        <dd>
+                            @Html.DisplayFor(model => model.Email)
+                        </dd>
+                        <dt>
+                            @Html.DisplayNameFor(model => model.Telephone)
+                        </dt>
+                        <dd>
+                            @Html.DisplayFor(model => model.Telephone)
+                        </dd>
+                    </dl>
+                </div>
+                <div class="col-sm-6">
+                    <dt>
+                        Imagem
+                    </dt>
+                    <dd>
+                        @if (Model.ImageData != null && !string.IsNullOrEmpty(Model.ImageMimeType))
+                        {
+                            var imageBase64 = Convert.ToBase64String(Model.ImageData);
+                            var imageSrc = $"data:{Model.ImageMimeType};base64,{imageBase64}";
+                            <img src="@imageSrc" alt="Client Image" class="img-fluid" style="border: 1px solid #ccc; padding: 5px;" />
+                        }
+                        else
+                        {
+                            <p>Sem imagem disponível</p>
+                        }
+                    </dd>
+                </div>
+            </div>
+            <div>
+                <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-primary">Edit</a>
+                <a asp-action="Index" class="btn btn-secondary">Voltar</a>
+            </div>
+        </form>
+    </div>
+</div>
