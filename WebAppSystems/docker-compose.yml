@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  webappsystems:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:80"
+      - "8443:443"
+    environment:       
+      - ConnectionStrings__WebAppSystemsContext=${CONNECTION_STRING}${SQL_SA_PASSWORD}
+      - SMTP__Username=${SMTP__USERNAME}
+      - SMTP__Name=${SMTP__NAME}
+      - SMTP__Host=${SMTP__HOST}
+      - SMTP__Senha=${SMTP__SENHA}
+      - SMTP__Porta=${SMTP__PORTA}
+
+  sqlserver:
+    image: "mcr.microsoft.com/mssql/server:2019-latest"
+    ports:
+      - "1433:1433"
+    environment:
+      SA_PASSWORD: ${SQL_SA_PASSWORD}
+      ACCEPT_EULA: ${SQL_ACCEPT_EULA}

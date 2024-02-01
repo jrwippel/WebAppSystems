@@ -1,0 +1,76 @@
+﻿@model WebAppSystems.Models.ProcessRecord
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h1>Detalhes</h1>
+
+<hr />
+
+<div class="card">
+    <div class="card-body">
+        <h4 class="card-title">Valores por Cliente/Área</h4>
+        <hr />
+        <form asp-action="Create">
+            <dl class="row">
+
+                <dt class="col-sm-2">
+                    Data
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.Date)
+                </dd>
+                <dt class="col-sm-2">
+                    Hora Inicial
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.HoraInicial)
+                </dd>
+                <dt class="col-sm-2">
+                    Hora Final
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.HoraFinal)
+                </dd>
+                <dt class="col-sm-2">
+                    Cliente
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.Client.Name)
+                </dd>
+                <dt class="col-sm-2">
+                    Usuário
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.Attorney.Name)
+                </dd>
+                <dt class="col-sm-2">
+                    Atividade
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.Description)
+                </dd>
+                <dt class="col-sm-2">
+                    Solicitante
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.Solicitante)
+                </dd>
+                <dt class="col-sm-2">
+                    Área
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.Department.Name)
+                </dd>
+            </dl>
+            <div>
+                <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-primary">Editar</a>
+                <a asp-action="Index" class="btn btn-secondary">Voltar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+        

@@ -1,0 +1,106 @@
+﻿@using WebAppSystems.Models.Enums;
+@using WebAppSystems.Models.ViewModels;
+@model ProcessRecordViewModel;
+@{
+    ViewData["Title"] = "Nova Atividade";
+}
+<div class="card">
+    <div class="card-body">
+        <h4 class="card-title">Registro de Atividades</h4>
+        <hr />
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="ProcessRecord.Date" class="control-label">Data</label>
+                <input asp-for="ProcessRecord.Date" class="form-control" />
+                <span asp-validation-for="ProcessRecord.Date" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ProcessRecord.HoraInicial" class="control-label">Hora Inicial</label>
+                <input asp-for="ProcessRecord.HoraInicial" class="form-control" value="" />
+                <span asp-validation-for="ProcessRecord.HoraInicial" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ProcessRecord.HoraFinal" class="control-label">Hora Final</label>
+                <input asp-for="ProcessRecord.HoraFinal" class="form-control" value="" />
+                <span asp-validation-for="ProcessRecord.HoraFinal" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ProcessRecord.Description" class="control-label">Descrição da Atividade</label>
+                <textarea asp-for="ProcessRecord.Description" class="form-control" rows="5"></textarea> <!-- ajuste aqui -->
+                <span asp-validation-for="ProcessRecord.Description" class="text-danger"></span>
+            </div>
+
+            <input type="hidden" asp-for="ProcessRecord.AttorneyId" />
+            <div class="form-group">
+                <label class="control-label">Usuário</label>
+                <input type="hidden" asp-for="ProcessRecord.AttorneyId" />
+                <input type="text" value="@Model.Attorneys.FirstOrDefault(a => a.Id == Model.ProcessRecord.AttorneyId)?.Name" class="form-control" readonly />
+            </div>
+            <div class="form-group">
+                <label asp-for="ProcessRecord.ClientId" class="control-label">Cliente</label>
+                <select asp-for="ProcessRecord.ClientId" asp-items="@(new SelectList(Model.Clients, "Id", "Name"))" class="form-control"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="ProcessRecord.DepartmentId" class="control-label">Área</label>
+                <select asp-for="ProcessRecord.DepartmentId" asp-items="@(new SelectList(Model.Departments,"Id","Name"))" class="form-control"></select>
+            </div  
+            <div class="form-group">
+                <label asp-for="ProcessRecord.Solicitante" class="control-label">Solicitante</label>
+                <input asp-for="ProcessRecord.Solicitante" class="form-control"></input>
+                <span asp-validation-for="ProcessRecord.Solicitante" class="text-danger"></span>
+            </div>    
+
+            <div class="mt-3">
+                <button type="submit" class="btn btn-primary">Salvar</button>
+                <a asp-action="Index" class="btn btn-secondary">Voltar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        $(document).ready(function () {
+            $("input[id$='HoraInicial'], input[id$='HoraFinal']").on('focus', function (e) {
+                if ($(this).val() == '00:00') {
+                    $(this).val('');
+                }
+            }).on('blur', function (e) {
+                var value = $(this).val().replace(/\D/g, "").padStart(4, "0");
+                if (value.length === 4) {
+                    $(this).val(value.substr(0, 2) + ":" + value.substr(2));
+                } else if ($(this).val() == '') {
+                    $(this).val('00:00');
+                }
+            });
+        });
+    </script>
+<script>
+    $('#ProcessRecord_HoraInicial, #ProcessRecord_HoraFinal').on('change', function() {
+        var horaInicial = $('#ProcessRecord_HoraInicial').val();
+        var horaFinal = $('#ProcessRecord_HoraFinal').val();
+        
+        // verifica se ambos os campos estão preenchidos
+        if (horaInicial && horaFinal) {
+            // executa a comparação somente se ambos os campos estiverem preenchidos
+            if (horaInicial > horaFinal) {
+                alert('A hora inicial deve ser menor que a hora final.');
+                // aqui você pode fazer mais ações, como limpar os campos ou destacá-los em vermelho
+                
+                // traz o foco de volta para o campo que disparou o evento
+                $(this).focus();
+            }
+        }
+    });
+</script>
+
+
+}
+
+
+

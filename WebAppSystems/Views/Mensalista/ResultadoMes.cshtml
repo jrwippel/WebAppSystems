@@ -1,0 +1,49 @@
+﻿@model IEnumerable<WebAppSystems.Models.ViewModels.MensalistaHoursViewModel>
+
+@functions {
+    public static string FormatHours(double hours)
+    {
+        int wholeHours = (int)hours;
+        int minutes = (int)Math.Round((hours - wholeHours) * 60);
+        return $"{wholeHours:D2}:{minutes:D2}";
+    }
+}
+
+@{
+    ViewData["Title"] = "Resultados do Mês";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<div class="panel panel-primary">
+    <div class="panel-body">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr class="success">
+                    <th>Cliente</th>
+                    <th>Horas Totais</th>
+                    <th>Hora Técnica Bruta</th>
+                    <th>Hora Técnica Líquida</th>
+                    <th>Resultado Bruto</th>
+                    <th>Resultado Liquido</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@Html.DisplayFor(modelItem => item.Mensalista.Client.Name)</td>
+                        <td>@FormatHours(item.TotalHours)</td>
+                        <td>@item.ValorTotalHoras.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("pt-BR"))</td>
+                        <td>@item.ValorHoraTecLiquida.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("pt-BR"))</td>
+                        <td>@item.ValorResultadoBruto.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("pt-BR"))</td>
+                        <td>@item.ValorResultadoLiquido.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("pt-BR"))</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="panel-footer">        
+        <a href="@Url.Action("SimpleSearch", "Mensalista", new { monthYear = ViewData["inputMonthYear"], clientId = ViewData["clientId"], departmentId = ViewData["departmentId"] })" class="btn btn-secondary">Voltar</a>
+    </div>
+</div>

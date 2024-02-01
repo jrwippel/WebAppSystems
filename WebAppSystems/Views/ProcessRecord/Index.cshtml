@@ -1,0 +1,83 @@
+﻿@model IEnumerable<WebAppSystems.Models.ProcessRecord>
+
+@{
+    ViewData["Title"] = "Relatório de Horas";
+    var selectedClientId = ViewData["clientId"]?.ToString();
+    var selectedAttorneyId = ViewData["attorneyId"]?.ToString();
+    var today = DateTime.Now.ToString("yyyy-MM-dd");
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <form class="navbar-form" role="search" asp-controller="ProcessRecord" asp-action="SimpleSearch" method="get">
+            <div class="form-row">
+                <!-- Data Inicial -->
+                <div class="form-group col-md-2">
+                    <label for="minDate">Data Inicial</label>
+                    <input type="date" class="form-control" name="minDate" id="minDate" value="@today" />
+                </div>
+
+                <!-- Data Final -->
+                <div class="form-group col-md-2">
+                    <label for="maxDate">Data Final</label>
+                    <input type="date" class="form-control" name="maxDate" id="maxDate" value="@today" />
+                </div>
+
+                <!-- Cliente -->
+                <div class="form-group col-md-3">
+                    <label for="clientId">Cliente</label>
+                    <select class="form-control" name="clientId" id="clientId">
+                        <option value="">Todos</option>
+                        @foreach (var client in ViewBag.Clients)
+                        {
+                            <option value="@client.Id">@client.Name</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Usuário -->
+                <div class="form-group col-md-3">
+                    <label for="attorneyId">Usuário</label>
+                    <select class="form-control" name="attorneyId" id="attorneyId">
+                        <option value="">Todos</option>
+                        @foreach (var attorney in ViewBag.Attorneys)
+                        {
+                            <option value="@attorney.Id">@attorney.Name</option>
+                        }
+
+                    </select>
+                </div>
+
+                <!-- Botões -->
+                <div class="form-group col-md-2">
+                    <label>&nbsp;</label><br>
+                    <button type="submit" class="btn btn-primary mr-1">Visualizar</button>
+                    <button type="submit" formaction="@Url.Action("DownloadReport")" class="btn btn-secondary">Gerar CSV</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</nav>
+
+
+<script>
+    // Função para atualizar os valores do formulário oculto e enviar o formulário
+    function exportToCsv() {
+        var minDate = document.getElementById("minDate").value;
+        var maxDate = document.getElementById("maxDate").value;
+        var clientId = document.getElementById("clientId").value;
+        var attorneyId = document.getElementById("attorneyId").value;
+
+        document.getElementById("exportMinDate").value = minDate;
+        document.getElementById("exportMaxDate").value = maxDate;
+        document.getElementById("exportClientId").value = clientId;
+        document.getElementById("exportAttorneyId").value = attorneyId;
+
+        document.getElementById("exportCsvForm").submit();
+    }
+
+    // Vincular a função exportToCsv ao evento click do botão
+    document.getElementById("exportCsvBtn").addEventListener("click", exportToCsv);
+</script>
