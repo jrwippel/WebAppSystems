@@ -496,17 +496,62 @@ namespace WebAppSystems.Controllers
                 {
                     var cell = row.CreateCell(col);
                     cell.CellStyle = currentStyle;
+                  
+
                 }
 
                 row.GetCell(0).SetCellValue(item.Mensalista.Client.Name);
                 double totalHours = Math.Floor(item.TotalHours);
                 double totalMinutes = (item.TotalHours - totalHours) * 60;
+
                 row.GetCell(1).SetCellValue($"{totalHours}:{Math.Round(totalMinutes)}");                
-                row.GetCell(2).SetCellValue((double)item.ValorTotalHoras);                
-                row.GetCell(3).SetCellValue(Math.Round((double)item.ValorHoraTecLiquida, 2));                
-                row.GetCell(4).SetCellValue((double)item.ValorResultadoBruto);                
-                row.GetCell(5).SetCellValue(Math.Round((double)item.ValorResultadoLiquido, 2));
-                
+                //row.GetCell(2).SetCellValue((double)item.ValorTotalHoras);
+
+                double valotTotalHoras = Math.Round((double)item.ValorTotalHoras, 2);
+                row.GetCell(2).SetCellValue(valotTotalHoras);
+
+                //row.GetCell(3).SetCellValue(Math.Round((double)item.ValorHoraTecLiquida, 2));
+
+                double valorHoraTecnicaLiquida = Math.Round((double)item.ValorHoraTecLiquida, 2);
+                row.GetCell(3).SetCellValue(valorHoraTecnicaLiquida);
+
+                //row.GetCell(4).SetCellValue((double)item.ValorResultadoBruto);
+
+                double valorResultadoBruto = Math.Round((double)item.ValorResultadoBruto, 2);
+                row.GetCell(4).SetCellValue(valorResultadoBruto);
+
+
+                double valorResultadoLiquido = Math.Round((double)item.ValorResultadoLiquido, 2);
+                row.GetCell(5).SetCellValue(valorResultadoLiquido);
+
+                // Aplicar formatação condicional para todas as colunas de valor
+                for (int col = 1; col <= 5; col++)
+                {
+                    double cellValue;
+                    var cell = row.GetCell(col);
+                    if (cell != null && cell.CellType == CellType.Numeric)
+                    {
+                        cellValue = cell.NumericCellValue;
+                        IFont font = workbook.CreateFont();
+
+                        if (cellValue < 0)
+                        {
+                            font.Color = HSSFColor.Red.Index; // Fonte vermelha
+                        }
+                        else if (cellValue > 0)
+                        {
+                            font.Color = HSSFColor.Green.Index; // Fonte verde
+                        }
+
+                        ICellStyle conditionalStyle = workbook.CreateCellStyle();
+                        conditionalStyle.CloneStyleFrom(currentStyle);
+                        conditionalStyle.SetFont(font);
+                        cell.CellStyle = conditionalStyle;
+                    }
+                }
+
+
+
             }
 
             for (int colIndex = 0; colIndex < 6; colIndex++)
@@ -514,6 +559,8 @@ namespace WebAppSystems.Controllers
                 sheet.AutoSizeColumn(colIndex);
             }
         }
+
+   
 
         private async Task CreateMediaMesesSheet(XSSFWorkbook workbook, int? clientId, int? departmentId, DateTime? monthYear)
 
@@ -618,11 +665,55 @@ namespace WebAppSystems.Controllers
                 row.GetCell(0).SetCellValue(item.Mensalista.Client.Name);
                 double totalHours = Math.Floor(item.TotalHours);
                 double totalMinutes = (item.TotalHours - totalHours) * 60;
+
                 row.GetCell(1).SetCellValue($"{totalHours}:{Math.Round(totalMinutes)}");
-                row.GetCell(2).SetCellValue((double)item.ValorTotalHoras);
-                row.GetCell(3).SetCellValue(Math.Round((double)item.ValorHoraTecLiquida, 2));
-                row.GetCell(4).SetCellValue((double)item.ValorResultadoBruto);
-                row.GetCell(5).SetCellValue(Math.Round((double)item.ValorResultadoLiquido, 2));
+                //row.GetCell(2).SetCellValue((double)item.ValorTotalHoras);
+
+                double valotTotalHoras = Math.Round((double)item.ValorTotalHoras, 2);
+                row.GetCell(2).SetCellValue(valotTotalHoras);
+
+                //row.GetCell(3).SetCellValue(Math.Round((double)item.ValorHoraTecLiquida, 2));
+
+                double valorHoraTecnicaLiquida = Math.Round((double)item.ValorHoraTecLiquida, 2);
+                row.GetCell(3).SetCellValue(valorHoraTecnicaLiquida);
+
+                //row.GetCell(4).SetCellValue((double)item.ValorResultadoBruto);
+
+                double valorResultadoBruto = Math.Round((double)item.ValorResultadoBruto, 2);
+                row.GetCell(4).SetCellValue(valorResultadoBruto);
+
+
+                double valorResultadoLiquido = Math.Round((double)item.ValorResultadoLiquido, 2);
+                row.GetCell(5).SetCellValue(valorResultadoLiquido);
+
+                // Aplicar formatação condicional para todas as colunas de valor
+                for (int col = 1; col <= 5; col++)
+                {
+                    double cellValue;
+                    var cell = row.GetCell(col);
+                    if (cell != null && cell.CellType == CellType.Numeric)
+                    {
+                        cellValue = cell.NumericCellValue;
+                        IFont font = workbook.CreateFont();
+
+                        if (cellValue < 0)
+                        {
+                            font.Color = HSSFColor.Red.Index; // Fonte vermelha
+                        }
+                        else if (cellValue > 0)
+                        {
+                            font.Color = HSSFColor.Green.Index; // Fonte verde
+                        }
+
+                        ICellStyle conditionalStyle = workbook.CreateCellStyle();
+                        conditionalStyle.CloneStyleFrom(currentStyle);
+                        conditionalStyle.SetFont(font);
+                        cell.CellStyle = conditionalStyle;
+                    }
+                }
+
+
+
             }
 
             for (int colIndex = 0; colIndex < 6; colIndex++)
@@ -725,12 +816,54 @@ namespace WebAppSystems.Controllers
 
                 row.GetCell(0).SetCellValue(item.Mensalista.Client.Name);
                 double totalHours = Math.Floor(item.TotalHours);
-                double totalMinutes = (item.TotalHours - totalHours) * 60;
+                double totalMinutes = (item.TotalHours - totalHours) * 60;  
+
                 row.GetCell(1).SetCellValue($"{totalHours}:{Math.Round(totalMinutes)}");
-                row.GetCell(2).SetCellValue((double)item.ValorTotalHoras);
-                row.GetCell(3).SetCellValue(Math.Round((double)item.ValorHoraTecLiquida, 2));
-                row.GetCell(4).SetCellValue((double)item.ValorResultadoBruto);
-                row.GetCell(5).SetCellValue(Math.Round((double)item.ValorResultadoLiquido, 2));
+                //row.GetCell(2).SetCellValue((double)item.ValorTotalHoras);
+
+                double valotTotalHoras = Math.Round((double)item.ValorTotalHoras, 2);
+                row.GetCell(2).SetCellValue(valotTotalHoras);
+
+                //row.GetCell(3).SetCellValue(Math.Round((double)item.ValorHoraTecLiquida, 2));
+
+                double valorHoraTecnicaLiquida = Math.Round((double)item.ValorHoraTecLiquida, 2);
+                row.GetCell(3).SetCellValue(valorHoraTecnicaLiquida);
+
+                //row.GetCell(4).SetCellValue((double)item.ValorResultadoBruto);
+
+                double valorResultadoBruto = Math.Round((double)item.ValorResultadoBruto, 2);
+                row.GetCell(4).SetCellValue(valorResultadoBruto);
+
+
+                double valorResultadoLiquido = Math.Round((double)item.ValorResultadoLiquido, 2);
+                row.GetCell(5).SetCellValue(valorResultadoLiquido);
+
+                // Aplicar formatação condicional para todas as colunas de valor
+                for (int col = 1; col <= 5; col++)
+                {
+                    double cellValue;
+                    var cell = row.GetCell(col);
+                    if (cell != null && cell.CellType == CellType.Numeric)
+                    {
+                        cellValue = cell.NumericCellValue;
+                        IFont font = workbook.CreateFont();
+
+                        if (cellValue < 0)
+                        {
+                            font.Color = HSSFColor.Red.Index; // Fonte vermelha
+                        }
+                        else if (cellValue > 0)
+                        {
+                            font.Color = HSSFColor.Green.Index; // Fonte verde
+                        }
+
+                        ICellStyle conditionalStyle = workbook.CreateCellStyle();
+                        conditionalStyle.CloneStyleFrom(currentStyle);
+                        conditionalStyle.SetFont(font);
+                        cell.CellStyle = conditionalStyle;
+                    }
+                }
+
             }
 
             for (int colIndex = 0; colIndex < 6; colIndex++)

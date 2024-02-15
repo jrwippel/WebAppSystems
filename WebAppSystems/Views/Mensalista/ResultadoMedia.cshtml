@@ -7,10 +7,27 @@
         int minutes = (int)Math.Round((hours - wholeHours) * 60);
         return $"{wholeHours:D2}:{minutes:D2}";
     }
+
+    public static string GetFormattedValue(decimal value)
+    {
+        string formattedValue = value.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("pt-BR"));
+        if (value > 0)
+        {
+            return $"<span class=\"text-success\">{formattedValue}</span>";
+        }
+        else if (value < 0)
+        {
+            return $"<span class=\"text-danger\">{formattedValue}</span>";
+        }
+        else
+        {
+            return formattedValue; // para zero, sem alteração de cor
+        }
+    }
 }
 
 @{
-    ViewData["Title"] = "Média 3 ultimos meses";
+    ViewData["Title"] = "Média 3 últimos meses";
 }
 
 <h2>@ViewData["Title"]</h2>
@@ -34,10 +51,10 @@
                     <tr>
                         <td>@Html.DisplayFor(modelItem => item.Mensalista.Client.Name)</td>
                         <td>@FormatHours(item.TotalHours)</td>
-                        <td>@item.ValorTotalHoras.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("pt-BR"))</td>
-                        <td>@item.ValorHoraTecLiquida.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("pt-BR"))</td>                                              
-                        <td>@item.ValorResultadoBruto.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("pt-BR"))</td>
-                        <td>@item.ValorResultadoLiquido.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("pt-BR"))</td>
+                        <td>@Html.Raw(GetFormattedValue(item.ValorTotalHoras))</td>
+                        <td>@Html.Raw(GetFormattedValue(item.ValorHoraTecLiquida))</td>
+                        <td>@Html.Raw(GetFormattedValue(item.ValorResultadoBruto))</td>
+                        <td>@Html.Raw(GetFormattedValue(item.ValorResultadoLiquido))</td>
                     </tr>
                 }
             </tbody>
