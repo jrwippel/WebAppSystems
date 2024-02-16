@@ -9,29 +9,29 @@
         <hr />
 
         <form asp-action="Create" method="post" enctype="multipart/form-data">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div asp-validation-summary="ModelOnly" class="text-danger">Nome</div>
             <div class="form-group">
                 <label asp-for="Name" class="control-label"></label>
                 <input asp-for="Name" class="form-control" />
                 <span asp-validation-for="Name" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="Document" class="control-label"></label>
+                <label asp-for="Document" class="control-label">Documento</label>
                 <input asp-for="Document" class="form-control" />
                 <span asp-validation-for="Document" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="Email" class="control-label"></label>
+                <label asp-for="Email" class="control-label">Email</label>
                 <input asp-for="Email" class="form-control" />
                 <span asp-validation-for="Email" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="Telephone" class="control-label"></label>
+                <label asp-for="Telephone" class="control-label">Telefone</label>
                 <input asp-for="Telephone" class="form-control" />
                 <span asp-validation-for="Telephone" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="ImageData" class="control-label"></label>
+                <label asp-for="ImageData" class="control-label">Logo</label>
                 <input asp-for="ImageData" name="imageData" type="file" class="form-control" />
                 <span asp-validation-for="ImageData" class="text-danger"></span>
                 @if (Model != null && Model.ImageData != null && !string.IsNullOrEmpty(Model.ImageMimeType))
