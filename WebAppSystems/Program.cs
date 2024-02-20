@@ -40,7 +40,8 @@ namespace WebAppSystems
             builder.Services.AddScoped<PrecoClienteService>();          
             builder.Services.AddScoped<ISessao, Sessao>();
             builder.Services.AddScoped<IEmail, Email>();
-            builder.Services.AddScoped<MensalistaService>();                     
+            builder.Services.AddScoped<MensalistaService>();
+            builder.Services.AddScoped<ValorClienteService>();
 
 
             builder.Services.AddSession(o =>

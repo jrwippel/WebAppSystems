@@ -30,17 +30,17 @@ namespace WebAppSystems.Controllers
 
         private readonly AttorneyService _attorneyService;
 
-        private readonly PrecoClienteService _precoClienteService;
+        private readonly ValorClienteService _valorClienteService;
 
         private readonly IWebHostEnvironment _env;
 
         public ProcessRecordController(ProcessRecordService processRecordService, ClientService clientService, AttorneyService attorneyService, IWebHostEnvironment env,
-            PrecoClienteService precoClienteService)
+            ValorClienteService valorClienteService)
         {
             _processRecordService = processRecordService;
             _clientService = clientService;
             _attorneyService = attorneyService;
-            _precoClienteService = precoClienteService;
+            _valorClienteService = valorClienteService;
             _env = env;
 
         }
@@ -214,11 +214,11 @@ namespace WebAppSystems.Controllers
 
                     double hours = item.CalculoHorasDecimal();
 
-                    var precoCliente = await _precoClienteService.GetPrecoForClienteAndDepartmentAsync(item.ClientId, item.Department.Id); // supondo que haja um método que retorna o valor baseado no Cliente e Departamento
+                    var valorCliente = await _valorClienteService.GetPrecoForClienteAndUserAsync(item.ClientId, item.Attorney.Id); // supondo que haja um método que retorna o valor baseado no Cliente e Usuario
                     double value = 0;
-                    if (precoCliente != null)
+                    if (valorCliente != null)
                     {
-                        double valuePerHour = precoCliente.Valor;
+                        double valuePerHour = valorCliente.Valor;
                         value = hours * valuePerHour;
                     }
                     departmentSummary[departmentName] = (departmentSummary[departmentName].hours + hours, departmentSummary[departmentName].value + value);
