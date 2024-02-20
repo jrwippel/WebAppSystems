@@ -106,9 +106,10 @@ namespace WebAppSystems.Services
                 decimal valorTotalHoras = 0;
                 foreach (var record in recordsList)
                 {
-                    var deptoId = record.DepartmentId;
-                    var valorPorHora = Convert.ToDecimal(_context.PrecoCliente
-                        .FirstOrDefault(pc => pc.ClientId == mensalista.ClientId && pc.DepartmentId == deptoId)?.Valor ?? 0.0);
+                    var userId = record.AttorneyId;
+                    //var valorPorHora = Convert.ToDecimal(_context.PrecoCliente
+                    var valorPorHora = Convert.ToDecimal(_context.ValorCliente
+                        .FirstOrDefault(pc => pc.ClientId == mensalista.ClientId && pc.AttorneyId == userId)?.Valor ?? 0.0);
 
                     valorTotalHoras += (decimal)(record.CalculoHorasDecimal()) * valorPorHora;
                 }

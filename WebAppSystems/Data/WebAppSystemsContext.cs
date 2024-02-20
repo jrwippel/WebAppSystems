@@ -35,6 +35,8 @@ namespace WebAppSystems.Data
         }               
 
         public DbSet<WebAppSystems.Models.PercentualArea>? PercentualArea { get; set; }
+
+        public DbSet<WebAppSystems.Models.ValorCliente>? ValorCliente { get; set; }
     }
 }
 
