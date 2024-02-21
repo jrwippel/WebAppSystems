@@ -214,7 +214,7 @@ namespace WebAppSystems.Controllers
 
                     double hours = item.CalculoHorasDecimal();
 
-                    var valorCliente = await _valorClienteService.GetPrecoForClienteAndUserAsync(item.ClientId, item.Attorney.Id); // supondo que haja um método que retorna o valor baseado no Cliente e Usuario
+                    var valorCliente = await _valorClienteService.GetValorForClienteAndUserAsync(item.ClientId, item.Attorney.Id); // supondo que haja um método que retorna o valor baseado no Cliente e Usuario
                     double value = 0;
                     if (valorCliente != null)
                     {
