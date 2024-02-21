@@ -12,14 +12,14 @@ namespace WebAppSystems.Services
         {
             _context = context;
         }
-        public async Task<ValorCliente> GetPrecoForClienteAndUserAsync(int clientId, int userId)
+        public async Task<ValorCliente> GetValorForClienteAndUserAsync(int clientId, int userId)
         {
             return await _context.ValorCliente
                 .Where(p => p.ClientId == clientId && p.AttorneyId == userId)
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<ValorCliente> GetPrecoForClienteAndUserIdAsync(int clientId, int userId)
+        public async Task<ValorCliente> GetValorForClienteAndUserIdAsync(int clientId, int userId)
         {
             return await _context.ValorCliente
                 .Include(p => p.Client)
