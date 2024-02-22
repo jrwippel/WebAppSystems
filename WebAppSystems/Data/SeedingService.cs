@@ -19,8 +19,7 @@ namespace WebAppSystems.Data
         {
             if (_context.ProcessRecord.Any() ||
                 _context.Department.Any() ||
-                _context.Attorney.Any() ||
-                _context.PrecoCliente.Any())              
+                _context.Attorney.Any())              
                 
             {
                 return;
