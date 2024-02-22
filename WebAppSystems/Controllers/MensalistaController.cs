@@ -27,9 +27,7 @@ namespace WebAppSystems.Controllers
 
         private readonly ClientService _clientService;
 
-        private readonly AttorneyService _attorneyService;
-
-        private readonly PrecoClienteService _precoClienteService;
+        private readonly AttorneyService _attorneyService;        
 
         private readonly DepartmentService _departmentService;
 
@@ -40,12 +38,11 @@ namespace WebAppSystems.Controllers
         private ICellStyle veryLightGrayStyle;
 
         public MensalistaController(ProcessRecordService processRecordService, ClientService clientService, AttorneyService attorneyService, IWebHostEnvironment env,
-            PrecoClienteService precoClienteService, DepartmentService departmentService, MensalistaService mensalistaService)
+            DepartmentService departmentService, MensalistaService mensalistaService)
         {
             _processRecordService = processRecordService;
             _clientService = clientService;
-            _attorneyService = attorneyService;
-            _precoClienteService = precoClienteService;
+            _attorneyService = attorneyService;            
             _env = env;
             _departmentService = departmentService;
             _mensalistaService = mensalistaService;

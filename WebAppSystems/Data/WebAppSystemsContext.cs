@@ -18,7 +18,6 @@ namespace WebAppSystems.Data
         public DbSet<WebAppSystems.Models.Attorney> Attorney { get; set; } = default!;
         public DbSet<WebAppSystems.Models.ProcessRecord> ProcessRecord { get; set; } = default!;
         public DbSet<WebAppSystems.Models.Client>? Client { get; set; }
-        public DbSet<WebAppSystems.Models.PrecoCliente> PrecoCliente { get; set; } = default!;
 
         public DbSet<WebAppSystems.Models.Mensalista> Mensalista { get; set; } = default!;
      
