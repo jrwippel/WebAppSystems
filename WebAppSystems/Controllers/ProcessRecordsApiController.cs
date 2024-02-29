@@ -80,7 +80,7 @@ public class ProcessRecordsApiController : ControllerBase
             if (ultimoRegistro != null)
             {
                 // Retorne apenas a descrição da atividade
-                return Ok(new { descricaoAtividade = ultimoRegistro.Description });
+                return Ok(new { descricaoAtividade = ultimoRegistro.Description, solicitante = ultimoRegistro.Solicitante });
             }
             else
             {
