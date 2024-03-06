@@ -100,6 +100,12 @@ namespace WebAppSystems
 
             app.MapControllers(); // Adicione suporte ao roteamento da API
 
+
+            app.MapControllerRoute(
+            name: "about",
+            pattern: "about",
+            defaults: new { controller = "Home", action = "About" });
+
             //app.UseMiddleware<BasicAuthenticationMiddleware>();
 
             app.UseAuthorization();

@@ -19,8 +19,9 @@ namespace WebAppSystems.Models
         [EmailAddress(ErrorMessage = "Digite um email válido")]
         [Required(ErrorMessage = "{0} required")]
         public string Email { get; set; }
-        public string Telephone { get; set; }
-        public byte[] ImageData { get; set; }
+        public string Telephone { get; set; }        
+        public byte[]? ImageData { get; set; }
+
         public string ImageMimeType { get; set; }
         public ICollection<ProcessRecord> ProcessRecords { get; set; } = new List<ProcessRecord>();
 
