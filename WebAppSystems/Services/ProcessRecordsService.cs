@@ -23,18 +23,22 @@ namespace WebAppSystems.Services
         }
         public async Task<List<ProcessRecord>> FindAllAsync()
         {
-            
-            var processRecords = await _context.ProcessRecord.ToListAsync();
-
-            foreach (var processRecord in processRecords)
-            {
-                var completeProcessRecord = await FindByIdAsync(processRecord.Id);
-                processRecord.Attorney = completeProcessRecord.Attorney;
-            }
+            var processRecords = await _context.ProcessRecord
+                .Include(pr => pr.Attorney)
+                .OrderByDescending(pr => pr.Date)
+                .ThenByDescending(pr => pr.HoraInicial) // Ordena por hora inicial em ordem descendente
+                .ToListAsync();
 
             return processRecords;
-
         }
 
+
+
+        /*
+        public async Task<List<ProcessRecord>> FindAllAsync()
+        {
+            return await _context.ProcessRecord.OrderByDescending(pr => pr.Date).ToListAsync();
+        }
+        */
     }
 }

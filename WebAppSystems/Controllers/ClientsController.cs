@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -15,10 +16,12 @@ namespace WebAppSystems.Controllers
     public class ClientsController : Controller
     {
         private readonly WebAppSystemsContext _context;
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public ClientsController(WebAppSystemsContext context)
+        public ClientsController(WebAppSystemsContext context, IWebHostEnvironment webHostEnvironment)
         {
             _context = context;
+            _webHostEnvironment = webHostEnvironment;
         }
 
         // GET: Clients
@@ -53,6 +56,7 @@ namespace WebAppSystems.Controllers
             return View();
         }
 
+        
         // POST: Clients/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
@@ -63,8 +67,21 @@ namespace WebAppSystems.Controllers
         {
             //if (ModelState.IsValid)
             //{
-                
-                if (imageData != null && imageData.Length > 0)
+
+            if (client.ImageData == null && imageData == null)
+            {
+                // Caminho da imagem padrão no sistema de arquivos
+                string defaultImagePath = Path.Combine(_webHostEnvironment.WebRootPath, "images", "default-image.jpg");
+
+                // Lê a imagem padrão como bytes
+                byte[] defaultImageData = System.IO.File.ReadAllBytes(defaultImagePath);
+
+                // Atribui a imagem padrão ao cliente
+                client.ImageData = defaultImageData;
+                client.ImageMimeType = "image/jpeg"; // Ajuste conforme o tipo de imagem padrão que você tem
+            }
+
+            if (imageData != null && imageData.Length > 0)
                 {
                     // Verificar se é um tipo de arquivo de imagem válido
                     if (!imageData.ContentType.StartsWith("image"))
@@ -79,8 +96,7 @@ namespace WebAppSystems.Controllers
                         client.ImageData = memoryStream.ToArray();
                         client.ImageMimeType = imageData.ContentType;
                     }
-                }
-                
+                }               
 
                 _context.Add(client);
                 await _context.SaveChangesAsync();
@@ -89,6 +105,9 @@ namespace WebAppSystems.Controllers
 
             //return View(client);
         }
+
+        
+
 
 
 
