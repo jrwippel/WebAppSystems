@@ -33,6 +33,7 @@ namespace WebAppSystems.Services
             {
                 Id = a.Id,
                 Name = a.Name,
+                Solicitante = a.Solicitante,
             }).ToList();
         }
     }
