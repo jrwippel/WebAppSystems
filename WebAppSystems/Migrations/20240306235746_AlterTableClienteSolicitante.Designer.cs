@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WebAppSystems.Data;
 
@@ -11,9 +12,10 @@ using WebAppSystems.Data;
 namespace WebAppSystems.Migrations
 {
     [DbContext(typeof(WebAppSystemsContext))]
-    partial class WebAppSystemsContextModelSnapshot : ModelSnapshot
+    [Migration("20240306235746_AlterTableClienteSolicitante")]
+    partial class AlterTableClienteSolicitante
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

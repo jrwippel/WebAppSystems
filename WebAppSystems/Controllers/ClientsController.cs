@@ -63,7 +63,7 @@ namespace WebAppSystems.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         //public async Task<IActionResult> Create(Client client, IFormFile image)
-        public async Task<IActionResult> Create(int id, [Bind("Id,Name,Document,Email,Telephone,ImageData,ImageMimeType")] Client client, IFormFile imageData)
+        public async Task<IActionResult> Create(int id, [Bind("Id,Name,Document,Email,Telephone,ImageData,ImageMimeType,Solicitante")] Client client, IFormFile imageData)
         {
             //if (ModelState.IsValid)
             //{
@@ -125,6 +125,8 @@ namespace WebAppSystems.Controllers
             {
                 return NotFound();
             }
+            ViewData["ImageData"] = client.ImageData != null ? Convert.ToBase64String(client.ImageData) : null;
+
             return View(client);
         }
 
@@ -134,12 +136,13 @@ namespace WebAppSystems.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         //public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Document,Email,Telephone")] Client client, IFormFile imageData)
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Document,Email,Telephone,ImageData,ImageMimeType")] Client client, IFormFile imageData)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Document,Email,Telephone,ImageData,ImageMimeType,Solicitante")] Client client, IFormFile imageData)
         {
             if (id != client.Id)
             {
                 return NotFound();
             }
+
 
             //if (ModelState.IsValid)
             //{

@@ -25,8 +25,7 @@ namespace WebAppSystems.Models
         public string ImageMimeType { get; set; }
         public ICollection<ProcessRecord> ProcessRecords { get; set; } = new List<ProcessRecord>();
 
-
-
+        public string Solicitante { get; set; }
 
         public Client()
         {
