@@ -43,10 +43,12 @@ namespace WebAppSystems.Controllers
         {
             if (ModelState.IsValid)
             {
+   
                 var departments = await _departmentService.FindAllAsync();
                 var viewModel = new AttorneyFormViewModel { Attorney = attorney, Departments = departments };
                 return View(viewModel);
             }
+
             await _attorneyService.InsertAsync(attorney);
             return RedirectToAction(nameof(Index));
         }
@@ -106,8 +108,8 @@ namespace WebAppSystems.Controllers
             {
                 return RedirectToAction(nameof(Error), new { message = "Id not found" });
             }
-
             List<Department> departments = await _departmentService.FindAllAsync();
+            bool useBorder = obj.UseBorder;
             AttorneyFormViewModel viewModel = new AttorneyFormViewModel { Attorney = obj, Departments = departments };
             return View(viewModel);
 

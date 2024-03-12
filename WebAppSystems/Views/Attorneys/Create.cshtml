@@ -51,7 +51,13 @@
                 <div class="mb-3">
                 <label for="fone">Senha</label>
                     <input type="password" asp-for="Attorney.Password" class="form-control" placeholder="Digite a senha do usuário">        
-                </div>               
+                </div>   
+                <div class="form-check">
+                    <input type="checkbox" asp-for="Attorney.UseBorder" class="form-check-input"/> 
+                    <label asp-for="Attorney.UseBorder" class="form-check-label">Utiliza borda</label>
+                </div>
+
+
             </div>
             <div class="mt-3">
                 <button type="submit" class="btn btn-primary">Salvar</button>

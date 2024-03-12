@@ -35,7 +35,7 @@ namespace WebAppSystems.Controllers
                     Attorney usuario = _attorneyService.FindByLoginAsync(loginModel.Login);
                     if (usuario != null && usuario.ValidaSenha(loginModel.Senha))
                     {
-                        return Ok(new { message = "Usuário autenticado com sucesso!", userId = usuario.Id, userName = usuario.Name, usuario.DepartmentId });
+                        return Ok(new { message = "Usuário autenticado com sucesso!", userId = usuario.Id, userName = usuario.Name, usuario.DepartmentId, usuario.UseBorder });
                     }
                     return Unauthorized(new { message = "Usuário e/ou senha inválidos!" });
                 }

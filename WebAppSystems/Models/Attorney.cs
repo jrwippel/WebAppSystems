@@ -30,10 +30,9 @@ namespace WebAppSystems.Models
         public string Password { get; set; }
         public DateTime RegisterDate { get; set; }
         public DateTime? UpdateDate { get; set; }
-        public string Login { get; set; }
-
-        public ICollection<ProcessRecord> ProcessRecords { get; set; } = new List<ProcessRecord>();        
-
+        public string Login { get; set; }     
+        public ICollection<ProcessRecord> ProcessRecords { get; set; } = new List<ProcessRecord>();
+        public bool UseBorder { get; set; }
         public Attorney()
         {
         }
