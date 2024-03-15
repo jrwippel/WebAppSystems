@@ -21,7 +21,7 @@ namespace WebAppSystems.Migrations
                 name: "Solicitante",
                 table: "Client",
                 type: "nvarchar(max)",
-                nullable: false,
+                nullable: true,
                 defaultValue: "");
         }
 
