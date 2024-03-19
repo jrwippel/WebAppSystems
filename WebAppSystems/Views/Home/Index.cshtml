@@ -1,8 +1,38 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
-}
+﻿@model WebAppSystems.Models.ChartData
 
 <div class="text-center">
-    <img src="~/images/logoPrincipal.jpg" alt="Logo do Sistema" width="1024" height="576">    
-    <p><a href="http://www.ecadvogados.com.br/br/sobre-nos/">Eberhardt, Carrascoza - Advogados Assoc</a></p>
+    <canvas id="usoDoSistemaChart" width="800" height="400"></canvas>
 </div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        var clientNames = @Html.Raw(Json.Serialize(Model.ClientNames));
+        var clientValues = @Html.Raw(Json.Serialize(Model.ClientValues));
+
+        var data = {
+            labels: clientNames,
+            datasets: [{
+                label: 'Clientes Horas',
+                data: clientValues,
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        };
+
+        var ctx = document.getElementById('usoDoSistemaChart').getContext('2d');
+        var myChart = new Chart(ctx, {
+            type: 'bar',
+            data: data,
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    </script>
+}
