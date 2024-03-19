@@ -1,38 +1,23 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics;
-using WebAppSystems.Filters;
 using WebAppSystems.Models;
+using WebAppSystems.Services;
 
 namespace WebAppSystems.Controllers
 {
-    [PaginaParaUsuarioLogado]
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
+        private readonly ProcessRecordsService _processRecordsService;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(ProcessRecordsService processRecordsService)
         {
-            _logger = logger;
+            _processRecordsService = processRecordsService;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            return View();
-        }
-        public IActionResult About()
-        {
-            return View();
-        }
+            var chartData = _processRecordsService.GetChartData();
 
-        public IActionResult Privacy()
-        {
-            return View();
-        }
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            return View(chartData);
         }
     }
 }

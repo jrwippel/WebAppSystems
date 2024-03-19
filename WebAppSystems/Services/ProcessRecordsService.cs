@@ -1,4 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using WebAppSystems.Data;
 using WebAppSystems.Models;
 
@@ -6,13 +10,13 @@ namespace WebAppSystems.Services
 {
     public class ProcessRecordsService
     {
-
         private readonly WebAppSystemsContext _context;
 
         public ProcessRecordsService(WebAppSystemsContext context)
         {
             _context = context;
         }
+
         public async Task<ProcessRecord> FindByIdAsync(int id)
         {
             return await _context.ProcessRecord
@@ -21,10 +25,12 @@ namespace WebAppSystems.Services
                 .Include(obj => obj.Department)
                 .FirstOrDefaultAsync(obj => obj.Id == id);
         }
+
         public async Task<List<ProcessRecord>> FindAllAsync()
         {
             var processRecords = await _context.ProcessRecord
                 .Include(pr => pr.Attorney)
+                .Include(obj => obj.Client)
                 .OrderByDescending(pr => pr.Date)
                 .ThenByDescending(pr => pr.HoraInicial) // Ordena por hora inicial em ordem descendente
                 .ToListAsync();
@@ -32,13 +38,42 @@ namespace WebAppSystems.Services
             return processRecords;
         }
 
-
-
-        /*
-        public async Task<List<ProcessRecord>> FindAllAsync()
+        public ChartData GetChartData()
         {
-            return await _context.ProcessRecord.OrderByDescending(pr => pr.Date).ToListAsync();
+            // Obtém o mês e o ano correntes
+            var currentMonth = DateTime.Now.Month;
+            var currentYear = DateTime.Now.Year;
+
+            var clientHours = _context.ProcessRecord
+                .Where(pr => pr.Date.Month == currentMonth && pr.Date.Year == currentYear)
+                .ToList() // Executa a consulta e traz os resultados para a memória
+                .GroupBy(pr => pr.ClientId)
+                .Select(g => new { ClientId = g.Key, TotalHours = g.Sum(pr => (pr.HoraFinal - pr.HoraInicial).TotalHours) })
+                .ToList();
+
+            // Obtém os nomes dos clientes e suas horas gastas
+            var clientNames = new List<string>();
+            var clientValues = new List<int>(); // Alterado para List<int>
+
+            foreach (var item in clientHours)
+            {
+                var client = _context.Client.FirstOrDefault(c => c.Id == item.ClientId);
+                if (client != null)
+                {
+                    clientNames.Add(client.Name);
+                    // Converta o resultado para double antes de arredondar
+                    var totalHours = (int)Math.Round(Convert.ToDouble(item.TotalHours));
+                    clientValues.Add(totalHours);
+                }
+            }
+
+            // Retorna os dados como um objeto ChartData
+            return new ChartData { ClientNames = clientNames, ClientValues = clientValues };
+
         }
-        */
+
+
+
+
     }
 }
