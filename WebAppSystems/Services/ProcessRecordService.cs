@@ -47,10 +47,12 @@ namespace WebAppSystems.Services
                 .Include(x => x.Client)
                 .Include(x => x.Department)
                 .OrderByDescending(x => x.Date)
+                .ThenByDescending(x => x.HoraInicial)
                 .ToListAsync();
         }
 
-        
+
+
         public async Task<List<MensalistaHoursViewModel>> FindByDateMensalistaAsync(DateTime? minDate, DateTime? maxDate, int? clientId, int? departmentId, QueryType queryType = QueryType.Monthly)
 
         {
