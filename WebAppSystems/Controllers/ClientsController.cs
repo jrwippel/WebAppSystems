@@ -13,6 +13,7 @@ using WebAppSystems.Models;
 namespace WebAppSystems.Controllers
 {
     [PaginaParaUsuarioLogado]
+    [PaginaRestritaSomenteAdmin]
     public class ClientsController : Controller
     {
         private readonly WebAppSystemsContext _context;

@@ -18,6 +18,7 @@ using WebAppSystems.Services;
 namespace WebAppSystems.Controllers
 {
     [PaginaParaUsuarioLogado]
+    [PaginaRestritaSomenteAdmin]
     public class ProcessRecordsController : Controller
     {
         private readonly WebAppSystemsContext _context;

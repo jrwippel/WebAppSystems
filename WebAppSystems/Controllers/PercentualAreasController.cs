@@ -6,10 +6,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using WebAppSystems.Data;
+using WebAppSystems.Filters;
 using WebAppSystems.Models;
 
 namespace WebAppSystems.Controllers
 {
+    [PaginaParaUsuarioLogado]
+    [PaginaRestritaSomenteAdmin]
     public class PercentualAreasController : Controller
     {
         private readonly WebAppSystemsContext _context;

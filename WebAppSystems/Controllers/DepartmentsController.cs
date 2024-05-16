@@ -15,6 +15,7 @@ using System.Diagnostics;
 namespace WebAppSystems.Controllers
 {
     [PaginaParaUsuarioLogado]
+    [PaginaRestritaSomenteAdmin]
     public class DepartmentsController : Controller
     {
         private readonly WebAppSystemsContext _context;

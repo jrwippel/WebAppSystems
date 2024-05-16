@@ -19,6 +19,7 @@ using Microsoft.AspNetCore.Http;
 namespace WebAppSystems.Controllers
 {
     [PaginaParaUsuarioLogado]
+    [PaginaRestritaSomenteAdmin]
     public class MensalistaController : Controller
     {
 
