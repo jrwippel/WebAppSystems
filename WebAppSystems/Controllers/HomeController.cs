@@ -11,13 +11,16 @@ namespace WebAppSystems.Controllers
         public HomeController(ProcessRecordsService processRecordsService)
         {
             _processRecordsService = processRecordsService;
-        }
-
+        }        
         public async Task<IActionResult> Index()
         {
             var chartData = _processRecordsService.GetChartData();
 
             return View(chartData);
+        }
+        public IActionResult About()
+        {           
+            return View();
         }
     }
 }

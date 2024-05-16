@@ -57,7 +57,7 @@ namespace WebAppSystems.Services
 
             foreach (var item in clientHours)
             {
-                var client = _context.Client.FirstOrDefault(c => c.Id == item.ClientId);
+                var client = _context.Client.FirstOrDefault(c => c.Id == item.ClientId && !c.ClienteInterno);
                 if (client != null)
                 {
                     clientNames.Add(client.Name);

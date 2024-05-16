@@ -8,48 +8,115 @@
 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
     <ul class="navbar-nav flex-grow-1">
         <li class="nav-item" title="Home">
-            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index"><i class="fas fa-home fa-2x" data-toggle="tooltip"></i></a>
-        </li>
-        <li class="nav-item" title="Área">
-            <a class="nav-link text-dark" asp-area="" asp-controller="Departments" asp-action="Index"><i class="fas fa-building fa-2x" data-toggle="tooltip"></i></a>
-        </li>
-        @if (Model.Perfil == ProfileEnum.Admin)
-        {
-            <li class="nav-item" title="Usuários">
-                <a class="nav-link text-dark" asp-area="" asp-controller="Attorneys" asp-action="Index"><i class="fas fa-users fa-2x" data-toggle="tooltip"></i></a>
-            </li>
-            <li class="nav-item" title="Valores/Cliente">
-                <a class="nav-link text-dark" asp-area="" asp-controller="ValorClientes" asp-action="Index"><i class="fas fa-money-bill fa-2x" data-toggle="tooltip"></i></a>
-            </li>
-            <li class="nav-item" title="Mensalistas">
-                <a class="nav-link text-dark" asp-area="" asp-controller="Mensalistas" asp-action="Index"><i class="fas fa-calendar-alt fa-2x" data-toggle="tooltip"></i></a>
-            </li>
-            <li class="nav-item" title="Percentuais Área">
-                <a class="nav-link text-dark" asp-area="" asp-controller="PercentualAreas" asp-action="Index"><i class="fas fa-chart-pie fa-2x" data-toggle="tooltip"></i></a>
-            </li>
-        }
-        <li class="nav-item" title="Clientes">
-            <a class="nav-link text-dark" asp-area="" asp-controller="Clients" asp-action="Index"><i class="fas fa-users fa-2x" data-toggle="tooltip"></i></a>
-        </li>
-        <li class="nav-item" title="Registro de Atividades">
-            <a class="nav-link text-dark" asp-area="" asp-controller="ProcessRecords" asp-action="Index"><i class="fas fa-list-alt fa-2x" data-toggle="tooltip"></i></a>
-        </li>
-        <li class="nav-item" title="Relatórios">
-            <a class="nav-link text-dark" asp-area="" asp-controller="ProcessRecord" asp-action="Index"><i class="fas fa-file-alt fa-2x" data-toggle="tooltip"></i></a>
+            <div class="text-center">
+                <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">
+                    <i class="fas fa-home fa-3x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Home"></i>
+                    <span class="d-block">Home</span>
+                </a>
+            </div>
         </li>
 
-        <li class="nav-item" title="Resultados">
-            <a class="nav-link text-dark" asp-area="" asp-controller="Mensalista" asp-action="Index"><i class="fas fa-chart-line fa-2x" data-toggle="tooltip"></i></a>
+        @if (Model.Perfil == ProfileEnum.Admin)
+        {
+            <li class="nav-item" title="Área">
+                <div class="text-center">
+                    <a class="nav-link text-dark" asp-area="" asp-controller="Departments" asp-action="Index">
+                        <i class="fas fa-building fa-3x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Área"></i>
+                        <span class="d-block">Área</span>
+                    </a>
+                </div>
+            </li>
+            <li class="nav-item" title="Usuários">
+                <div class="text-center">
+                    <a class="nav-link text-dark" asp-area="" asp-controller="Attorneys" asp-action="Index">
+                        <i class="fas fa-users fa-3x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Usuários"></i>
+                        <span class="d-block">Usuários</span>
+                    </a>
+                </div>
+            </li>
+            <li class="nav-item" title="Valores/Cliente">
+                <div class="text-center">
+                    <a class="nav-link text-dark" asp-area="" asp-controller="ValorClientes" asp-action="Index">
+                        <i class="fas fa-money-bill fa-3x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Valores/Cliente"></i>
+                        <span class="d-block">Valores</span>
+                    </a>
+                </div>
+            </li>
+            <li class="nav-item" title="Mensalistas">
+                <div class="text-center">
+                    <a class="nav-link text-dark" asp-area="" asp-controller="Mensalistas" asp-action="Index">
+                        <i class="fas fa-calendar-alt fa-3x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Mensalistas"></i>
+                        <span class="d-block">Mensalistas</span>
+                    </a>
+                </div>
+            </li>
+            <li class="nav-item" title="Percentuais Área">
+                <div class="text-center">
+                    <a class="nav-link text-dark" asp-area="" asp-controller="PercentualAreas" asp-action="Index">
+                        <i class="fas fa-chart-pie fa-3x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Percentuais Área"></i>
+                        <span class="d-block">Percentuais</span>
+                    </a>
+                </div>
+            </li>
+            <li class="nav-item" title="Clientes">
+                <div class="text-center">
+                    <a class="nav-link text-dark" asp-area="" asp-controller="Clients" asp-action="Index">
+                        <i class="fas fa-users fa-3x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Clientes"></i>
+                        <span class="d-block">Clientes</span>
+                    </a>
+                </div>
+            </li>
+
+            <li class="nav-item" title="Relatórios">
+                <div class="text-center">
+                    <a class="nav-link text-dark" asp-area="" asp-controller="ProcessRecord" asp-action="Index">
+                        <i class="fas fa-file-alt fa-3x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Relatórios"></i>
+                        <span class="d-block">Relatórios</span>
+                    </a>
+                </div>
+            </li>
+            <li class="nav-item" title="Resultados">
+                <div class="text-center">
+                    <a class="nav-link text-dark" asp-area="" asp-controller="Mensalista" asp-action="Index">
+                        <i class="fas fa-chart-line fa-3x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Resultados"></i>
+                        <span class="d-block">Resultados</span>
+                    </a>
+                </div>
+            </li>
+        }
+
+        <li class="nav-item" title="Registro de Atividades">
+            <div class="text-center">
+                <a class="nav-link text-dark" asp-area="" asp-controller="ProcessRecords" asp-action="Index">
+                    <i class="fas fa-list-alt fa-3x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Registro de Atividades"></i>
+                    <span class="d-block">Atividades</span>
+                </a>
+            </div>
         </li>
 
         <li class="nav-item" title="Alterar Senha">
-            <a class="nav-link text-dark" asp-area="" asp-controller="AlterarSenha" asp-action="Index"><i class="fas fa-lock fa-2x" data-toggle="tooltip"></i></a>
+            <div class="text-center">
+                <a class="nav-link text-dark" asp-area="" asp-controller="AlterarSenha" asp-action="Index">
+                    <i class="fas fa-lock fa-3x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Alterar Senha"></i>
+                    <span class="d-block">Senha</span>
+                </a>
+            </div>
         </li>
         <li class="nav-item" title="Sair">
-            <a class="nav-link text-dark" asp-area="" asp-controller="Login" asp-action="Sair"><i class="fas fa-sign-out-alt fa-2x" data-toggle="tooltip"></i></a>
+            <div class="text-center">
+                <a class="nav-link text-dark" asp-area="" asp-controller="Login" asp-action="Sair">
+                    <i class="fas fa-sign-out-alt fa-3x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Sair"></i>
+                    <span class="d-block">Sair</span>
+                </a>
+            </div>
         </li>
         <li class="nav-item" title="Sobre">
-            <a class="nav-link text-dark" asp-area="" asp-controller="About" asp-action="Index"><i class="fas fa-info-circle fa-2x" data-toggle="tooltip"></i></a>
+            <div class="text-center">
+                <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="About">
+                    <i class="fas fa-info-circle fa-3x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Sobre"></i>
+                    <span class="d-block">Sobre</span>
+                </a>
+            </div>
         </li>
     </ul>
 </div>
@@ -59,3 +126,4 @@
         $('[data-toggle="tooltip"]').tooltip();
     });
 </script>
+

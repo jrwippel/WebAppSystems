@@ -63,8 +63,6 @@ namespace WebAppSystems.Services
                 minDate = new DateTime(maxDate.Value.AddMonths(-2).Year, maxDate.Value.AddMonths(-2).Month, 1);
                 // Mantemos o maxDate como está, representando o final do terceiro mês
             }
-
-
             //var mensalistas = _context.Mensalista.Include(m => m.MensalistaDepartments).Include(m => m.Client).AsQueryable();
 
             var mensalistas = _context.Mensalista.Include(m => m.Client).AsQueryable();
@@ -139,6 +137,13 @@ namespace WebAppSystems.Services
                     valorResultadoLiquido = (valorAreaLiquido * 3) - valorHoraTecLiquida;
                 }
 
+                // Inicialize a lista TotalHoursPerMonth
+                var totalHoursPerMonth = new List<double>();
+
+                // Determine o primeiro mês e ano no intervalo fornecido
+                DateTime currentMonth = new DateTime(minDate.Value.Year, minDate.Value.Month, 1);
+
+
 
                 results.Add(new MensalistaHoursViewModel
                 {
@@ -152,9 +157,8 @@ namespace WebAppSystems.Services
                     ValorMensalLiquido = valorMensalLiquido,                    
                     ValorHoraTecLiquida = valorHoraTecLiquida,
                     ValorAreaLiquido = valorAreaLiquido,
-                    ValorResultadoLiquido = valorResultadoLiquido,
-
-
+                    ValorResultadoLiquido = valorResultadoLiquido
+                  
                 });
             }
             return results;
