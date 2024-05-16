@@ -160,7 +160,6 @@ namespace WebAppSystems.Controllers
             ViewData["departmentId"] = departmentId;
             ViewData["inputMonthYear"] = monthYear.Value.ToString("MM/yyyy");
 
-
             return View(new List<MensalistaHoursViewModel> { specificMensalistaHours });
         }
 
@@ -202,7 +201,7 @@ namespace WebAppSystems.Controllers
 
             return View(new List<MensalistaHoursViewModel> { specificMensalistaHours });
         }
-
+        
         public async Task<IActionResult> ResultadoAcumulado(int id, DateTime? monthYear, int? clientId, int? departmentId)
         {
             var mensalista = await _mensalistaService.FindByIdAsync(id);
@@ -231,7 +230,7 @@ namespace WebAppSystems.Controllers
             if (specificMensalistaHours == null)
             {
                 return NotFound();
-            }
+            }            
 
             // Armazenar os parâmetros no ViewData
             ViewData["monthYear"] = monthYear.Value.ToString("yyyy-MM");
@@ -239,8 +238,10 @@ namespace WebAppSystems.Controllers
             ViewData["departmentId"] = departmentId;
 
             return View(new List<MensalistaHoursViewModel> { specificMensalistaHours });
-        }
-        // Ação para gerar e baixar o arquivo CSV
+        }    
+
+        
+
 
 
         public async Task<IActionResult> DownloadReport(string monthYearString, int? clientId, int? departmentId, string format = "xlsx")

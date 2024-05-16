@@ -63,7 +63,7 @@ namespace WebAppSystems.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         //public async Task<IActionResult> Create(Client client, IFormFile image)
-        public async Task<IActionResult> Create(int id, [Bind("Id,Name,Document,Email,Telephone,ImageData,ImageMimeType,Solicitante")] Client client, IFormFile imageData)
+        public async Task<IActionResult> Create(int id, [Bind("Id,Name,Document,Email,Telephone,ImageData,ImageMimeType,Solicitante,ClienteInterno")] Client client, IFormFile imageData)
         {
             //if (ModelState.IsValid)
             //{
@@ -136,7 +136,7 @@ namespace WebAppSystems.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         //public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Document,Email,Telephone")] Client client, IFormFile imageData)
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Document,Email,Telephone,ImageData,ImageMimeType,Solicitante")] Client client, IFormFile imageData)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Document,Email,Telephone,ImageData,ImageMimeType,Solicitante,ClienteInterno")] Client client, IFormFile imageData)
         {
             if (id != client.Id)
             {

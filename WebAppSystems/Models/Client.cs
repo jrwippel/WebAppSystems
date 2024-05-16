@@ -27,6 +27,8 @@ namespace WebAppSystems.Models
 
         public string? Solicitante { get; set; }
 
+        public bool ClienteInterno { get; set; }
+
         public Client()
         {
         }

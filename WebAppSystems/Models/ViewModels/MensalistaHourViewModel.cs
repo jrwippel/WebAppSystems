@@ -18,7 +18,7 @@
         public decimal ValorAreaLiquido { get; set; }
         public decimal ValorResultadoLiquido { get; set; }
 
-        public decimal ValorHoraTecLiquida { get; set; }
+        public decimal ValorHoraTecLiquida { get; set; }      
 
     }
 }

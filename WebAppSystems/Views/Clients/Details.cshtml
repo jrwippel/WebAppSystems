@@ -46,6 +46,19 @@
                         <dd>
                             @Html.DisplayFor(model => model.Solicitante)
                         </dd>
+                        <dt class="col-sm-2">
+                        Interno
+                        </dt>
+                        <dd class="col-sm-10">
+                            @if (Model.ClienteInterno)
+                            {
+                                <text>Sim</text>
+                            }
+                            else
+                            {
+                                <text>Não</text>
+                            }
+                        </dd>
                     </dl>
                 </div>
                 <div class="col-sm-6">
