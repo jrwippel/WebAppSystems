@@ -19,11 +19,15 @@
             </div>
         </nav>
     </header>
+
     <div class="container">
+        @*@await Component.InvokeAsync("LicenseNotification") *@
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
-    </div>
+    </div> 
+    
+    
 
     <footer class="border-top footer text-muted">
         <div class="container">

@@ -27,11 +27,9 @@ namespace WebAppSystems
             builder.Services.AddDbContext<WebAppSystemsContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("WebAppSystemsContext") ?? throw new InvalidOperationException("Connection string 'WebAppSystemsContext' not found.")));
 
-            builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-            // Add services to the container.
+            builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();         
             builder.Services.AddScoped<SeedingService>();
-            builder.Services.AddScoped<BasicAuthenticationFilterAttribute, BasicAuthenticationFilterAttribute>();
-            
+            builder.Services.AddScoped<BasicAuthenticationFilterAttribute, BasicAuthenticationFilterAttribute>();            
             builder.Services.AddScoped<AttorneyService>();
             builder.Services.AddScoped<DepartmentService>();
             builder.Services.AddScoped<ProcessRecordService>();
@@ -41,6 +39,9 @@ namespace WebAppSystems
             builder.Services.AddScoped<IEmail, Email>();
             builder.Services.AddScoped<MensalistaService>();
             builder.Services.AddScoped<ValorClienteService>();
+            builder.Services.AddHttpClient();
+            //builder.Services.AddTransient<ILicenseService, LicenseService>(); 
+
 
 
             builder.Services.AddSession(o =>
@@ -51,7 +52,7 @@ namespace WebAppSystems
 
             builder.Services.AddControllersWithViews();
             builder.Services.AddControllers();
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            //ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
             var app = builder.Build();
 
@@ -97,6 +98,9 @@ namespace WebAppSystems
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseRouting();
+            //app.UseMiddleware<LicenseMiddleware>();
+            app.UseAuthorization();
+            app.UseSession();
 
             app.MapControllers(); // Adicione suporte ao roteamento da API
 
@@ -106,7 +110,7 @@ namespace WebAppSystems
             pattern: "about",
             defaults: new { controller = "Home", action = "About" });
 
-            //app.UseMiddleware<BasicAuthenticationMiddleware>();
+         
 
             app.UseAuthorization();
             app.UseSession();
