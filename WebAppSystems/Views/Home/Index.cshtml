@@ -29,7 +29,13 @@
                 responsive: true,
                 scales: {
                     y: {
-                        beginAtZero: true
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function (value) {
+                                // Formata valores para exibir com duas casas decimais
+                                return value.toFixed(2);
+                            }
+                        }
                     }
                 }
             }
