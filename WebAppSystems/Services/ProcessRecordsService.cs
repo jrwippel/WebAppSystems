@@ -53,7 +53,7 @@ namespace WebAppSystems.Services
 
             // Obtém os nomes dos clientes e suas horas gastas
             var clientNames = new List<string>();
-            var clientValues = new List<int>(); // Alterado para List<int>
+            var clientValues = new List<double>(); // Alterado para List<double>
 
             foreach (var item in clientHours)
             {
@@ -61,16 +61,15 @@ namespace WebAppSystems.Services
                 if (client != null)
                 {
                     clientNames.Add(client.Name);
-                    // Converta o resultado para double antes de arredondar
-                    var totalHours = (int)Math.Round(Convert.ToDouble(item.TotalHours));
-                    clientValues.Add(totalHours);
+                    clientValues.Add(Math.Round(item.TotalHours, 2)); // Arredonda para duas casas decimais
                 }
             }
 
             // Retorna os dados como um objeto ChartData
             return new ChartData { ClientNames = clientNames, ClientValues = clientValues };
-
         }
+
+
 
 
 
