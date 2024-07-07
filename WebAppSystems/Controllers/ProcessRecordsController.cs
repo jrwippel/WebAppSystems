@@ -12,6 +12,7 @@ using WebAppSystems.Data;
 using WebAppSystems.Filters;
 using WebAppSystems.Helper;
 using WebAppSystems.Models;
+using WebAppSystems.Models.Enums;
 using WebAppSystems.Models.ViewModels;
 using WebAppSystems.Services;
 
@@ -51,6 +52,7 @@ namespace WebAppSystems.Controllers
         {
             Attorney usuario = _isessao.BuscarSessaoDoUsuario();
             ViewBag.LoggedUserId = usuario.Id;
+            ViewBag.IsAdmin = usuario.Perfil == ProfileEnum.Admin;
 
             if (id == null || _context.ProcessRecord == null)
             {
