@@ -2,6 +2,8 @@
 
 @{
     ViewData["Title"] = "Details";
+    var userId = ViewBag.LoggedUserId as int?;
+    var isAdmin = ViewBag.IsAdmin as bool?;
 }
 
 <h1>Detalhes</h1>
@@ -10,7 +12,7 @@
 
 <div class="card">
     <div class="card-body">
-        <h4 class="card-title">Valores por Cliente/Área</h4>
+        <h4 class="card-title">Atividades</h4>
         <hr />
         <form asp-action="Create">
             <dl class="row">
@@ -65,7 +67,10 @@
                 </dd>
             </dl>
             <div>
-                <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-primary">Editar</a>
+                @if (userId == Model.AttorneyId || isAdmin == true)
+                {
+                    <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-primary">Editar</a>
+                }
                 <a asp-action="Index" class="btn btn-secondary">Voltar</a>
             </div>
         </form>
