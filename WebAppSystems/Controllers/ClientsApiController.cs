@@ -5,9 +5,11 @@ using System.Threading.Tasks;
 using WebAppSystems.Models.ViewModels;
 using WebAppSystems.Services;
 using WebAppSystems.Models.Dto;
+using Microsoft.AspNetCore.Authorization;
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize]
 public class ClientsApiController : ControllerBase
 {
     private readonly WebAppSystemsContext _context;
@@ -19,7 +21,8 @@ public class ClientsApiController : ControllerBase
         _clientsService = clientService;
     }
 
-    [HttpGet]
+   
+    [HttpGet]    
     [Route("GetAllClients")]
     public async Task<ActionResult<List<ClientDTO>>> GetAllClients()
     {

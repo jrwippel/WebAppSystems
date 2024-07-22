@@ -2,6 +2,10 @@
 using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using WebAppSystems.Data;
 using WebAppSystems.Helper;
 using WebAppSystems.Models;
@@ -16,13 +20,14 @@ namespace WebAppSystems.Controllers
         private readonly AttorneyService _attorneyService;
         private readonly ISessao _sessao;
         private readonly IEmail _email;
+        private readonly IConfiguration _configuration;
 
-        public LoginApiController(AttorneyService attorneyService, ISessao sessao, IEmail email)
+        public LoginApiController(AttorneyService attorneyService, ISessao sessao, IEmail email, IConfiguration configuration)
         {
             _attorneyService = attorneyService;
             _sessao = sessao;
             _email = email;
-            
+            _configuration = configuration;
         }
 
         [HttpPost("authenticate")]
@@ -35,7 +40,17 @@ namespace WebAppSystems.Controllers
                     Attorney usuario = _attorneyService.FindByLoginAsync(loginModel.Login);
                     if (usuario != null && usuario.ValidaSenha(loginModel.Senha))
                     {
-                        return Ok(new { message = "Usuário autenticado com sucesso!", userId = usuario.Id, userName = usuario.Name, usuario.DepartmentId, usuario.UseBorder });
+                        var token = GenerateJwtToken(usuario);
+
+                        return Ok(new
+                        {
+                            message = "Usuário autenticado com sucesso!",
+                            userId = usuario.Id,
+                            userName = usuario.Name,
+                            usuario.DepartmentId,
+                            usuario.UseBorder,
+                            token = token
+                        });
                     }
                     return Unauthorized(new { message = "Usuário e/ou senha inválidos!" });
                 }
@@ -46,6 +61,30 @@ namespace WebAppSystems.Controllers
                 return StatusCode(500, new { message = $"Erro interno do servidor: {erro.Message}" });
             }
         }
+
+        private string GenerateJwtToken(Attorney usuario)
+        {
+            var key = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_configuration["Jwt:Key"]));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var claims = new[]
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, usuario.Name),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim("userId", usuario.Id.ToString())
+            };
+
+            var token = new JwtSecurityToken(
+                issuer: _configuration["Jwt:Issuer"],
+                audience: _configuration["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.Now.AddMinutes(30),
+                signingCredentials: creds
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
 
         public IActionResult Index()
         {
