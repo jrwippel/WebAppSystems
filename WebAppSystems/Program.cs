@@ -6,13 +6,8 @@ using System.Text;
 using WebAppSystems.Data;
 using WebAppSystems.Helper;
 using WebAppSystems.Services;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using Microsoft.AspNetCore.Builder;
-using DocumentFormat.OpenXml.InkML;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 using OfficeOpenXml;
 
@@ -21,15 +16,17 @@ namespace WebAppSystems
     public class Program
     {
         public static void Main(string[] args)
-        {           
-
+        {
             var builder = WebApplication.CreateBuilder(args);
-            builder.Services.AddDbContext<WebAppSystemsContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("WebAppSystemsContext") ?? throw new InvalidOperationException("Connection string 'WebAppSystemsContext' not found.")));
 
-            builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();         
+            // Configurar o contexto do banco de dados
+            builder.Services.AddDbContext<WebAppSystemsContext>(options =>
+                options.UseSqlServer(builder.Configuration.GetConnectionString("WebAppSystemsContext")
+                ?? throw new InvalidOperationException("Connection string 'WebAppSystemsContext' not found.")));
+
+            builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             builder.Services.AddScoped<SeedingService>();
-            builder.Services.AddScoped<BasicAuthenticationFilterAttribute, BasicAuthenticationFilterAttribute>();            
+            builder.Services.AddScoped<BasicAuthenticationFilterAttribute, BasicAuthenticationFilterAttribute>();
             builder.Services.AddScoped<AttorneyService>();
             builder.Services.AddScoped<DepartmentService>();
             builder.Services.AddScoped<ProcessRecordService>();
@@ -40,44 +37,58 @@ namespace WebAppSystems
             builder.Services.AddScoped<MensalistaService>();
             builder.Services.AddScoped<ValorClienteService>();
             builder.Services.AddHttpClient();
-            //builder.Services.AddTransient<ILicenseService, LicenseService>(); 
-
-
 
             builder.Services.AddSession(o =>
-                {
-                    o.Cookie.HttpOnly = true;
-                    o.Cookie.IsEssential = true;
-                });
+            {
+                o.Cookie.HttpOnly = true;
+                o.Cookie.IsEssential = true;
+            });
 
             builder.Services.AddControllersWithViews();
             builder.Services.AddControllers();
-            //ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+            // Configurar autenticação JWT
+            var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"]);
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.RequireHttpsMetadata = false;
+                options.SaveToken = true;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                    ValidAudience = builder.Configuration["Jwt:Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(key)
+                };
+            });
 
             var app = builder.Build();
-
 
             var ptBR = new CultureInfo("pt-BR");
             var localizationOptions = new RequestLocalizationOptions
             {
                 DefaultRequestCulture = new RequestCulture(ptBR),
                 SupportedCultures = new List<CultureInfo> { ptBR },
-                SupportedUICultures = new List<CultureInfo> { ptBR }                
-        };
+                SupportedUICultures = new List<CultureInfo> { ptBR }
+            };
 
             app.UseRequestLocalization(localizationOptions);
 
-
-            // Create a new scope to retrieve scoped services
+            // Aplicar migrações pendentes no banco de dados
             using (var scope = app.Services.CreateScope())
             {
                 var services = scope.ServiceProvider;
                 try
                 {
-                    // Get the DbContext instance
                     var myDbContext = services.GetRequiredService<WebAppSystemsContext>();
-
-                    // Apply pending migrations
                     myDbContext.Database.Migrate();
                 }
                 catch (Exception ex)
@@ -87,33 +98,25 @@ namespace WebAppSystems
                 }
             }
 
-            // Injeta a dependência do IWebHostEnvironment
-            var env = app.Services.GetRequiredService<IWebHostEnvironment>();
-
-            //if (env.IsDevelopment())
-            //{
+            // Seed data
             app.Services.CreateScope().ServiceProvider.GetRequiredService<SeedingService>().Seed();
-            //}
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseRouting();
-            //app.UseMiddleware<LicenseMiddleware>();
+
+            // Adicionar middlewares de autenticação e autorização
+            app.UseAuthentication();
             app.UseAuthorization();
+
             app.UseSession();
 
             app.MapControllers(); // Adicione suporte ao roteamento da API
 
-
             app.MapControllerRoute(
-            name: "about",
-            pattern: "about",
-            defaults: new { controller = "Home", action = "About" });
-
-         
-
-            app.UseAuthorization();
-            app.UseSession();
+                name: "about",
+                pattern: "about",
+                defaults: new { controller = "Home", action = "About" });
 
             app.MapControllerRoute(
                 name: "default",
@@ -122,5 +125,4 @@ namespace WebAppSystems
             app.Run();
         }
     }
-
 }

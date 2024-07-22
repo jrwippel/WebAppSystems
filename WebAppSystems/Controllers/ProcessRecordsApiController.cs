@@ -9,6 +9,7 @@ using WebAppSystems.Services;
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize]
 //[BasicAuthenticationFilter]
 public class ProcessRecordsApiController : ControllerBase
 {

@@ -5,9 +5,11 @@ using System.Threading.Tasks;
 using WebAppSystems.Models.ViewModels;
 using WebAppSystems.Services;
 using WebAppSystems.Models.Dto;
+using Microsoft.AspNetCore.Authorization;
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize]
 public class DepartmentsApiController : ControllerBase
 {
     private readonly WebAppSystemsContext _context;
