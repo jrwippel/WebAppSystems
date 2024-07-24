@@ -70,7 +70,6 @@ namespace WebAppSystems.Controllers
 
         }
 
-        // GET: ProcessRecords/Create
         public async Task<IActionResult> Create()
         {
             var clients = await _clientService.FindAllAsync();
@@ -78,15 +77,16 @@ namespace WebAppSystems.Controllers
             Attorney usuario = _isessao.BuscarSessaoDoUsuario();
             var departments = await _departmentService.FindAllAsync();
 
-
             if (usuario == null)
             {
-                // Redirecionar para a página de login se o usuário não estiver logado
                 return RedirectToAction("Index", "Login");
             }
 
-            var clientsOptions = new SelectList(clients, "Id", "Name")
-            .Prepend(new SelectListItem { Value = "0", Text = "Selecionar" }).ToList();
+            var clientsOptions = clients
+                .OrderBy(c => c.Name)
+                .Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name })
+                .Prepend(new SelectListItem { Value = "0", Text = "Selecionar" })
+                .ToList();
 
             var viewModel = new ProcessRecordViewModel
             {
@@ -100,27 +100,53 @@ namespace WebAppSystems.Controllers
                     ClientId = 0
                 },
                 Attorneys = attorneys,
-                Clients = clients, // mantemos a lista de Client como antes
-                ClientsOptions = clientsOptions, // agora temos uma lista de SelectListItem para popular o dropdown
+                Clients = clients,
+                ClientsOptions = clientsOptions,
                 Departments = departments
             };
             return View(viewModel);
         }
 
-
         [HttpPost]
         [ValidateAntiForgeryToken]
-        //public async Task<IActionResult> Create([Bind("Id,Date,Hours,Status","")] ProcessRecord processRecord)
         public async Task<IActionResult> Create(ProcessRecord processRecord)
         {
+            if (processRecord.ClientId == 0)
+            {
+                ModelState.AddModelError("ProcessRecord.ClientId", "Por favor, selecione um cliente.");
+            }
+
             if (!processRecord.IsStartTimeLessEndTime())
             {
-                return RedirectToAction(nameof(Error), new { message = "A hora inicial deve ser menor que a hora final.\"" });
+                ModelState.AddModelError("ProcessRecord.HoraInicial", "A hora inicial deve ser menor que a hora final.");
             }
+
+            if (!ModelState.IsValid)
+            {
+                var clients = await _clientService.FindAllAsync();
+                var attorneys = await _attorneyService.FindAllAsync();
+                var departments = await _departmentService.FindAllAsync();
+                var clientsOptions = clients
+                    .OrderBy(c => c.Name)
+                    .Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name })
+                    .Prepend(new SelectListItem { Value = "0", Text = "Selecionar" })
+                    .ToList();
+                var viewModel = new ProcessRecordViewModel
+                {
+                    ProcessRecord = processRecord,
+                    Attorneys = attorneys,
+                    Clients = clients,
+                    ClientsOptions = clientsOptions,
+                    Departments = departments
+                };
+                return View(viewModel);
+            }
+
             _context.Add(processRecord);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
+
 
         // GET: ProcessRecords/Edit/5
 
