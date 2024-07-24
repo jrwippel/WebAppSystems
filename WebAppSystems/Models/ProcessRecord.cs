@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using Newtonsoft.Json.Linq;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using WebAppSystems.Models.Enums;
@@ -13,9 +14,11 @@ namespace WebAppSystems.Models
         
         public DateTime Date { get; set; }
         [JsonIgnore] // Adicione esta linha para que ao enviar o JSON, essa propriedade seja ignorada
+        [ValidateNever]
         public Attorney Attorney { get; set; }
         public int AttorneyId { get; set; }
         [JsonIgnore] // Adicione esta linha para que ao enviar o JSON, essa propriedade seja ignorada
+        [ValidateNever]
         public Client Client { get; set; }
         public int ClientId { get; set; }
 
@@ -33,6 +36,8 @@ namespace WebAppSystems.Models
         public string Description { get; set; }
 
         [JsonIgnore] // Adicione esta linha para que ao enviar o JSON, essa propriedade seja ignorada
+
+        [ValidateNever]
         public Department Department { get; set; }
         public int DepartmentId { get; set; }
 
