@@ -73,6 +73,21 @@
 
     <script>
         $(document).ready(function () {
+            $("select[id$='ProcessRecord_ClientId']").change(function () {
+                var clientId = $(this).val();
+                if (clientId) {
+                    $.getJSON('@Url.Action("GetClientSolicitante", "ProcessRecords")', { clientId: clientId }, function (data) {
+                        if (data.success) {
+                            $("input[id$='ProcessRecord_Solicitante']").val(data.solicitante);
+                        } else {
+                            $("input[id$='ProcessRecord_Solicitante']").val('');
+                        }
+                    });
+                } else {
+                    $("input[id$='ProcessRecord_Solicitante']").val('');
+                }
+            });
+
             $("input[id$='HoraInicial'], input[id$='HoraFinal']").on('focus', function (e) {
                 if ($(this).val() == '00:00') {
                     $(this).val('');
@@ -87,4 +102,5 @@
             });
         });
     </script>
+
 }
