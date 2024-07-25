@@ -276,5 +276,31 @@ namespace WebAppSystems.Controllers
             };
             return View(viewModel);
         }
+
+        [HttpGet]
+        public async Task<JsonResult> GetClientSolicitante(int clientId)
+        {
+
+
+            var client = await _clientService.FindByIdAsync(clientId);
+            if (client == null)
+            {
+                return Json(new { success = false });
+            }
+
+            // Verifica se o cliente é interno
+            if (client.ClienteInterno)
+            {
+                var attorneys = _attorneyService.FindAll();
+                Attorney usuario = _isessao.BuscarSessaoDoUsuario();
+                // Obtém o nome do usuário logado
+                var userName = usuario.Name; // Ajuste conforme necessário para obter o nome do usuário logado
+                return Json(new { success = true, solicitante = userName });
+            }
+
+            return Json(new { success = true, solicitante = client.Solicitante });
+        }
+
+
     }
 }
