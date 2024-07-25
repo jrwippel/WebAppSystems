@@ -171,7 +171,20 @@ namespace WebAppSystems.Controllers
             List<Attorney> attorneys = await _attorneyService.FindAllAsync();
             List<Client> clients = await _clientService.FindAllAsync();
             List<Department> departments = await _departmentService.FindAllAsync();
-            ProcessRecordViewModel viewModel = new ProcessRecordViewModel { ProcessRecord = obj, Attorneys = attorneys, Clients = clients, Departments = departments };
+
+            var clientsOptions = clients
+                 .OrderBy(c => c.Name)
+                 .Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name })
+                 .ToList();
+
+            ProcessRecordViewModel viewModel = new ProcessRecordViewModel
+            {
+                ProcessRecord = obj,
+                Attorneys = attorneys,
+                Clients = clients,
+                ClientsOptions = clientsOptions,
+                Departments = departments
+            };
             return View(viewModel);
 
         }
