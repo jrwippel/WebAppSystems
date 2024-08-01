@@ -1,9 +1,11 @@
 ﻿@model IEnumerable<WebAppSystems.Models.ProcessRecord>
+@using WebAppSystems.Models.Enums
 
 @{
     ViewData["Title"] = "Relatório de Horas";
     var selectedClientId = ViewData["clientId"]?.ToString();
     var selectedAttorneyId = ViewData["attorneyId"]?.ToString();
+    var userProfile = (WebAppSystems.Models.Enums.ProfileEnum)ViewBag.UserProfile;
 }
 
 <h2>@ViewData["Title"]</h2>
@@ -71,7 +73,10 @@
                 <div class="form-group col-md-2">
                     <label>&nbsp;</label><br>
                     <button type="submit" class="btn btn-primary mr-1">Visualizar</button>
-                    <button type="submit" formaction="@Url.Action("DownloadReport")" class="btn btn-secondary">Gerar CSV</button>
+                    @if (userProfile == WebAppSystems.Models.Enums.ProfileEnum.Admin)                   
+                     {
+                        <button type="submit" formaction="@Url.Action("DownloadReport")" class="btn btn-secondary">Gerar CSV</button>
+                     }
                 </div>
             </div>
         </form>

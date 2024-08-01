@@ -15,6 +15,8 @@ using System.Drawing.Imaging;
 using System.Globalization;
 using System.Text;
 using WebAppSystems.Filters;
+using WebAppSystems.Helper;
+using WebAppSystems.Models;
 using WebAppSystems.Services;
 
 
@@ -22,7 +24,7 @@ using WebAppSystems.Services;
 namespace WebAppSystems.Controllers
 {
     [PaginaParaUsuarioLogado]
-    [PaginaRestritaSomenteAdmin]
+   
     public class ProcessRecordController : Controller
     {
         private readonly ProcessRecordService _processRecordService;
@@ -35,7 +37,9 @@ namespace WebAppSystems.Controllers
 
         private readonly IWebHostEnvironment _env;
 
-        public ProcessRecordController(ProcessRecordService processRecordService, ClientService clientService, AttorneyService attorneyService, IWebHostEnvironment env,
+        private readonly ISessao _isessao;
+
+        public ProcessRecordController(ProcessRecordService processRecordService, ClientService clientService, AttorneyService attorneyService, IWebHostEnvironment env, ISessao isessao, 
             ValorClienteService valorClienteService)
         {
             _processRecordService = processRecordService;
@@ -43,6 +47,7 @@ namespace WebAppSystems.Controllers
             _attorneyService = attorneyService;
             _valorClienteService = valorClienteService;
             _env = env;
+            _isessao = isessao;
 
         }
 
@@ -454,6 +459,9 @@ namespace WebAppSystems.Controllers
         {
             ViewBag.Clients = await _clientService.FindAllAsync();
             ViewBag.Attorneys = await _attorneyService.FindAllAsync();
+
+            Attorney usuario = _isessao.BuscarSessaoDoUsuario();
+            ViewBag.UserProfile = usuario.Perfil;        
         }
 
         #endregion
