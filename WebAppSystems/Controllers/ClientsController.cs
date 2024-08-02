@@ -105,13 +105,7 @@ namespace WebAppSystems.Controllers
             //}
 
             //return View(client);
-        }
-
-        
-
-
-
-
+        }   
 
         // GET: Clients/Edit/5
         public async Task<IActionResult> Edit(int? id)
@@ -193,10 +187,19 @@ namespace WebAppSystems.Controllers
             }
 
             var client = await _context.Client
-                .FirstOrDefaultAsync(m => m.Id == id);
+                  .Include(c => c.ProcessRecords) // Inclui os registros de processo relacionados
+                  .FirstOrDefaultAsync(m => m.Id == id);
+
             if (client == null)
             {
                 return NotFound();
+            }
+
+            // Verifica se o cliente tem registros relacionados
+            if (client.ProcessRecords.Any())
+            {
+                ModelState.AddModelError(string.Empty, "Não é possível excluir o cliente porque existem registros relacionados.");
+                return View(client); // Retorna a view com a mensagem de erro
             }
 
             return View(client);
@@ -209,16 +212,27 @@ namespace WebAppSystems.Controllers
         {
             if (_context.Client == null)
             {
-                return Problem("Entity set 'WebAppSystemsContext.Client'  is null.");
+                return Problem("Entity set 'WebAppSystemsContext.Client' is null.");
             }
-            var client = await _context.Client.FindAsync(id);
+
+            var client = await _context.Client
+                .Include(c => c.ProcessRecords)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
             if (client != null)
             {
+                if (client.ProcessRecords.Any())
+                {
+                    ModelState.AddModelError(string.Empty, "Não é possível excluir o cliente porque existem registros relacionados.");
+                    return View(client); // Retorna a view com a mensagem de erro
+                }
+
                 _context.Client.Remove(client);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index)); // Redireciona após a exclusão
             }
-            
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+
+            return NotFound(); // Retorna NotFound se o cliente não for encontrado
         }
 
         private bool ClientExists(int id)
