@@ -1,15 +1,18 @@
 ﻿@model WebAppSystems.Models.Client
 
 @{
-    ViewData["Title"] = "Delete";
+    ViewData["Title"] = "Exclusão";
 }
+
 <h1>Exclusão</h1>
 
 <h3>Você tem certeza?</h3>
 <div class="card">
     <div class="card-body">
-        <form asp-action="Delete">
+        <!-- Exibe mensagens de erro, se houver -->
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
 
+        <form asp-action="Delete">
             <h4>Cliente</h4>
             <hr />
             <dl class="row">
@@ -39,12 +42,9 @@
                 </dd>
             </dl>
 
-            <form asp-action="Delete">
-                <input type="hidden" asp-for="Id" />
-                <input type="submit" value="Delete" class="btn btn-danger" />
-                <a asp-action="Index" class="btn btn-secondary">Voltar</a>
-            </form>
+            <input type="hidden" asp-for="Id" />
+            <input type="submit" value="Excluir" class="btn btn-danger" />
+            <a asp-action="Index" class="btn btn-secondary">Voltar</a>
         </form>
     </div>
 </div>
-
