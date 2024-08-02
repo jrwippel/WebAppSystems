@@ -40,16 +40,9 @@
                 <input type="text" value="@Model.Attorneys.FirstOrDefault(a => a.Id == Model.ProcessRecord.AttorneyId)?.Name" class="form-control" readonly />
             </div>
             <div class="form-group">
-                <label for="clientAutocomplete" class="control-label">Cliente</label>
-                <input id="clientAutocomplete" class="form-control" />
-                <input type="hidden" asp-for="ProcessRecord.ClientId" id="ProcessRecord_ClientId" />
+                <label asp-for="ProcessRecord.ClientId" class="control-label"></label>
+                <select asp-for="ProcessRecord.ClientId" class="form-control" asp-items="Model.ClientsOptions"></select>
                 <span asp-validation-for="ProcessRecord.ClientId" class="text-danger"></span>
-                <select id="clientList" class="form-control mt-2" style="display: none;">
-                    @foreach (var client in Model.ClientsOptions)
-                    {
-                        <option value="@client.Value">@client.Text</option>
-                    }
-                </select>
             </div>
             <div class="form-group">
                 <label asp-for="ProcessRecord.DepartmentId" class="control-label">Área</label>
@@ -74,64 +67,36 @@
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-
     <script>
         $(document).ready(function () {
-            var clients = @Html.Raw(Json.Serialize(Model.ClientsOptions.Select(c => new { label = c.Text, value = c.Value })));
-
-            $("#clientAutocomplete").autocomplete({
-                source: function (request, response) {
-                    var results = $.ui.autocomplete.filter(clients, request.term);
-                    response(results);
-                },
-                select: function (event, ui) {
-                    $("#ProcessRecord_ClientId").val(ui.item.value); // Store the ID
-                    $("#clientAutocomplete").val(ui.item.label); // Display the name
-                    $("#clientList").hide(); // Hide the dropdown
-                }
-            }).on('keyup', function () {
-                var value = $(this).val().toLowerCase();
-                $("#clientList option").each(function () {
-                    var text = $(this).text().toLowerCase();
-                    if (text.indexOf(value) > -1) {
-                        $(this).show();
-                    } else {
-                        $(this).hide();
-                    }
-                });
-                $("#clientList").show();
-            });
-
-            $("#clientList").on('change', function () {
-                var selectedValue = $(this).val();
-                var selectedText = $(this).find('option:selected').text();
-                $("#ProcessRecord_ClientId").val(selectedValue);
-                $("#clientAutocomplete").val(selectedText);
-                $(this).hide();
-            });
-
-            // Hide the dropdown if the user clicks outside
-            $(document).on('click', function (e) {
-                if (!$(e.target).closest('#clientAutocomplete').length && !$(e.target).closest('#clientList').length) {
-                    $("#clientList").hide();
+            $("select[id$='ProcessRecord_ClientId']").change(function () {
+                var clientId = $(this).val();
+                if (clientId) {
+                    $.getJSON('@Url.Action("GetClientSolicitante", "ProcessRecords")', { clientId: clientId }, function (data) {
+                        if (data.success) {
+                            $("input[id$='ProcessRecord_Solicitante']").val(data.solicitante);
+                        } else {
+                            $("input[id$='ProcessRecord_Solicitante']").val('');
+                        }
+                    });
+                } else {
+                    $("input[id$='ProcessRecord_Solicitante']").val('');
                 }
             });
 
-            $("input[id$='HoraInicial'], input[id$='HoraFinal']").on('focus', function () {
-                if ($(this).val() === '00:00') {
+            $("input[id$='HoraInicial'], input[id$='HoraFinal']").on('focus', function (e) {
+                if ($(this).val() == '00:00') {
                     $(this).val('');
                 }
-            }).on('blur', function () {
+            }).on('blur', function (e) {
                 var value = $(this).val().replace(/\D/g, "").padStart(4, "0");
                 if (value.length === 4) {
                     $(this).val(value.substr(0, 2) + ":" + value.substr(2));
-                } else if ($(this).val() === '') {
+                } else if ($(this).val() == '') {
                     $(this).val('00:00');
                 }
             });
         });
     </script>
+
 }
