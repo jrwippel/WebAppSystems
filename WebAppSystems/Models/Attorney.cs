@@ -32,7 +32,7 @@ namespace WebAppSystems.Models
         public DateTime? UpdateDate { get; set; }
         public string Login { get; set; }     
         public ICollection<ProcessRecord> ProcessRecords { get; set; } = new List<ProcessRecord>();
-        public bool UseBorder { get; set; }
+        public bool UseBorder { get; set; }  
         public Attorney()
         {
         }

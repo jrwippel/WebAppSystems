@@ -88,6 +88,15 @@ namespace WebAppSystems.Controllers
                 .Prepend(new SelectListItem { Value = "0", Text = "Selecionar" })
                 .ToList();
 
+            var recordTypeOptions = Enum.GetValues(typeof(RecordType))
+                           .Cast<RecordType>()
+                           .Select(rt => new SelectListItem
+                           {
+                               Value = rt.ToString(),
+                               Text = rt.ToString()
+                           })
+                           .ToList();
+
             var viewModel = new ProcessRecordViewModel
             {
                 ProcessRecord = new ProcessRecord
@@ -102,7 +111,8 @@ namespace WebAppSystems.Controllers
                 Attorneys = attorneys,
                 Clients = clients,
                 ClientsOptions = clientsOptions,
-                Departments = departments
+                Departments = departments,
+                RecordTypeOptions = recordTypeOptions
             };
             return View(viewModel);
         }
@@ -131,13 +141,24 @@ namespace WebAppSystems.Controllers
                     .Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name })
                     .Prepend(new SelectListItem { Value = "0", Text = "Selecionar" })
                     .ToList();
+
+                var recordTypeOptions = Enum.GetValues(typeof(RecordType))
+                                   .Cast<RecordType>()
+                                   .Select(rt => new SelectListItem
+                                   {
+                                       Value = rt.ToString(),
+                                       Text = rt.ToString()
+                                   })
+                                   .ToList();
+
                 var viewModel = new ProcessRecordViewModel
                 {
                     ProcessRecord = processRecord,
                     Attorneys = attorneys,
                     Clients = clients,
                     ClientsOptions = clientsOptions,
-                    Departments = departments
+                    Departments = departments,
+                    RecordTypeOptions = recordTypeOptions
                 };
                 return View(viewModel);
             }
@@ -177,13 +198,25 @@ namespace WebAppSystems.Controllers
                  .Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name })
                  .ToList();
 
+            var recordTypeOptions = Enum.GetValues(typeof(RecordType))
+                           .Cast<RecordType>()
+                           .Select(rt => new SelectListItem
+                           {
+                               Value = rt.ToString(),
+                               Text = rt.ToString()
+                           })
+                           .ToList();
+
+
+
             ProcessRecordViewModel viewModel = new ProcessRecordViewModel
             {
                 ProcessRecord = obj,
                 Attorneys = attorneys,
                 Clients = clients,
                 ClientsOptions = clientsOptions,
-                Departments = departments
+                Departments = departments,
+                RecordTypeOptions = recordTypeOptions
             };
             return View(viewModel);
 

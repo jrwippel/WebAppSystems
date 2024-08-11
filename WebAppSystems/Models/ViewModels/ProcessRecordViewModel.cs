@@ -12,6 +12,8 @@ namespace WebAppSystems.Models.ViewModels
         public IEnumerable<SelectListItem> ClientsOptions { get; set; }
 
         public ICollection<Department> Departments { get; set; }
+        public IEnumerable<SelectListItem> RecordTypeOptions { get; set; } // Adicione esta linha
+
 
     }
 }

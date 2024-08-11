@@ -42,11 +42,14 @@ namespace WebAppSystems.Models
         public int DepartmentId { get; set; }
 
         public string Solicitante { get; set; }
+
+        [Required(ErrorMessage = "O tipo de registro é obrigatório.")]
+        public RecordType RecordType { get; set; }
         public ProcessRecord()
         {
         }
 
-        public ProcessRecord(DateTime date, Attorney attorney, Client client, TimeSpan horaInicial, TimeSpan horaFinal, string description, Department department, string solicitante)
+        public ProcessRecord(DateTime date, Attorney attorney, Client client, TimeSpan horaInicial, TimeSpan horaFinal, string description, Department department, string solicitante, RecordType recordType)
         {
             Date = date;
 
@@ -58,10 +61,11 @@ namespace WebAppSystems.Models
             Solicitante = solicitante;
             Department = department;
             Solicitante = solicitante;
+            RecordType = RecordType;
                 
         }
 
-        public ProcessRecord(int id, DateTime date, Attorney attorney, Client client, TimeSpan horaInicial, TimeSpan horaFinal, string description, Department department, string solicitante)
+        public ProcessRecord(int id, DateTime date, Attorney attorney, Client client, TimeSpan horaInicial, TimeSpan horaFinal, string description, Department department, string solicitante, RecordType recordType)
         {
             Id = id;
             Date = date; 
@@ -72,7 +76,7 @@ namespace WebAppSystems.Models
             Description = description;
             Department = department;
             Solicitante = solicitante;
-
+            RecordType = recordType;
         }
 
         public string CalculoHoras()
