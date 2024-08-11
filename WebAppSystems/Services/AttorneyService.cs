@@ -166,5 +166,12 @@ namespace WebAppSystems.Services
             }
         }
 
+        public void UpdateAttorney(Attorney attorney)
+        {
+            _context.Attorney.Update(attorney);
+            _context.SaveChanges();
+        }
+
+
     }
 }

@@ -13,6 +13,17 @@
         <form asp-action="Create">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-group">
+                <label asp-for="ProcessRecord.RecordType" class="control-label">Tipo de Registro</label>
+                <select asp-for="ProcessRecord.RecordType" class="form-control">
+                    <option value="">Selecionar</option>
+                    @foreach (var item in Html.GetEnumSelectList<RecordType>())
+                    {
+                        <option value="@item.Value">@item.Text</option>
+                    }
+                </select>
+                <span asp-validation-for="ProcessRecord.RecordType" class="text-danger"></span>
+            </div>
+            <div class="form-group">
                 <label asp-for="ProcessRecord.Date" class="control-label">Data</label>
                 <input asp-for="ProcessRecord.Date" class="form-control" />
                 <span asp-validation-for="ProcessRecord.Date" class="text-danger"></span>
@@ -40,7 +51,7 @@
                 <input type="text" value="@Model.Attorneys.FirstOrDefault(a => a.Id == Model.ProcessRecord.AttorneyId)?.Name" class="form-control" readonly />
             </div>
             <div class="form-group">
-                <label asp-for="ProcessRecord.ClientId" class="control-label"></label>
+                <label asp-for="ProcessRecord.ClientId" class="control-label">Cliente</label>
                 <select asp-for="ProcessRecord.ClientId" class="form-control" asp-items="Model.ClientsOptions"></select>
                 <span asp-validation-for="ProcessRecord.ClientId" class="text-danger"></span>
             </div>
@@ -61,7 +72,6 @@
         </form>
     </div>
 </div>
-
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
@@ -69,6 +79,13 @@
 
     <script>
         $(document).ready(function () {
+            // Define o foco automaticamente no campo "Tipo de Registro"
+            var $recordTypeSelect = $("select[id$='ProcessRecord_RecordType']");
+            $recordTypeSelect.focus();
+
+            // Configura a opção padrão do combo box para "Selecionar"
+            $recordTypeSelect.val(''); // Define a opção padrão para 'Selecionar' (valor vazio)
+
             $("select[id$='ProcessRecord_ClientId']").change(function () {
                 var clientId = $(this).val();
                 if (clientId) {
@@ -98,5 +115,5 @@
             });
         });
     </script>
-
 }
+

@@ -1,4 +1,6 @@
-﻿namespace WebAppSystems.Models.ViewModels
+﻿using WebAppSystems.Models.Enums;
+
+namespace WebAppSystems.Models.ViewModels
 {
     public class ProcessRecordInputModel
     {
@@ -11,5 +13,6 @@
         public string Description { get; set; }
         public int DepartmentId { get; set; }
         public string Solicitante { get; set; }
+        public RecordType RecordType { get; set; }
     }
 }

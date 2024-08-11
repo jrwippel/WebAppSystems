@@ -6,6 +6,7 @@ using WebAppSystems.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using WebAppSystems.Helper;
 using WebAppSystems.Services;
+using WebAppSystems.Models.Enums;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -42,7 +43,9 @@ public class ProcessRecordsApiController : ControllerBase
                 HoraFinal = inputModel.HoraFinal,
                 Description = inputModel.Description,
                 DepartmentId = inputModel.DepartmentId,
-                Solicitante = inputModel.Solicitante
+                Solicitante = inputModel.Solicitante,
+                RecordType = inputModel.RecordType
+
             };
 
             // Carregue as entidades associadas com base nos IDs

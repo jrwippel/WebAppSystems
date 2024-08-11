@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WebAppSystems.Data;
 
@@ -11,9 +12,10 @@ using WebAppSystems.Data;
 namespace WebAppSystems.Migrations
 {
     [DbContext(typeof(WebAppSystemsContext))]
-    partial class WebAppSystemsContextModelSnapshot : ModelSnapshot
+    [Migration("20240806011746_RefreshToken")]
+    partial class RefreshToken
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -59,6 +61,13 @@ namespace WebAppSystems.Migrations
                     b.Property<string>("Phone")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RefreshToken")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("RefreshTokenExpiration")
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("RegisterDate")
                         .HasColumnType("datetime2");
@@ -218,9 +227,6 @@ namespace WebAppSystems.Migrations
 
                     b.Property<TimeSpan>("HoraInicial")
                         .HasColumnType("time");
-
-                    b.Property<int>("RecordType")
-                        .HasColumnType("int");
 
                     b.Property<string>("Solicitante")
                         .IsRequired()
