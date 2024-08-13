@@ -49,6 +49,7 @@ namespace WebAppSystems.Controllers
                             userName = usuario.Name,
                             usuario.DepartmentId,
                             usuario.UseBorder,
+                            usuario.UseCronometroAlwaysOnTop,
                             token = token
                         });
                     }
