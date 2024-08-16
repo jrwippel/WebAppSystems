@@ -245,7 +245,7 @@ namespace WebAppSystems.Controllers
 
 
 
-        public async Task<IActionResult> DownloadReport(string monthYearString, int? clientId, int? departmentId, string format = "xlsx")
+        public async Task<IActionResult> DownloadReport(string monthYearString, int? clientId, int? departmentId, string recordType = null, string format = "xlsx")
         {
             DateTime? monthYear = null;
 
@@ -264,7 +264,13 @@ namespace WebAppSystems.Controllers
 
             ConvertMonthYearToRange(monthYear.Value, out DateTime minDate, out DateTime maxDate);
 
-            var filteredRecords = await _processRecordService.FindByDateAsync(minDate, maxDate, clientId, departmentId);
+            RecordType? recordTypeEnum = null;
+            if (!string.IsNullOrEmpty(recordType))
+            {
+                recordTypeEnum = Enum.Parse<RecordType>(recordType, true);
+            }
+
+            var filteredRecords = await _processRecordService.FindByDateAsync(minDate, maxDate, clientId, departmentId, recordTypeEnum);
 
             if (format != "xlsx")
             {
