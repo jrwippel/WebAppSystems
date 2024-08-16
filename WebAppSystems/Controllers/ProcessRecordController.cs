@@ -17,6 +17,7 @@ using System.Text;
 using WebAppSystems.Filters;
 using WebAppSystems.Helper;
 using WebAppSystems.Models;
+using WebAppSystems.Models.Enums;
 using WebAppSystems.Services;
 
 
@@ -56,24 +57,37 @@ namespace WebAppSystems.Controllers
             await PopulateViewBag();
             return View();
         }
-        public async Task<IActionResult> SimpleSearch(DateTime? minDate, DateTime? maxDate, int? clientId, int? attorneyId)
+        public async Task<IActionResult> SimpleSearch(DateTime? minDate, DateTime? maxDate, int? clientId, int? attorneyId, string recordType)
         {
             SetDefaultDateValues(ref minDate, ref maxDate);
 
-            PopulateViewData(minDate, maxDate, clientId, attorneyId);
+            RecordType? recordTypeEnum = null;
+            if (!string.IsNullOrEmpty(recordType))
+            {
+                recordTypeEnum = Enum.Parse<RecordType>(recordType, true);
+            }
+
+            PopulateViewData(minDate, maxDate, clientId, attorneyId, recordTypeEnum.ToString());
             await PopulateViewBag();
 
-            var result = await _processRecordService.FindByDateAsync(minDate, maxDate, clientId, attorneyId);
+            var result = await _processRecordService.FindByDateAsync(minDate, maxDate, clientId, attorneyId, recordTypeEnum);
             return View(result);
 
         }
 
         // Ação para gerar e baixar o arquivo CSV
 
-        public async Task<IActionResult> DownloadReport(DateTime? minDate, DateTime? maxDate, int? clientId, int? attorneyId, string format = "xlsx")
+        public async Task<IActionResult> DownloadReport(DateTime? minDate, DateTime? maxDate, int? clientId, int? attorneyId, string recordType = null, string format = "xlsx")
         {
+
+            RecordType? recordTypeEnum = null;
+            if (!string.IsNullOrEmpty(recordType))
+            {
+                recordTypeEnum = Enum.Parse<RecordType>(recordType, true);
+            }
+
             // Obter os registros filtrados usando a função FindByDateAsync
-            var filteredRecords = await _processRecordService.FindByDateAsync(minDate, maxDate, clientId, attorneyId);
+            var filteredRecords = await _processRecordService.FindByDateAsync(minDate, maxDate, clientId, attorneyId, recordTypeEnum);
 
             string clientName = null;
             if (clientId.HasValue)
@@ -446,12 +460,13 @@ namespace WebAppSystems.Controllers
             }
         }
 
-        private void PopulateViewData(DateTime? minDate, DateTime? maxDate, int? clientId, int? attorneyId)
+        private void PopulateViewData(DateTime? minDate, DateTime? maxDate, int? clientId, int? attorneyId, string recordType)
         {
             ViewData["minDate"] = minDate.Value.ToString("yyyy-MM-dd");
             ViewData["maxDate"] = maxDate.Value.ToString("yyyy-MM-dd");
             ViewData["clientId"] = clientId;
             ViewData["attorneyId"] = attorneyId;
+            ViewData["selectedRecordType"] = recordType;
 
         }
 

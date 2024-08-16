@@ -5,6 +5,7 @@
     var selectedClientId = ViewData["clientId"]?.ToString();
     var selectedAttorneyId = ViewData["attorneyId"]?.ToString();
     var today = DateTime.Now.ToString("yyyy-MM-dd");   
+    var selectedRecordType = ViewData["selectedRecordType"]?.ToString();
     var userProfile = (WebAppSystems.Models.Enums.ProfileEnum)ViewBag.UserProfile;
 }
 
@@ -51,6 +52,26 @@
                     </select>
                 </div>
 
+                <!-- Tipo de Registro -->
+                <div class="form-group col-md-3">
+                    <label for="recordType">Tipo de Registro</label>
+                    <select class="form-control" name="recordType" id="recordType">
+                        <option value="">Todos</option>
+                        @foreach (var recordType in Enum.GetValues(typeof(WebAppSystems.Models.Enums.RecordType)))
+                        {
+                            if (recordType.ToString() == selectedRecordType)
+                            {
+                                <option value="@recordType" selected>@recordType</option>
+                            }
+                            else
+                            {
+                                <option value="@recordType">@recordType</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+
                 <!-- Botões -->
                 <div class="form-group col-md-2">
                     <label>&nbsp;</label><br>
@@ -73,11 +94,13 @@
         var maxDate = document.getElementById("maxDate").value;
         var clientId = document.getElementById("clientId").value;
         var attorneyId = document.getElementById("attorneyId").value;
+        var tipoReg = document.getElementById("selectedRecordType").value;
 
         document.getElementById("exportMinDate").value = minDate;
         document.getElementById("exportMaxDate").value = maxDate;
         document.getElementById("exportClientId").value = clientId;
         document.getElementById("exportAttorneyId").value = attorneyId;
+        document.getElementById("selectedRecordType").value = tipoReg;
 
         document.getElementById("exportCsvForm").submit();
     }
