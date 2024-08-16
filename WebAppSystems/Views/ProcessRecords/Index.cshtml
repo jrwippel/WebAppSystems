@@ -40,6 +40,7 @@
                     <th scope="col">Horas</th>
                     <th scope="col">Cliente</th>
                     <th scope="col">Usuário</th>
+                    <th scope="col">Tipo</th>
                     <th></th>
                 </tr>
             </thead>
@@ -64,6 +65,9 @@
                         </td>
                         <td>
                             @Html.DisplayFor(modelItem => item.Attorney.Name)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.RecordType)
                         </td>
                         <td>
                             @if (item.Attorney.Id == ViewBag.LoggedUserId)
