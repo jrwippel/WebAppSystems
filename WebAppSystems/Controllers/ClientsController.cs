@@ -239,5 +239,51 @@ namespace WebAppSystems.Controllers
         {
           return (_context.Client?.Any(e => e.Id == id)).GetValueOrDefault();
         }
+
+        // POST: Clients/CreateCliente
+        [HttpPost]
+        public async Task<IActionResult> CreateCliente([Bind("Name,Document,Email,Telephone,ImageData,ImageMimeType,Solicitante,ClienteInterno")] Client client, IFormFile imageData)
+        {
+
+            //if (ModelState.IsValid)
+            //{
+                if (client.ImageData == null && imageData == null)
+                {
+                    // Caminho da imagem padrão no sistema de arquivos
+                    string defaultImagePath = Path.Combine(_webHostEnvironment.WebRootPath, "images", "default-image.jpg");
+
+                    // Lê a imagem padrão como bytes
+                    byte[] defaultImageData = System.IO.File.ReadAllBytes(defaultImagePath);
+
+                    // Atribui a imagem padrão ao cliente
+                    client.ImageData = defaultImageData;
+                    client.ImageMimeType = "image/jpeg"; // Ajuste conforme o tipo de imagem padrão que você tem
+                }
+
+                if (imageData != null && imageData.Length > 0)
+                {
+                    // Verificar se é um tipo de arquivo de imagem válido
+                    if (!imageData.ContentType.StartsWith("image"))
+                    {
+                        return Json(new { success = false, message = "O arquivo enviado não é uma imagem válida." });
+                    }
+
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        await imageData.CopyToAsync(memoryStream);
+                        client.ImageData = memoryStream.ToArray();
+                        client.ImageMimeType = imageData.ContentType;
+                    }
+                }
+
+                _context.Add(client);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, clienteId = client.Id, clienteNome = client.Name });
+            //}
+
+            //return Json(new { success = false, message = "Erro ao cadastrar cliente." });
+        }
+
     }
 }

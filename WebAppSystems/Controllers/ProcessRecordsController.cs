@@ -76,6 +76,9 @@ namespace WebAppSystems.Controllers
             var attorneys = _attorneyService.FindAll();
             Attorney usuario = _isessao.BuscarSessaoDoUsuario();
             var departments = await _departmentService.FindAllAsync();
+        
+            ViewBag.LoggedUserId = usuario.Id;
+            ViewBag.IsAdmin = usuario.Perfil == ProfileEnum.Admin;
 
             if (usuario == null)
             {
