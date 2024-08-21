@@ -138,45 +138,54 @@ namespace WebAppSystems.Controllers
                 return NotFound();
             }
 
+            var existingClient = await _context.Client.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id);
+            if (existingClient == null)
+            {
+                return NotFound();
+            }
 
-            //if (ModelState.IsValid)
-            //{
-                try
+            try
+            {
+                if (imageData != null && imageData.Length > 0)
                 {
-                    if (imageData != null && imageData.Length > 0)
+                    // Verificar se é um tipo de arquivo de imagem válido
+                    if (!imageData.ContentType.StartsWith("image"))
                     {
-                        // Verificar se é um tipo de arquivo de imagem válido
-                        if (!imageData.ContentType.StartsWith("image"))
-                        {
-                            ModelState.AddModelError("Image", "O arquivo enviado não é uma imagem válida.");
-                            return View(client);
-                        }
+                        ModelState.AddModelError("Image", "O arquivo enviado não é uma imagem válida.");
+                        return View(client);
+                    }
 
-                        using (var memoryStream = new MemoryStream())
-                        {
-                            await imageData.CopyToAsync(memoryStream);
-                            client.ImageData = memoryStream.ToArray();
-                            client.ImageMimeType = imageData.ContentType;
-                        }
-                    }
-                    _context.Update(client);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ClientExists(client.Id))
+                    using (var memoryStream = new MemoryStream())
                     {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
+                        await imageData.CopyToAsync(memoryStream);
+                        client.ImageData = memoryStream.ToArray();
+                        client.ImageMimeType = imageData.ContentType;
                     }
                 }
+                else
+                {
+                    // Preserva a imagem existente no banco de dados
+                    client.ImageData = existingClient.ImageData;
+                    client.ImageMimeType = existingClient.ImageMimeType;
+                }
+
+                _context.Update(client);
+                await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
-            //}
-            //return View(client);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!ClientExists(client.Id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
         }
+
 
         // GET: Clients/Delete/5
         public async Task<IActionResult> Delete(int? id)
