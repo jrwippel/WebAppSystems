@@ -30,13 +30,15 @@ namespace WebAppSystems.Services
         {
             var processRecords = await _context.ProcessRecord
                 .Include(pr => pr.Attorney)
-                .Include(obj => obj.Client)
+                .Include(pr => pr.Client)
+                .Where(pr => pr.HoraInicial != TimeSpan.Zero && pr.HoraFinal != TimeSpan.Zero) // Filtra registros com hora inicial e final preenchidos
                 .OrderByDescending(pr => pr.Date)
                 .ThenByDescending(pr => pr.HoraInicial) // Ordena por hora inicial em ordem descendente
                 .ToListAsync();
 
             return processRecords;
         }
+
 
         public ChartData GetChartData()
         {

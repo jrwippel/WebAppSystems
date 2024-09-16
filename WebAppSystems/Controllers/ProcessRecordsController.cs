@@ -115,7 +115,7 @@ namespace WebAppSystems.Controllers
                 Clients = clients,
                 ClientsOptions = clientsOptions,
                 Departments = departments,
-                RecordTypeOptions = recordTypeOptions
+                RecordTypesOptions = recordTypeOptions
             };
             return View(viewModel);
         }
@@ -161,7 +161,7 @@ namespace WebAppSystems.Controllers
                     Clients = clients,
                     ClientsOptions = clientsOptions,
                     Departments = departments,
-                    RecordTypeOptions = recordTypeOptions
+                    RecordTypesOptions = recordTypeOptions
                 };
                 return View(viewModel);
             }
@@ -219,7 +219,7 @@ namespace WebAppSystems.Controllers
                 Clients = clients,
                 ClientsOptions = clientsOptions,
                 Departments = departments,
-                RecordTypeOptions = recordTypeOptions
+                RecordTypesOptions = recordTypeOptions
             };
             return View(viewModel);
 
@@ -336,7 +336,5 @@ namespace WebAppSystems.Controllers
 
             return Json(new { success = true, solicitante = client.Solicitante });
         }
-
-
     }
 }

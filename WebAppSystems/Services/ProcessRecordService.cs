@@ -127,9 +127,9 @@ namespace WebAppSystems.Services
                     percentual = GetMensalistaDepartmentPercentual(mensalista, departmentId.Value);
                 }                
 
-                decimal tributos = mensalista.ValorMensalBruto * (decimal)0.1465;
+                decimal tributos = mensalista.ValorMensalBruto * (decimal)0.1453;
                 decimal valorMensalLiquido = mensalista.ValorMensalBruto - tributos - mensalista.ComissaoParceiro - mensalista.ComissaoSocio;
-                decimal valorHoraTecLiquida = valorTotalHoras - (valorTotalHoras * (decimal)0.1465);
+                decimal valorHoraTecLiquida = valorTotalHoras - (valorTotalHoras * (decimal)0.1453);
                 decimal valorAreaLiquido = valorMensalLiquido * percentual / 100;
                 decimal valorResultadoBruto = (mensalista.ValorMensalBruto * percentual / 100) - valorTotalHoras;
                 decimal valorResultadoLiquido = valorAreaLiquido - valorHoraTecLiquida;

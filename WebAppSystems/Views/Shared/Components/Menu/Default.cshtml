@@ -15,7 +15,14 @@
                 </a>
             </div>
         </li>
-
+        <li class="nav-item" title="Time Tracker">
+            <div class="text-center">
+                <a class="nav-link text-dark" asp-area="" asp-controller="TimeTracker" asp-action="Index">
+                    <i class="fas fa-stopwatch fa-3x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Time Tracker"></i>
+                    <span class="d-block">Time Tracker</span>
+                </a>
+            </div>
+        </li>
         @if (Model.Perfil == ProfileEnum.Admin)
         {
             <li class="nav-item" title="Área">

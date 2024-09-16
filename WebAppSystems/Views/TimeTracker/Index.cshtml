@@ -1,0 +1,305 @@
+﻿@model WebAppSystems.Models.ViewModels.ProcessRecordViewModel
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        .form-group {
+            margin-bottom: 0;
+        }
+
+        .form-control {
+            display: inline-block;
+        }
+
+        .btn {
+            line-height: 1.5;
+        }
+
+        #timeDisplay {
+            line-height: 1.5;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .time-tracker {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group.row.align-items-center {
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .form-group .col-md-7 {
+            flex: 1;
+        }
+
+        .form-group .col-md-2, .form-group .col-md-3 {
+            flex: 0 0 auto;
+        }
+
+        .form-group .form-control {
+            width: 100%;
+        }
+
+        .form-group .btn {
+            margin-left: 10px;
+        }
+
+        .form-group .time-display-container {
+            text-align: right;
+            margin-left: 10px;
+        }
+
+        .form-group.full-width {
+            width: 100%;
+        }
+
+        .form-group.inline-fields {
+            display: flex;
+            justify-content: space-between;
+        }
+
+            .form-group.inline-fields > * {
+                flex: 1;
+                margin-right: 10px;
+            }
+
+                .form-group.inline-fields > *:last-child {
+                    margin-right: 0;
+                }
+
+        #startStopButton {
+            font-size: 1.8rem;
+            width: 80px;
+            height: 80px;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <style>
+        .form-group {
+            margin-bottom: 20px;
+        }
+    </style>
+
+    <div id="content">
+        <h1>Time Tracker</h1>
+        <div class="time-tracker">            
+            <div class="form-group inline-fields">                
+                <select asp-for="ProcessRecord.RecordType" asp-items="Model.RecordTypesOptions" class="form-control"></select>
+                <select asp-for="ProcessRecord.ClientId" asp-items="Model.ClientsOptions" class="form-control"></select>
+                <select asp-for="ProcessRecord.DepartmentId" asp-items="Model.DepartmentsOptions" class="form-control"></select>
+                <input type="text" asp-for="Solicitante" class="form-control" id="solicitante" placeholder="Informe o Solicitante" />
+            </div>
+
+            <div class="form-group full-width">
+                <input type="text" class="form-control" id="description" placeholder="O que vamos fazer agora?" oninput="checkDescription()" />
+            </div>
+
+            <div class="form-group row align-items-center">
+                <div class="col-md-2 d-flex align-items-center">
+                    <button id="startStopButton" onclick="toggleTimer()" class="btn btn-success" style="padding: 10px;" disabled>
+                        <i class="fa fa-play fa-lg"></i>
+                    </button>
+                </div>
+                <div class="col-md-3 d-flex align-items-center time-display-container">
+                    <span id="timeDisplay" class="small">00:00:00</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="error-message" class="alert alert-danger" style="display: none;"></div>
+
+   
+
+
+    <script>
+        let timerInterval;
+        let startTime;
+        let isRunning = false;
+        let processRecordId;
+        
+        let loggedUserId = '@ViewBag.LoggedUserId';
+
+        console.log("Logged User ID: ", loggedUserId);
+
+        document.addEventListener("DOMContentLoaded", async function () {
+            checkDescription();
+            const descriptionField = document.getElementById("description");
+            const clientField = document.querySelector('select[name="ProcessRecord.ClientId"]');
+            const departmentField = document.querySelector('select[name="ProcessRecord.DepartmentId"]');
+            const solicitanteField = document.getElementById("solicitante");            
+            const recordTypeField = document.querySelector('select[name="ProcessRecord.RecordType"]');
+
+            const startStopButton = document.getElementById("startStopButton");
+
+            try {
+                const response = await fetch(`/TimeTracker/GetActiveTimer?attorneyId=${loggedUserId}`);
+
+                function validateFields() {
+                    const isDescriptionValid = descriptionField.value.trim() !== "";
+                    const isClientValid = clientField.value !== "" && clientField.value !== "0";
+                    const isDepartmentValid = departmentField.value !== "" && departmentField.value !== "0";
+                    const isSolicitanteValid = solicitanteField.value.trim() !== "";
+
+                    if (isDescriptionValid && isClientValid && isDepartmentValid && isSolicitanteValid) {
+                        startStopButton.disabled = false;
+                    } else {
+                        startStopButton.disabled = true;
+                    }
+                }
+
+                descriptionField.addEventListener('input', validateFields);
+                clientField.addEventListener('change', validateFields);
+                departmentField.addEventListener('change', validateFields);
+                solicitanteField.addEventListener('input', validateFields);
+                recordTypeField.addEventListener('input', validateFields);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log("Dados Recebidos:", data);
+
+                    if (data && data.horaInicial) {
+                        console.log("Hora Inicial Recebida:", data.horaInicial);
+
+                        processRecordId = data.processRecordId;
+
+                        const [hours, minutes, seconds] = data.horaInicial.split(':').map(Number);
+                        startTime = new Date();
+                        startTime.setHours(hours, minutes, seconds, 0);
+
+                        console.log("Start Time Configurado:", startTime);
+
+                        timerInterval = setInterval(updateTime, 1000);
+                        isRunning = true;
+
+                        document.getElementById("startStopButton").innerHTML = '<i class="fa fa-stop"></i>';
+                        document.getElementById("startStopButton").classList.replace('btn-success', 'btn-danger');
+                        document.getElementById("startStopButton").disabled = false;
+
+                        document.getElementById("description").value = data.description;
+                        document.querySelector('select[name="ProcessRecord.ClientId"]').value = data.clientId;
+                        document.querySelector('select[name="ProcessRecord.DepartmentId"]').value = data.departmentId;
+                        document.getElementById("solicitante").value = data.solicitante;                        
+
+                    } else {
+                        console.warn("Hora Inicial não encontrada ou está vazia.");
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao recuperar o estado do cronômetro', error);
+            }
+        });
+
+        function checkDescription() {
+            const description = document.getElementById("description").value;
+            const button = document.getElementById("startStopButton");
+            button.disabled = !description.trim();
+        }
+
+        async function toggleTimer() {
+            const button = document.getElementById("startStopButton");
+            if (!isRunning) {
+                await startTimer();
+                button.innerHTML = '<i class="fa fa-stop"></i>';
+                button.classList.replace('btn-success', 'btn-danger');
+                button.disabled = false;
+            } else {
+                await stopTimer();
+                button.innerHTML = '<i class="fa fa-play"></i>';
+                button.classList.replace('btn-danger', 'btn-success');
+                button.disabled = true;
+            }
+        }
+
+        async function startTimer() {
+            const description = document.getElementById("description").value;
+            const clientId = document.querySelector('select[name="ProcessRecord.ClientId"]').value;
+            const departmentId = document.querySelector('select[name="ProcessRecord.DepartmentId"]').value;
+            const solicitante = document.getElementById("solicitante").value;           
+            const recordType = document.querySelector('select[name="ProcessRecord.RecordType"]').value;
+
+
+            const requestBody = {
+                description: description,
+                clientId: clientId,
+                departmentId: departmentId,
+                solicitante: solicitante,               
+                attorneyId: loggedUserId,
+                recordType: recordType
+
+                    };
+
+            console.log("Request JSON:", JSON.stringify(requestBody));
+
+            startTime = new Date();
+            const response = await fetch('/TimeTracker/StartTimer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    description: description,
+                    clientId: clientId,
+                    departmentId: departmentId,
+                    solicitante: solicitante,                    
+                    attorneyId: loggedUserId,
+                    recordType: recordType
+                })                               
+            });           
+
+            if (response.ok) {
+                //const data = await response.json();
+                //processRecordId = data.processRecordId;
+                processRecordId = await response.json();
+                timerInterval = setInterval(updateTime, 1000);
+                isRunning = true;
+
+                console.log("processRecordId(Retorno):", processRecordId);
+            }            
+        }
+
+        async function stopTimer() {
+            console.log("processRecordId(Stop):", processRecordId);
+
+            const response = await fetch('/TimeTracker/StopTimer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    processRecordId: processRecordId
+                })
+            });
+
+            if (response.ok) {
+                clearInterval(timerInterval);
+                isRunning = false;
+                document.getElementById("timeDisplay").textContent = "00:00:00";
+                document.title = "Time Tracker";
+                
+            }
+        }
+
+        function updateTime() {
+            const now = new Date();
+            const elapsed = Math.floor((now - startTime) / 1000);
+
+            const hours = String(Math.floor(elapsed / 3600)).padStart(2, '0');
+            const minutes = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
+            const seconds = String(elapsed % 60).padStart(2, '0');
+
+            document.getElementById("timeDisplay").textContent = `${hours}:${minutes}:${seconds}`;
+
+            // Atualiza o título da aba do navegador com o cronômetro
+            document.title = `${hours}:${minutes}:${seconds} - Time Tracker`;
+        }
+    </script>
+</body>
+</html>

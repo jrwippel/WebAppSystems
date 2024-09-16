@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using WebAppSystems.Data;
 using WebAppSystems.Filters;
 using WebAppSystems.Models;
+using WebAppSystems.Services;
 
 namespace WebAppSystems.Controllers
 {
@@ -18,7 +19,6 @@ namespace WebAppSystems.Controllers
     {
         private readonly WebAppSystemsContext _context;
         private readonly IWebHostEnvironment _webHostEnvironment;
-
         public ClientsController(WebAppSystemsContext context, IWebHostEnvironment webHostEnvironment)
         {
             _context = context;
@@ -293,6 +293,8 @@ namespace WebAppSystems.Controllers
 
             //return Json(new { success = false, message = "Erro ao cadastrar cliente." });
         }
+
+
 
     }
 }
