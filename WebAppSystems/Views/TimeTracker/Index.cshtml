@@ -186,7 +186,8 @@
                         document.getElementById("description").value = data.description;
                         document.querySelector('select[name="ProcessRecord.ClientId"]').value = data.clientId;
                         document.querySelector('select[name="ProcessRecord.DepartmentId"]').value = data.departmentId;
-                        document.getElementById("solicitante").value = data.solicitante;                        
+                        document.getElementById("solicitante").value = data.solicitante;  
+                        document.querySelector('select[name="ProcessRecord.RecordType"]').value = data.recordType;
 
                     } else {
                         console.warn("Hora Inicial não encontrada ou está vazia.");
