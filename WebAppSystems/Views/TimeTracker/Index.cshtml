@@ -284,6 +284,14 @@
                 isRunning = false;
                 document.getElementById("timeDisplay").textContent = "00:00:00";
                 document.title = "Time Tracker";
+
+                // Resetando os valores dos campos
+                document.getElementById("description").value = "";
+                document.querySelector('select[name="ProcessRecord.ClientId"]').value = "0";
+                document.querySelector('select[name="ProcessRecord.DepartmentId"]').value = "0";
+                document.getElementById("solicitante").value = "";
+                document.querySelector('select[name="ProcessRecord.RecordType"]').value = "0";
+
                 
             }
         }
