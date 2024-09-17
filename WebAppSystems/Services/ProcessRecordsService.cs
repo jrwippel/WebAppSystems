@@ -47,11 +47,11 @@ namespace WebAppSystems.Services
             var currentYear = DateTime.Now.Year;
 
             var clientHours = _context.ProcessRecord
-                .Where(pr => pr.Date.Month == currentMonth && pr.Date.Year == currentYear)
-                .ToList() // Executa a consulta e traz os resultados para a memória
-                .GroupBy(pr => pr.ClientId)
-                .Select(g => new { ClientId = g.Key, TotalHours = g.Sum(pr => (pr.HoraFinal - pr.HoraInicial).TotalHours) })
-                .ToList();
+               .Where(pr => pr.Date.Month == currentMonth && pr.Date.Year == currentYear && pr.HoraFinal != TimeSpan.Zero) // Verifica se HoraFinal não é zero
+               .ToList() // Executa a consulta e traz os resultados para a memória
+               .GroupBy(pr => pr.ClientId)
+               .Select(g => new { ClientId = g.Key, TotalHours = g.Sum(pr => (pr.HoraFinal - pr.HoraInicial).TotalHours) })
+               .ToList();
 
             // Obtém os nomes dos clientes e suas horas gastas
             var clientNames = new List<string>();
