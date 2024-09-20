@@ -111,12 +111,28 @@
                     <span id="timeDisplay" class="small">00:00:00</span>
                 </div>
             </div>
+
+            <div class="form-group full-width">                
+                <table class="table table-striped" id="recordsTable">
+                    <thead>
+                        <tr>
+                            <th>Hora Inicial</th>
+                            <th>Descrição</th>
+                            <th>Cliente</th>
+                            <th>Solicitante</th>
+                            <th>Tipo de Registro</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Registros serão inseridos aqui -->
+                    </tbody>
+                </table>
+            </div>
+
         </div>
     </div>
 
     <div id="error-message" class="alert alert-danger" style="display: none;"></div>
-
-   
 
 
     <script>
@@ -127,10 +143,46 @@
         
         let loggedUserId = '@ViewBag.LoggedUserId';
 
-        console.log("Logged User ID: ", loggedUserId);
+        const recordTypeMap = {
+            0: "Consultivo",
+            1: "Contencioso",
+            2: "Proposta Específica"
+        };
+
+       async function loadRecordsForToday(attorneyId) {
+   
+           try {
+        const response = await fetch(`/TimeTracker/GetRecordsForToday?attorneyId=${attorneyId}`);
+
+        if (response.ok) {
+            const records = await response.json();
+            console.log(records);
+            const tableBody = document.querySelector("#recordsTable tbody");
+            tableBody.innerHTML = ""; // Limpa o conteúdo atual
+
+            records.forEach(record => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${record.horaInicial}</td>
+                    <td>${record.description}</td>
+                    <td>${record.clienteNome}</td> <!-- Aqui está o nome do cliente -->
+                    <td>${record.solicitante}</td>
+                    <td>${recordTypeMap[record.recordType]}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        } else {
+            console.error('Erro ao carregar os registros.');
+        }
+    } catch (error) {
+        console.error('Erro na chamada de fetch para carregar registros:', error);
+    }
+}
+
 
         document.addEventListener("DOMContentLoaded", async function () {
             checkDescription();
+            await loadRecordsForToday(loggedUserId);
             const descriptionField = document.getElementById("description");
             const clientField = document.querySelector('select[name="ProcessRecord.ClientId"]');
             const departmentField = document.querySelector('select[name="ProcessRecord.DepartmentId"]');
@@ -284,6 +336,7 @@
                 isRunning = false;
                 document.getElementById("timeDisplay").textContent = "00:00:00";
                 document.title = "Time Tracker";
+                
 
                 // Resetando os valores dos campos
                 document.getElementById("description").value = "";
@@ -291,9 +344,10 @@
                 document.querySelector('select[name="ProcessRecord.DepartmentId"]').value = "0";
                 document.getElementById("solicitante").value = "";
                 document.querySelector('select[name="ProcessRecord.RecordType"]').value = "0";
-
-                
-            }
+                await loadRecordsForToday(loggedUserId);
+            } else {
+                console.error("Erro ao parar o cronômetro e salvar o registro.");
+            }            
         }
 
         function updateTime() {

@@ -19,10 +19,11 @@
             <div class="text-center">
                 <a class="nav-link text-dark" asp-area="" asp-controller="TimeTracker" asp-action="Index">
                     <i class="fas fa-stopwatch fa-3x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Time Tracker"></i>
-                    <span class="d-block">Time Tracker</span>
+                    <span id="timeTrackerLabel" class="d-block">Time Tracker</span> <!-- ID para alterar o texto -->
                 </a>
             </div>
         </li>
+
         @if (Model.Perfil == ProfileEnum.Admin)
         {
             <li class="nav-item" title="Área">
@@ -129,8 +130,46 @@
 </div>
 
 <script>
-    $(document).ready(function () {
-        $('[data-toggle="tooltip"]').tooltip();
+    document.addEventListener("DOMContentLoaded", async function () {
+        console.log('DOM completamente carregado e analisado'); // Verifica se o DOM foi carregado
+
+        try {
+            // Faz a requisição para verificar se o cronômetro está ativo
+            const response = await fetch(`/TimeTracker/GetActiveTimer?attorneyId=${loggedUserId}`);
+
+            // Verifica se a requisição foi bem-sucedida
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Dados recebidos:', data); // Verifica o conteúdo retornado pela API
+
+                if (data && data.horaInicial) {
+                    const [hours, minutes, seconds] = data.horaInicial.split(':').map(Number);
+                    startTime = new Date();
+                    startTime.setHours(hours, minutes, seconds, 0);
+
+                    // Função para atualizar o tempo no menu
+                    function updateMenuTime() {
+                        const now = new Date();
+                        const elapsedTime = new Date(now - startTime);
+                        const hours = String(elapsedTime.getUTCHours()).padStart(2, '0');
+                        const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
+                        const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
+
+                        // Atualiza o texto do cronômetro no menu
+                        document.getElementById("timeTrackerLabel").textContent = `${hours}:${minutes}:${seconds}`;
+                    }
+
+                    // Inicia a atualização do texto do cronômetro no menu
+                    setInterval(updateMenuTime, 1000);
+                } else {
+                    console.warn("Hora Inicial não encontrada ou está vazia.");
+                }
+            } else {
+                console.error("Falha na requisição");
+            }
+        } catch (error) {
+            console.error('Erro ao recuperar o estado do cronômetro', error);
+        }
     });
 </script>
 

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Win32;
 using WebAppSystems.Data;
 using WebAppSystems.Helper;
 using WebAppSystems.Models;
@@ -165,5 +166,35 @@ namespace WebAppSystems.Controllers
         {
             public int ProcessRecordId { get; set; }
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetRecordsForToday(int attorneyId)
+        {
+            var today = DateTime.Now.Date;
+            var records = await _context.ProcessRecord
+                 .Where(r => r.AttorneyId == attorneyId && r.Date == today && r.HoraFinal != null && r.HoraFinal != TimeSpan.Zero)
+                .Include(r => r.Client)
+                .OrderByDescending(r => r.HoraInicial)
+                .ToListAsync();
+
+            var viewModel = new ProcessRecordViewModel
+            {
+                ProcessRecords = records,
+                Clients = records.Select(r => r.Client).ToList(),
+                // Outras propriedades que o ViewModel pode precisar
+            };
+
+            return Json(records.Select(r => new
+            {
+                r.Id,
+                r.Description,
+                ClienteNome = r.Client.Name, // Inclui o nome do cliente no JSON
+                r.HoraInicial,
+                r.HoraFinal,
+                r.RecordType,
+                r.Solicitante
+            }));
+        }
+
     }
 }
