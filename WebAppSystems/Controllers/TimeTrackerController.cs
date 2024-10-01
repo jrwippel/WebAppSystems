@@ -45,13 +45,17 @@ namespace WebAppSystems.Controllers
             Attorney usuario = _isessao.BuscarSessaoDoUsuario();
             var attorneyId = usuario.Id;
 
+            var brasiliaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("E. South America Standard Time");
+            var nowInBrasilia = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, brasiliaTimeZone);
+
             var processRecord = new ProcessRecord
             {
                 AttorneyId = attorneyId,
                 ClientId = request.ClientId,
                 DepartmentId = request.DepartmentId, // Capturando o DepartmentId
                 Date = DateTime.Now.Date,
-                HoraInicial = new TimeSpan(DateTime.Now.Hour, DateTime.Now.Minute, DateTime.Now.Second),
+                //HoraInicial = new TimeSpan(DateTime.Now.Hour, DateTime.Now.Minute, DateTime.Now.Second),
+                HoraInicial = new TimeSpan(nowInBrasilia.Hour, nowInBrasilia.Minute, nowInBrasilia.Second),
                 Description = request.Description,
                 RecordType = recordType,
                 Solicitante = request.Solicitante,
@@ -79,7 +83,16 @@ namespace WebAppSystems.Controllers
                 return NotFound();
             }
 
-            processRecord.HoraFinal = new TimeSpan(DateTime.Now.Hour, DateTime.Now.Minute, DateTime.Now.Second);
+            if (!string.IsNullOrEmpty(request.Description))
+            {
+                processRecord.Description = request.Description;
+            }
+
+            var brasiliaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("E. South America Standard Time");
+            var nowInBrasilia = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, brasiliaTimeZone);
+            //processRecord.HoraFinal = new TimeSpan(DateTime.Now.Hour, DateTime.Now.Minute, DateTime.Now.Second);            
+            processRecord.HoraFinal = new TimeSpan(nowInBrasilia.Hour, nowInBrasilia.Minute, nowInBrasilia.Second);
+
             await _context.SaveChangesAsync();
 
             return Ok();
@@ -165,6 +178,8 @@ namespace WebAppSystems.Controllers
         public class StopTimerRequest
         {
             public int ProcessRecordId { get; set; }
+
+            public string Description { get; set; }
         }
 
         [HttpGet]
@@ -193,8 +208,36 @@ namespace WebAppSystems.Controllers
                 r.HoraFinal,
                 r.RecordType,
                 r.Solicitante
+                
             }));
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetRecordById(int recordId)
+        {
+            var record = await _context.ProcessRecord
+                .Include(r => r.Client) // Inclui o cliente no retorno
+                .Include(r => r.Department) // Inclui o departamento, se necessário
+                .FirstOrDefaultAsync(r => r.Id == recordId);
+
+            if (record == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(new
+            {
+                ProcessRecordId = record.Id,
+                HoraInicial = record.HoraInicial.ToString(@"hh\:mm\:ss"),
+                HoraFinal = record.HoraFinal.ToString(@"hh\:mm\:ss"),
+                ClientId = record.ClientId,
+                DepartmentId = record.DepartmentId,
+                Description = record.Description,
+                Solicitante = record.Solicitante,
+                RecordType = record.RecordType
+            });
+        }
+
 
     }
 }

@@ -130,46 +130,63 @@
 </div>
 
 <script>
+/*
+   
     document.addEventListener("DOMContentLoaded", async function () {
-        console.log('DOM completamente carregado e analisado'); // Verifica se o DOM foi carregado
+        console.log('DOM completamente carregado e analisado');
+
+        const loggedUserId = '@Model.Id';
+
+        // Função para restaurar o cronômetro do localStorage
+        function restoreTimer() {
+            const storedStartTime = localStorage.getItem('cronometroHoraInicial');
+
+            if (storedStartTime) {
+                const [hours, minutes, seconds] = storedStartTime.split(':').map(Number);
+                const startTime = new Date();
+                startTime.setHours(hours, minutes, seconds, 0);
+
+                function updateMenuTime() {
+                    const now = new Date();
+                    const elapsedTime = new Date(now - startTime);
+                    const hours = String(elapsedTime.getUTCHours()).padStart(2, '0');
+                    const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
+                    const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
+
+                    document.getElementById("timeTrackerLabel").textContent = `${hours}:${minutes}:${seconds}`;
+                }
+
+                setInterval(updateMenuTime, 1000);
+            }
+        }
 
         try {
-            // Faz a requisição para verificar se o cronômetro está ativo
+            // Verifica o cronômetro no servidor
             const response = await fetch(`/TimeTracker/GetActiveTimer?attorneyId=${loggedUserId}`);
 
-            // Verifica se a requisição foi bem-sucedida
             if (response.ok) {
                 const data = await response.json();
-                console.log('Dados recebidos:', data); // Verifica o conteúdo retornado pela API
+                console.log('Dados recebidos:', data);
 
                 if (data && data.horaInicial) {
-                    const [hours, minutes, seconds] = data.horaInicial.split(':').map(Number);
-                    startTime = new Date();
-                    startTime.setHours(hours, minutes, seconds, 0);
+                    const horaInicial = data.horaInicial;
+                    localStorage.setItem('cronometroHoraInicial', horaInicial); // Salva no localStorage
 
-                    // Função para atualizar o tempo no menu
-                    function updateMenuTime() {
-                        const now = new Date();
-                        const elapsedTime = new Date(now - startTime);
-                        const hours = String(elapsedTime.getUTCHours()).padStart(2, '0');
-                        const minutes = String(elapsedTime.getUTCMinutes()).padStart(2, '0');
-                        const seconds = String(elapsedTime.getUTCSeconds()).padStart(2, '0');
-
-                        // Atualiza o texto do cronômetro no menu
-                        document.getElementById("timeTrackerLabel").textContent = `${hours}:${minutes}:${seconds}`;
-                    }
-
-                    // Inicia a atualização do texto do cronômetro no menu
-                    setInterval(updateMenuTime, 1000);
+                    restoreTimer(); // Restaura o cronômetro
                 } else {
                     console.warn("Hora Inicial não encontrada ou está vazia.");
+                    localStorage.removeItem('cronometroHoraInicial'); // Limpa o localStorage se não houver cronômetro
                 }
             } else {
                 console.error("Falha na requisição");
             }
         } catch (error) {
             console.error('Erro ao recuperar o estado do cronômetro', error);
+            restoreTimer(); // Tenta restaurar do localStorage em caso de erro
         }
     });
+
+    */
 </script>
+
 
