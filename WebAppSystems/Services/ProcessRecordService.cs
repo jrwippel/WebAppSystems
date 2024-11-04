@@ -51,8 +51,8 @@ namespace WebAppSystems.Services
                 .Include(x => x.Attorney.Department)
                 .Include(x => x.Client)
                 .Include(x => x.Department)
-                .OrderByDescending(x => x.Date)
-                .ThenByDescending(x => x.HoraInicial)
+                .OrderBy(x => x.Date)  // Ordena primeiramente por Data em ordem crescente
+                .ThenBy(x => x.HoraInicial)  // Ordena por Hora Inicial em ordem crescente
                 .ToListAsync();
         }
 

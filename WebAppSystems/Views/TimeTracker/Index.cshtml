@@ -202,20 +202,20 @@
 
                         const row = document.createElement("tr");
                         row.innerHTML = `
-                                                    <td>${record.horaInicial}</td>
-                                                    <td>${record.horaFinal}</td>
-                                                    <td>${duration}</td>
-                                                    <td class="description-cell" data-full-description="${record.description}">${record.description}</td>
-                                                    <td>${record.clienteNome}</td>
-                                                    <td>${record.solicitante}</td>
-                                                    <td>${recordTypeMap[record.recordType]}</td>
-                                                    <td>
-                                                        <input type="hidden" class="record-id" value="${record.id}">
-                                                            <button class="btn btn-success play-button" onclick="startTimerFromRecord(this.previousElementSibling.value)">
-                                                            <i class="fa fa-play"></i>
-                                                        </button>
-                                                    </td>
-                                                `;
+                                                            <td>${record.horaInicial}</td>
+                                                            <td>${record.horaFinal}</td>
+                                                            <td>${duration}</td>
+                                                            <td class="description-cell" data-full-description="${record.description}">${record.description}</td>
+                                                            <td>${record.clienteNome}</td>
+                                                            <td>${record.solicitante}</td>
+                                                            <td>${recordTypeMap[record.recordType]}</td>
+                                                            <td>
+                                                                <input type="hidden" class="record-id" value="${record.id}">
+                                                                    <button class="btn btn-success play-button" onclick="startTimerFromRecord(this.previousElementSibling.value)">
+                                                                    <i class="fa fa-play"></i>
+                                                                </button>
+                                                            </td>
+                                                        `;
                         tableBody.appendChild(row);
 
                     });
@@ -399,14 +399,10 @@
                 })
             });
 
-            if (response.ok) {
-                //const data = await response.json();
-                //processRecordId = data.processRecordId;
+            if (response.ok) {                
                 processRecordId = await response.json();
                 timerInterval = setInterval(updateTime, 1000);
                 isRunning = true;
-
-
                 console.log("processRecordId(Retorno):", processRecordId);
             }
         }
