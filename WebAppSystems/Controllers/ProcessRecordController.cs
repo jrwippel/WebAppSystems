@@ -40,8 +40,10 @@ namespace WebAppSystems.Controllers
 
         private readonly ISessao _isessao;
 
+        private readonly ParametroService _parametroService;
+
         public ProcessRecordController(ProcessRecordService processRecordService, ClientService clientService, AttorneyService attorneyService, IWebHostEnvironment env, ISessao isessao, 
-            ValorClienteService valorClienteService)
+            ValorClienteService valorClienteService, ParametroService parametroService)
         {
             _processRecordService = processRecordService;
             _clientService = clientService;
@@ -49,7 +51,7 @@ namespace WebAppSystems.Controllers
             _valorClienteService = valorClienteService;
             _env = env;
             _isessao = isessao;
-
+            _parametroService = parametroService;
         }
 
         public async Task<IActionResult> Index()
@@ -134,63 +136,101 @@ namespace WebAppSystems.Controllers
                 }
                 var sheet = workbook.CreateSheet(sheetName);
 
+                // Criar o estilo de célula com quebra de texto
+                ICellStyle cellStyle = workbook.CreateCellStyle();
+                cellStyle.WrapText = true;
 
-                // Criar o estilo de sombreamento
-                ICellStyle shadedStyle = workbook.CreateCellStyle();
-                shadedStyle.FillForegroundColor = HSSFColor.Grey25Percent.Index;
+                // Criar o estilo de sombreamento com XSSF
+                XSSFCellStyle shadedStyle = (XSSFCellStyle)workbook.CreateCellStyle();
+
+                // Definindo a cor azul claro Ênfase 1 mais claro 80% em RGB
+                XSSFColor lightBlueEmphasis = new XSSFColor(new byte[] { 222, 235, 247 });
+
+                // Aplicar a cor ao estilo da célula
+                shadedStyle.SetFillForegroundColor(lightBlueEmphasis);
                 shadedStyle.FillPattern = FillPattern.SolidForeground;
 
                 // Aplicar o estilo de sombreamento às células
-                for (int i = 0; i <= 7; i++)
+                for (int i = 0; i <= 4; i++)
                 {
                     IRow row = sheet.GetRow(i) ?? sheet.CreateRow(i);
-                    for (int j = 0; j <= 8; j++)
+                    for (int j = 0; j <= 9; j++)
                     {
                         ICell cell = row.GetCell(j) ?? row.CreateCell(j);
-                        cell.CellStyle = shadedStyle;
+                        cell.CellStyle = shadedStyle; // Aplique o estilo com o azul claro ênfase 1
                     }
                 }
 
+
                 // Criar o estilo de cabeçalho
                 ICellStyle headerStyle = workbook.CreateCellStyle();
-                headerStyle.FillForegroundColor = HSSFColor.Black.Index;  // Definir a cor de fundo para preto
-                headerStyle.FillPattern = FillPattern.SolidForeground;  // Padrão de preenchimento
+                headerStyle.FillForegroundColor = IndexedColors.Black.Index;  // Definir a cor de fundo para preto
+                headerStyle.FillPattern = FillPattern.SolidForeground;  // Padrão de preenchimento sólido
+
+                // Criar a fonte para o cabeçalho
                 IFont font = workbook.CreateFont();
-                font.Color = HSSFColor.White.Index;  // Definir a cor da fonte para branco
+                font.Color = IndexedColors.White.Index;  // Definir a cor da fonte para branco
+                font.Boldweight = (short)FontBoldWeight.Bold;  // Deixar o texto em negrito
                 headerStyle.SetFont(font);
 
-                // Criar o cabeçalho na linha 8
-                var headerRow = sheet.CreateRow(8);
-                headerRow.CreateCell(0).SetCellValue("Data");
-                headerRow.GetCell(0).CellStyle = headerStyle;
-                headerRow.CreateCell(1).SetCellValue("Responsável");
-                headerRow.GetCell(1).CellStyle = headerStyle;
-                headerRow.CreateCell(2).SetCellValue("Solicitante");
-                headerRow.GetCell(2).CellStyle = headerStyle;
-                headerRow.CreateCell(3).SetCellValue("Cliente");
-                headerRow.GetCell(3).CellStyle = headerStyle;
-                headerRow.CreateCell(4).SetCellValue("Descrição");
-                headerRow.GetCell(4).CellStyle = headerStyle;
-                headerRow.CreateCell(5).SetCellValue("Hora Inicial");
-                headerRow.GetCell(5).CellStyle = headerStyle;
-                headerRow.CreateCell(6).SetCellValue("Hora Final");
-                headerRow.GetCell(6).CellStyle = headerStyle;
-                headerRow.CreateCell(7).SetCellValue("Horas Trabalhadas");
-                headerRow.GetCell(7).CellStyle = headerStyle;
-                headerRow.CreateCell(8).SetCellValue("Área");
-                headerRow.GetCell(8).CellStyle = headerStyle;
+                // Centralizar o texto no cabeçalho
+                headerStyle.Alignment = HorizontalAlignment.Center;
+                headerStyle.VerticalAlignment = VerticalAlignment.Center;
 
-                // Cria um estilo para as linhas sombreadas
-                ICellStyle shadedRowStyle = workbook.CreateCellStyle();
-                shadedRowStyle.FillForegroundColor = HSSFColor.Grey25Percent.Index; // Define a cor de fundo para cinza claro
-                shadedRowStyle.FillPattern = FillPattern.SolidForeground; // Padrão de preenchimento
+                // Criar o cabeçalho na linha 8
+                var headerRow = sheet.CreateRow(5);
+
+                // Criar as células do cabeçalho e aplicar o estilo
+                string[] headers = { "Data", "Responsável", "Solicitante", "Cliente", "Tipo", "Descrição", "Hora Inicial", "Hora Final", "Horas Trabalhadas", "Área" };
+                for (int i = 0; i < headers.Length; i++)
+                {
+                    var cell = headerRow.CreateCell(i);
+                    cell.SetCellValue(headers[i]);
+                    cell.CellStyle = headerStyle;
+                }
 
                 // Adicionar dados ao arquivo Excel
-                int rowNum = 9;  // Começando da linha 9, porque a primeira até a oitava são da imagem e o cabeçalho
+                int rowNum = 6;  // Começando da linha 9, porque a primeira até a oitava são da imagem e o cabeçalho
                 var rowTotal = sheet.CreateRow(rowNum);  // Crie a linha do total
                 double totalHoras = 0;
 
                 Dictionary<string, (double hours, double value)> departmentSummary = new Dictionary<string, (double hours, double value)>();
+
+
+                // Cria um estilo para as células com texto justificado e centralizado (para as outras colunas)
+                ICellStyle justifiedCellStyle = workbook.CreateCellStyle();
+                justifiedCellStyle.WrapText = true; // Permite a quebra de linha dentro da célula
+                justifiedCellStyle.Alignment = HorizontalAlignment.Center; // Alinhamento central horizontal
+                justifiedCellStyle.VerticalAlignment = VerticalAlignment.Center; // Alinhamento central vertical
+
+                // Definindo a cor azul claro Ênfase 1 mais claro 80% em RGB
+                //XSSFColor lightBlueEmphasis = new XSSFColor(new byte[] { 222, 235, 247 });
+
+                // Cria um estilo que combina justificação, sombreamento e centralização (para as outras colunas)
+                ICellStyle justifiedShadedStyle = workbook.CreateCellStyle();
+                justifiedShadedStyle.CloneStyleFrom(justifiedCellStyle); // Copia as configurações de justificação e centralização
+                ((XSSFCellStyle)justifiedShadedStyle).SetFillForegroundColor(lightBlueEmphasis); // Define a cor de fundo como azul claro Ênfase 1
+                justifiedShadedStyle.FillPattern = FillPattern.SolidForeground; // Padrão de preenchimento sólido
+
+                // Cria um estilo específico para a coluna 5 (alinhamento à esquerda e no topo)
+                ICellStyle justifiedLeftTopStyle = workbook.CreateCellStyle();
+                justifiedLeftTopStyle.WrapText = true; // Permite quebra de linha dentro da célula
+                justifiedLeftTopStyle.Alignment = HorizontalAlignment.Left; // Alinhamento à esquerda
+                justifiedLeftTopStyle.VerticalAlignment = VerticalAlignment.Top; // Alinhamento vertical no topo
+
+                // Cria um estilo para a coluna 5 com sombreamento azul claro Ênfase 1
+                ICellStyle justifiedLeftTopShadedStyle = workbook.CreateCellStyle();
+                justifiedLeftTopShadedStyle.CloneStyleFrom(justifiedLeftTopStyle); // Copia o estilo de alinhamento à esquerda e no topo
+                ((XSSFCellStyle)justifiedLeftTopShadedStyle).SetFillForegroundColor(lightBlueEmphasis); // Define a cor de fundo como azul claro Ênfase 1
+                justifiedLeftTopShadedStyle.FillPattern = FillPattern.SolidForeground; // Padrão de preenchimento sólido
+
+
+
+                // Definindo o tamanho da coluna 5 com uma largura fixa
+                int columnIndex = 5; // coluna 5 (índice começa em 0)
+                int columannWidth = 10000; // largura da coluna (o valor é em unidades de 1/256 da largura de um caractere)
+                sheet.SetColumnWidth(columnIndex, columannWidth);
+
 
                 for (int i = 0; i < filteredRecords.Count; i++)
                 {
@@ -198,7 +238,7 @@ namespace WebAppSystems.Controllers
                     var row = sheet.CreateRow(rowNum);
 
                     // Crie células para todas as colunas
-                    for (int column = 0; column < 9; column++)
+                    for (int column = 0; column < 10; column++)
                     {
                         row.CreateCell(column);
                     }
@@ -207,25 +247,49 @@ namespace WebAppSystems.Controllers
                     row.GetCell(1).SetCellValue(item.Attorney.Name);
                     row.GetCell(2).SetCellValue(item.Solicitante);
                     row.GetCell(3).SetCellValue(item.Client.Name);
-                    row.GetCell(4).SetCellValue(item.Description);
-                    row.GetCell(5).SetCellValue(item.HoraInicial.ToString(@"hh\:mm"));
-                    row.GetCell(6).SetCellValue(item.HoraFinal.ToString(@"hh\:mm"));
-                    row.GetCell(7).SetCellValue(item.CalculoHoras());
+                    row.GetCell(4).SetCellValue(item.RecordType.ToString());
+                    // row.GetCell(5).SetCellValue(item.Description);
+
+                    // Definindo o valor da célula na coluna 5 e aplicando o estilo justificado à esquerda e no topo
+                    ICell descriptionCell = row.GetCell(columnIndex);
+                    descriptionCell.SetCellValue(item.Description);
+
+                    row.GetCell(6).SetCellValue(item.HoraInicial.ToString(@"hh\:mm"));
+                    row.GetCell(7).SetCellValue(item.HoraFinal.ToString(@"hh\:mm"));
+                    row.GetCell(8).SetCellValue(item.CalculoHoras());
                     //row.GetCell(7).SetCellValue(item.Department.Name);
                     string departmentName = item.Department != null ? item.Department.Name : "N/A";
-                    row.GetCell(8).SetCellValue(departmentName);                 
+                    row.GetCell(9).SetCellValue(departmentName);
 
                     totalHoras += item.CalculoHorasDecimal();
 
-                    // Se o número da linha for ímpar, aplique o estilo de sombreamento
-                    if (i % 2 != 0)
+
+                    // Aplique o estilo correto: justificado com ou sem sombreamento, dependendo se a linha é ímpar ou par
+                    for (int j = 0; j < 10; j++)
                     {
-                        for (int j = 0; j < 9; j++)
+                        if (i % 2 != 0) // Linhas ímpares
                         {
-                            row.GetCell(j).CellStyle = shadedRowStyle;
+                            if (j == 5) // Coluna 5 com alinhamento à esquerda e no topo com sombreamento
+                            {
+                                row.GetCell(j).CellStyle = justifiedLeftTopShadedStyle;
+                            }
+                            else // Outras colunas com sombreamento e centralizadas
+                            {
+                                row.GetCell(j).CellStyle = justifiedShadedStyle;
+                            }
+                        }
+                        else // Linhas pares
+                        {
+                            if (j == 5) // Coluna 5 com alinhamento à esquerda e no topo sem sombreamento
+                            {
+                                row.GetCell(j).CellStyle = justifiedLeftTopStyle;
+                            }
+                            else // Outras colunas sem sombreamento e centralizadas
+                            {
+                                row.GetCell(j).CellStyle = justifiedCellStyle;
+                            }
                         }
                     }
-
 
                     if (!departmentSummary.ContainsKey(departmentName))
                     {
@@ -271,14 +335,22 @@ namespace WebAppSystems.Controllers
                 // Desativa as linhas de grade
                 sheet.DisplayGridlines = false;
 
-                for (int columnNum = 0; columnNum < 9; columnNum++)
+                //   for (int columnNum = 0; columnNum < 10; columnNum++)
+                //   {
+                //       sheet.AutoSizeColumn(columnNum);
+                //   }
+
+                for (int columnNum = 0; columnNum < 10; columnNum++)
                 {
-                    sheet.AutoSizeColumn(columnNum);
+                    if (columnNum != 5) // Não aplicar AutoSize na coluna 5
+                    {
+                        sheet.AutoSizeColumn(columnNum);
+                    }
                 }
 
 
                 // Crie células para todas as colunas na linha de total
-                for (int column = 0; column < 9; column++)
+                for (int column = 0; column < 10; column++)
                 {
                     totalRow.CreateCell(column);
                 }
@@ -287,11 +359,11 @@ namespace WebAppSystems.Controllers
                 totalRow.GetCell(0).CellStyle = headerStyle;  // Sombreado em preto com fonte branca
 
 
-                totalRow.GetCell(7).SetCellValue(totalHorasFormatado);
-                totalRow.GetCell(7).CellStyle = headerStyle;  // Sombreado em preto com fonte branca
+                totalRow.GetCell(8).SetCellValue(totalHorasFormatado);
+                totalRow.GetCell(8).CellStyle = headerStyle;  // Sombreado em preto com fonte branca
 
                 // Aplicar o estilo de cabeçalho à linha de total
-                for (int j = 0; j < 9; j++)
+                for (int j = 0; j < 10; j++)
                 {
                     totalRow.GetCell(j).CellStyle = headerStyle;
                 }
@@ -354,7 +426,7 @@ namespace WebAppSystems.Controllers
                 totalSummaryRow.CreateCell(2).SetCellValue(totalValueSummary.ToString("N2", brazilianCulture));
 
                 totalSummaryRow.GetCell(2).CellStyle = headerStyle;  // Apply the header style to total row
-
+                /*
                 var imagePath = System.IO.Path.Combine(_env.WebRootPath, "images", "LogoRelatorio.png");
                 byte[] imageBytes = System.IO.File.ReadAllBytes(imagePath);
 
@@ -366,7 +438,64 @@ namespace WebAppSystems.Controllers
                 anchor.Col1 = 0;
                 anchor.Row1 = 1;  // A imagem começa na segunda linha
                 var picture = drawing.CreatePicture(anchor, pictureIdx);
-                picture.Resize(7);  // A imagem vai ocupar 7 linhas
+                picture.Resize(4);  // A imagem vai ocupar 7 linhas
+
+                */
+                var (imageBytes, mimeType, width, height) = await _parametroService.GetLogoAsync();
+
+                int pictureIdx = workbook.AddPicture(imageBytes, PictureType.PNG);
+                var helper = workbook.GetCreationHelper();
+                var drawing = sheet.CreateDrawingPatriarch();
+                var anchor = helper.CreateClientAnchor();
+
+                // Defina a posição da imagem e ajuste o tamanho conforme as configurações
+                anchor.Col1 = 0; // Defina a coluna inicial
+                anchor.Row1 = 1; // Defina a linha inicial
+                anchor.Col2 = anchor.Col1 + width; // Defina a coluna final com base na largura do logo
+                anchor.Row2 = anchor.Row1 + height; // Defina a linha final com base na altura do logo
+
+                var picture = drawing.CreatePicture(anchor, pictureIdx);
+                picture.Resize(4);
+
+
+
+                // Criar o estilo para a palavra "TimeSheet" com fonte de tamanho 30 e negrito
+                ICellStyle timeSheetStyle = workbook.CreateCellStyle();
+                IFont font1 = workbook.CreateFont();
+                font1.FontHeightInPoints = 30;  // Define o tamanho da fonte como 30
+                font1.Boldweight = (short)FontBoldWeight.Bold; // Define a fonte como negrito
+                timeSheetStyle.SetFont(font1);
+
+                // Centralizar o texto na célula
+                timeSheetStyle.Alignment = HorizontalAlignment.Center;
+                timeSheetStyle.VerticalAlignment = VerticalAlignment.Center;
+
+                // Adicionar a palavra "TimeSheet" na célula (coluna 6, linha 3)
+                var row3 = sheet.GetRow(2) ?? sheet.CreateRow(2); // Linha 3 é índice 2 (começa do 0)
+                var cell3 = row3.GetCell(5) ?? row3.CreateCell(5); // Coluna 6 é índice 5
+                cell3.SetCellValue("TimeSheet");
+                cell3.CellStyle = timeSheetStyle; // Aplicar o estilo à célula
+
+                // Agora copiar o estilo de sombreamento, se necessário
+                var previousRow = sheet.GetRow(1); // Pega a linha 2 para copiar o estilo de uma célula
+                if (previousRow != null)
+                {
+                    var previousCell = previousRow.GetCell(5); // Pega a célula da mesma coluna
+                    if (previousCell != null)
+                    {
+                        var previousStyle = previousCell.CellStyle;
+                        if (previousStyle != null)
+                        {
+                            // Clonar o estilo de sombreamento sem afetar a fonte
+                            ICellStyle clonedStyle = workbook.CreateCellStyle();
+                            clonedStyle.CloneStyleFrom(previousStyle);
+                            clonedStyle.SetFont(font1); // Manter a fonte definida
+                            clonedStyle.Alignment = HorizontalAlignment.Center; // Manter centralizado
+                            clonedStyle.VerticalAlignment = VerticalAlignment.Center; // Manter centralizado
+                            cell3.CellStyle = clonedStyle; // Aplicar o estilo clonado à célula
+                        }
+                    }
+                }
 
 
                 // Adicionar a imagem do cliente ao relatório Excel

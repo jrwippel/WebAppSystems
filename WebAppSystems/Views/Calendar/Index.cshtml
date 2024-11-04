@@ -1,0 +1,480 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendário Semanal</title>
+    <link href="/css/fullcalendar/main.min.css" rel="stylesheet" />
+    <script src="/js/fullcalendar/main.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+
+        #calendar {
+            width: 100%;
+            height: 80vh;
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        .fc-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .fc-button {
+            background-color: #03a9f4;
+            border: none;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+            .fc-button:hover {
+                background-color: #0288d1;
+            }
+
+            .fc-button:focus {
+                outline: none;
+            }
+
+        .fc-timegrid-slot-label {
+            text-align: center;
+        }
+
+        .fc-event {
+            background-color: #ffeb3b;
+            border: none;
+            color: #000;
+            padding: 5px;
+            border-radius: 4px;
+        }
+
+        .fc-col-header-cell {
+            position: relative;
+        }
+
+            .fc-col-header-cell .total-hours {
+                display: block;
+                margin-top: 5px;
+                font-size: 12px;
+                text-align: center;
+            }
+
+        /* Estilos para o modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            padding-top: 60px;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 8px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+            .close:hover,
+            .close:focus {
+                color: black;
+                text-decoration: none;
+                cursor: pointer;
+            }
+
+        .form-row {
+            display: flex;
+            flex-wrap: nowrap;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            width: 100%;
+        }
+
+            .form-group label {
+                display: block;
+                font-weight: bold;
+                margin-bottom: 5px;
+            }
+
+            .form-group input, .form-group select {
+                width: 100%;
+                padding: 8px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+            }
+
+        /* Ajustes para data e hora menores na mesma linha */
+        .form-group-inline {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+            .form-group-inline input[type="date"] {
+                flex: 1;
+            }
+
+            .form-group-inline input[type="time"] {
+                width: 80px; /* Menor largura para os campos de hora */
+            }
+
+        .total-hours-container {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+            .total-hours-container input {
+                width: 60px;
+                text-align: center;
+                border: none;
+                background-color: #f0f0f0;
+                font-weight: bold;
+            }
+
+        /* Estilo para descrição */
+        #eventTitle {
+            height: 50px;
+            padding: 10px;
+        }
+
+        button[type="submit"] {
+            background-color: #03a9f4;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+            button[type="submit"]:hover {
+                background-color: #0288d1;
+            }
+    </style>
+</head>
+<body>
+    <div id='calendar'></div>
+
+    <!-- Modal para adicionar/editar eventos -->
+    <div id="eventModal" class="modal">
+        <div class="modal-content">
+            <span class="close">×</span>
+            <h2>Adicionar/Editar Evento</h2>
+            <form id="eventForm">
+                <div class="form-group-inline">                    
+
+                    <input type="date" id="eventDate" name="eventDate" required>       
+
+                    <input type="time" id="eventStart" name="eventStart" required oninput="calculateTotalHours()">
+                    <input type="time" id="eventEnd" name="eventEnd" required oninput="calculateTotalHours()">
+
+                    <!-- Campo para exibir o total de horas -->
+                    <div class="total-hours-container">
+                        <label for="totalHours">Total:</label>
+                        <input type="text" id="totalHours" name="totalHours" readonly>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="eventTitle">Descrição:</label>
+                    <input type="text" id="eventTitle" name="title" placeholder="O que vamos fazer agora?" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="clientSelect">Cliente:</label>
+                    <select id="clientSelect" name="clientSelect" required>
+                        <option value="Selecionar">Selecionar</option>
+                        @foreach (var client in Model.ClientsOptions)
+                        {
+                            <option value="@client.Value">@client.Text</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="departmentSelect">Área:</label>
+                    <select id="departmentSelect" name="departmentSelect" required>
+                        <option value="Selecionar">Selecionar</option>
+                        @foreach (var department in Model.DepartmentsOptions)
+                        {
+                            <option value="@department.Value">@department.Text</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="recordTypeSelect">Tipo de Registro:</label>
+                    <select id="recordTypeSelect" name="recordTypeSelect" required>
+                        <option value="0">Selecione o tipo de registro</option>
+                        <option value="Selecionar">Selecionar</option>
+                        @foreach (var recordType in Model.RecordTypesOptions)
+                        {
+                            <option value="@recordType.Value">@recordType.Text</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="eventSolicitante">Solicitante:</label>
+                    <input type="text" id="eventSolicitante" name="solicitante" required>
+                </div>
+                <button type="submit">Salvar</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+
+        let loggedUserId = '@ViewBag.LoggedUserId';
+
+        document.addEventListener('DOMContentLoaded', function () {
+
+            console.log("Usuario", loggedUserId);
+
+            var calendarEl = document.getElementById('calendar');
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'timeGridWeek',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'timeGridWeek,timeGridDay'
+                },
+                editable: true,
+                selectable: true,
+                allDaySlot: false,
+                slotLabelFormat: {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                },
+                events: function (fetchInfo, successCallback, failureCallback) {
+                    // Substitua 'loggedUserId' pela variável de ID do usuário logado dinamicamente
+                    fetch(`/Calendar/GetUserRecords?attorneyId=${loggedUserId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log('Registros recebidos:', data);
+                            // Passando os registros de tempo ao FullCalendar
+                            successCallback(data);
+                        })
+                        .catch(error => {
+                            console.error('Erro ao buscar os registros:', error);
+                            failureCallback(error);
+                        });
+                },
+                select: function (info) {
+                    openModal(info.startStr, info.endStr);
+                },
+                eventClick: function (info) {
+                    console.log('Todos os dados do evento:', info.event.extendedProps.clientId);
+                    openModal(info.event.startStr, info.event.endStr, info.event.title, info.event.extendedProps.solicitante, info.event.extendedProps.clientId, info.event.extendedProps.departmentId, info.event.extendedProps.tipoRegistro, info.event);
+                },
+                eventChange: function () {
+                    updateTotalHours();
+                },
+                eventRemove: function () {
+                    updateTotalHours();
+                }
+            });
+            calendar.render();
+            console.log('Iniciando a tela de calendario');
+
+            updateTotalHours();            
+
+            
+            function updateTotalHours() {
+                console.log('updateTotalHours');
+                var dayHeaders = document.querySelectorAll('.fc-col-header-cell');
+                console.log('dayHeaders:', dayHeaders);
+                dayHeaders.forEach(header => {
+                    var date = header.getAttribute('data-date');
+                    var events = calendar.getEvents().filter(event => event.startStr.startsWith(date));
+                    console.log('Date:', date);
+                    console.log('Eventos:', events);
+                    var totalHours = events.reduce((sum, event) => {
+                        var duration = (event.end - event.start) / (1000 * 60 * 60);
+                        return sum + duration;
+                    }, 0);
+                    var totalHoursElement = header.querySelector('.total-hours');
+                    if (!totalHoursElement) {
+                        totalHoursElement = document.createElement('div');
+                        totalHoursElement.className = 'total-hours';
+                        header.appendChild(totalHoursElement);
+                    }
+                    totalHoursElement.textContent = totalHours.toFixed(2) + 'h';
+                    console.log('TotalHours:', totalHours);
+                });
+            }            
+
+            // Modal handling
+            var modal = document.getElementById("eventModal");
+            var span = document.getElementsByClassName("close")[0];
+            var form = document.getElementById("eventForm");
+            var currentEvent = null;
+
+            function openModal(start, end, title = '', solicitante = '', cliente, departamento, tipoRegistro, event = null) {                
+                document.getElementById('eventTitle').value = title;
+                document.getElementById('eventSolicitante').value = solicitante;
+                document.getElementById('eventDate').value = start.split('T')[0];
+                document.getElementById('eventStart').value = start.split('T')[1].substring(0, 5);
+                document.getElementById('eventEnd').value = end.split('T')[1].substring(0, 5);
+                currentEvent = event;                
+                document.getElementById('clientSelect').value = cliente ? cliente : 'Selecionar';
+                document.getElementById('departmentSelect').value = departamento ? departamento : 'Selecionar';
+                document.getElementById('recordTypeSelect').value = tipoRegistro ? tipoRegistro : 'Selecionar';
+
+                console.log('cliente', cliente);
+                calculateTotalHours();
+                modal.style.display = "block";
+            }
+
+            span.onclick = function () {
+                modal.style.display = "none";
+            }
+
+            window.onclick = function (event) {
+                if (event.target == modal) {
+                    modal.style.display = "none";
+                }
+            }
+
+            form.onsubmit = function (e) {
+                e.preventDefault();
+
+                var recordTypeId = document.getElementById('recordTypeSelect').value;
+                var clientId = document.getElementById('clientSelect').value;
+                var departmentId = document.getElementById('departmentSelect').value;
+                var solicitante = document.getElementById('eventSolicitante').value;
+                var title = document.getElementById('eventTitle').value;
+                var date = document.getElementById('eventDate').value;
+                var start = document.getElementById('eventStart').value;
+                var end = document.getElementById('eventEnd').value;
+
+                var record = {
+                    RecordType: recordTypeId,
+                    ClientId: clientId,
+                    departmentId: departmentId,
+                    Solicitante: solicitante,
+                    Id: currentEvent ? currentEvent.extendedProps.processId : 0, // Usar o ID do evento se já existir
+                    Description: title,
+                    Date: date,
+                    HoraInicial: start,
+                    HoraFinal: end,                    
+                };
+                console.log('Record:', record);
+                fetch('/Calendar/SaveProcessRecord', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(record)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            if (currentEvent) {
+                                currentEvent.setProp('title', title);
+                                currentEvent.setStart(date + 'T' + start);
+                                currentEvent.setEnd(date + 'T' + end);
+                            } else {
+                                calendar.addEvent({
+                                    id: data.id, // Pode precisar incluir o ID retornado pelo servidor
+                                    title: title,
+                                    start: date + 'T' + start,
+                                    end: date + 'T' + end
+                                });
+                            }
+                            
+                        } else {
+                            console.error('Erro ao salvar o registro');
+                        }
+
+                        modal.style.display = "none";
+                        updateTotalHours();
+                    })
+                    .catch(error => {
+                        console.error('Erro:', error);
+                    });
+            }
+
+            function calculateTotalHours() {
+
+                console.log('calculateTotalHours');
+                const startInput = document.getElementById('eventStart');
+                const endInput = document.getElementById('eventEnd');
+                const totalHoursDisplay = document.getElementById('totalHours');
+
+                const startTime = startInput.value.split(':');
+                const endTime = endInput.value.split(':');
+
+                console.log('starttime', startTime);
+                console.log('endTime', endTime);
+
+                if (startInput.value && endInput.value) {
+                    const startDate = new Date(0, 0, 0, startTime[0], startTime[1]);
+                    const endDate = new Date(0, 0, 0, endTime[0], endTime[1]);
+
+                    let diff = (endDate - startDate) / (1000 * 60 * 60); // Diferença em horas
+                    if (diff < 0) {
+                        diff += 24; // Corrige para caso o horário de término seja no dia seguinte
+                    }
+
+                    const hours = Math.floor(diff);
+                    const minutes = Math.round((diff - hours) * 60);
+                    totalHoursDisplay.textContent = `${hours}:${minutes < 10 ? '0' : ''}${minutes}`; // Formatação
+                    console.log('totalHoursDisplay', totalHoursDisplay.textContent);
+
+                } else {
+                    totalHoursDisplay.textContent = '0:00'; // Reseta se não houver hora
+                    console.log('Reseta senão houve horas', startInput.value);
+                }
+            }
+
+            // Adiciona ouvintes para calcular horas sempre que os campos de hora mudarem
+            document.getElementById('eventStart').addEventListener('change', calculateTotalHours);
+            document.getElementById('eventEnd').addEventListener('change', calculateTotalHours);
+
+            span.onclick = function () {
+                modal.style.display = "none";
+            }
+
+            window.onclick = function (event) {
+                if (event.target == modal) {
+                    modal.style.display = "none";
+                }
+            }
+        });
+    </script>
+</body>
+</html>

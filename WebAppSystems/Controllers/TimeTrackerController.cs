@@ -57,7 +57,7 @@ namespace WebAppSystems.Controllers
                 //HoraInicial = new TimeSpan(DateTime.Now.Hour, DateTime.Now.Minute, DateTime.Now.Second),
                 HoraInicial = new TimeSpan(nowInBrasilia.Hour, nowInBrasilia.Minute, nowInBrasilia.Second),
                 Description = request.Description,
-                RecordType = recordType,
+                RecordType = recordType,               
                 Solicitante = request.Solicitante,
                 
             };
@@ -236,6 +236,58 @@ namespace WebAppSystems.Controllers
                 Solicitante = record.Solicitante,
                 RecordType = record.RecordType
             });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Calendar()
+        {
+            var clients = await _clientService.FindAllAsync();
+            var departments = await _departmentService.FindAllAsync();
+
+            ViewBag.Clients = clients;
+            ViewBag.Departments = departments;
+
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SubmitTimeEntry([FromBody] TimeEntryRequest request)
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.Description) || request.ClientId <= 0 || request.DepartmentId <= 0)
+            {
+                return BadRequest("Todos os campos devem ser preenchidos.");
+            }
+
+            Attorney usuario = _isessao.BuscarSessaoDoUsuario();
+            var attorneyId = usuario.Id;
+
+            var processRecord = new ProcessRecord
+            {
+                AttorneyId = attorneyId,
+                ClientId = request.ClientId,
+                DepartmentId = request.DepartmentId,
+                Date = DateTime.Parse(request.StartTime).Date,
+                HoraInicial = TimeSpan.Parse(request.StartTime.Split(' ')[1]),
+                HoraFinal = TimeSpan.Parse(request.EndTime.Split(' ')[1]),
+                Description = request.Description,
+                Solicitante = request.Solicitante,
+                RecordType = RecordType.Consultivo, // Ou ajuste de acordo com o que você precisar
+            };
+
+            _context.ProcessRecord.Add(processRecord);
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
+
+        public class TimeEntryRequest
+        {
+            public int ClientId { get; set; }
+            public int DepartmentId { get; set; }
+            public string Solicitante { get; set; }
+            public string Description { get; set; }
+            public string StartTime { get; set; }
+            public string EndTime { get; set; }
         }
 
 
