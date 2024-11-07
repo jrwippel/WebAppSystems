@@ -15,9 +15,13 @@ namespace WebAppSystems.Helper
         public Attorney BuscarSessaoDoUsuario()
         {
             string sessaoUsuario = _httpContext.HttpContext.Session.GetString("sessaoUsuarioLogado");
-            if (string.IsNullOrEmpty(sessaoUsuario)) return null;
+            if (string.IsNullOrEmpty(sessaoUsuario))
+            {
+                throw new SessionExpiredException("A sessão expirou. Por favor, faça login novamente.");
+            }
             return JsonConvert.DeserializeObject<Attorney>(sessaoUsuario);
         }
+
 
         public void CriarSessaoDoUsuario(Attorney attorney)
         {
@@ -29,5 +33,13 @@ namespace WebAppSystems.Helper
         {
             _httpContext.HttpContext.Session.Remove("sessaoUsuarioLogado");
         }
+
+        public class SessionExpiredException : Exception
+        {
+            public SessionExpiredException(string message) : base(message)
+            {
+            }
+        }
+
     }
 }

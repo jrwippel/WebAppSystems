@@ -1,7 +1,4 @@
-﻿using DocumentFormat.OpenXml.Drawing;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WebAppSystems.Data;
+﻿using Microsoft.AspNetCore.Mvc;
 using WebAppSystems.Helper;
 using WebAppSystems.Models;
 using WebAppSystems.Services;
@@ -19,27 +16,42 @@ namespace WebAppSystems.Controllers
             _attorneyService = attorneyService;
             _sessao = sessao;
             _email = email;
-            
         }
-
-
 
         public IActionResult Index()
         {
-            // Se usuario estiver logado direcionar ele para a Home
-            if ( _sessao.BuscarSessaoDoUsuario() != null ) return RedirectToAction("Index", "Home");
+            string currentController = RouteData.Values["controller"]?.ToString();
+            string currentAction = RouteData.Values["action"]?.ToString();
+
+            if (currentController != "Login" || currentAction != "Index")
+            {
+                try
+                {
+                    // Tenta buscar a sessão do usuário e redireciona para a Home se estiver logado
+                    if (_sessao.BuscarSessaoDoUsuario() != null)
+                    {
+                        return RedirectToAction("Index", "Home");
+                    }
+                }
+                catch (Sessao.SessionExpiredException)
+                {
+                    // Exibe uma mensagem amigável se a sessão expirou
+                    TempData["MensagemAviso"] = "A sessão expirou. Por favor, faça login novamente.";
+                }
+            }
             return View();
         }
+
         public IActionResult TimeTracking()
         {
             return View();
         }
 
-
         public IActionResult RedefinirSenha()
         {
             return View();
         }
+
         public IActionResult Sair()
         {
             _sessao.RemoverSessaoDoUsuario();
@@ -53,32 +65,33 @@ namespace WebAppSystems.Controllers
             {
                 if (ModelState.IsValid)
                 {
-                    Attorney usuarioModel = _attorneyService.BuscarPorEmailLogin(redefinirSenhaModel.Email, redefinirSenhaModel.Login);
+                    var usuarioModel = _attorneyService.BuscarPorEmailLogin(redefinirSenhaModel.Email, redefinirSenhaModel.Login);
 
                     if (usuarioModel != null)
                     {
                         string novaSenha = usuarioModel.GerarNovaSenha();
                         string mensagem = $"Sua nova senha é: {novaSenha}";
                         bool emailEnviado = _email.Enviar(usuarioModel.Email, "Sistema de Controle Jurídico - Nova Senha", mensagem);
+
                         if (emailEnviado)
                         {
                             _attorneyService.AtualizarSenha(usuarioModel);
-                            TempData["MensagemSucesso"] = $"Enviamos para o seu email cadastrado uma nova senha.";
+                            TempData["MensagemSucesso"] = "Enviamos para o seu email cadastrado uma nova senha.";
                         }
                         else
                         {
-                            TempData["MensagemErro"] = $"Não conseguimos enviar email. Tente novamente";
+                            TempData["MensagemErro"] = "Não conseguimos enviar o email. Tente novamente.";
                         }
                         return RedirectToAction("Index", "Login");
                     }
-                    TempData["MensagemErro"] = $"Não conseguimos redefinir sua senha. Dados informados inválidos";
+                    TempData["MensagemErro"] = "Não conseguimos redefinir sua senha. Dados informados inválidos.";
                 }
 
                 return View("Index");
             }
             catch (Exception erro)
             {
-                TempData["MensagemErro"] = $"Ops, não conseguimos redefinir sua senha, tente novamente, detalhe do erro: {erro.Message}";
+                TempData["MensagemErro"] = $"Ops, não conseguimos redefinir sua senha, tente novamente. Detalhes do erro: {erro.Message}";
                 return RedirectToAction("Index");
             }
         }
@@ -90,27 +103,32 @@ namespace WebAppSystems.Controllers
             {
                 if (ModelState.IsValid)
                 {
-                    Attorney usuario = _attorneyService.FindByLoginAsync(loginModel.Login);
+                    var usuario = _attorneyService.FindByLoginAsync(loginModel.Login);
                     if (usuario != null)
-                      {
-                          if (usuario.ValidaSenha(loginModel.Senha))
-                          {
-                             _sessao.CriarSessaoDoUsuario(usuario);
-                             return RedirectToAction("Index", "Home");
-                            
+                    {
+                        if (usuario.ValidaSenha(loginModel.Senha))
+                        {
+                            _sessao.CriarSessaoDoUsuario(usuario);
+                            return RedirectToAction("Index", "Home");
                         }
-                          TempData["MensagemErro"] = $"Senha do Usuário é Inválida";
+                        TempData["MensagemErro"] = "Senha do usuário é inválida.";
                     }
-                    TempData["MensagemErro"] = $"Usuário e/ou Senha Inválido(s)";
-
+                    else
+                    {
+                        TempData["MensagemErro"] = "Usuário e/ou senha inválido(s).";
+                    }
                 }
 
                 return View("Index");
-                
+            }
+            catch (Sessao.SessionExpiredException)
+            {
+                TempData["MensagemErro"] = "A sessão expirou. Por favor, faça login novamente.";
+                return RedirectToAction("Index");
             }
             catch (Exception erro)
             {
-                TempData["MensagemErro"] = $"Ops, não conseguimos realizar o seu login, mais detalhes no erro: {erro.Message}";
+                TempData["MensagemErro"] = $"Ops, não conseguimos realizar o seu login. Mais detalhes no erro: {erro.Message}";
                 return RedirectToAction("Index");
             }
         }

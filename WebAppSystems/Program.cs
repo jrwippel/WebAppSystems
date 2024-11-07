@@ -43,6 +43,7 @@ namespace WebAppSystems
             {
                 o.Cookie.HttpOnly = true;
                 o.Cookie.IsEssential = true;
+                o.IdleTimeout = TimeSpan.FromMinutes(240);
             });
 
             builder.Services.AddControllersWithViews();

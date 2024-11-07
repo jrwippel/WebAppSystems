@@ -8,6 +8,7 @@ using WebAppSystems.Models.Enums;
 using WebAppSystems.Models.ViewModels;
 using WebAppSystems.Services;
 using WebAppSystems.Services.Exceptions;
+using static WebAppSystems.Helper.Sessao;
 
 namespace WebAppSystems.Controllers
 {
@@ -25,8 +26,17 @@ namespace WebAppSystems.Controllers
         }
         public async Task<IActionResult> Index()
         {
-            var list = await _attorneyService.FindAllAsync();
-            return View(list);
+            try
+            {
+                var list = await _attorneyService.FindAllAsync();
+                return View(list);
+            }
+            catch (SessionExpiredException)
+            {
+                // Redirecione para a página de login se a sessão expirou
+                TempData["MensagemAviso"] = "A sessão expirou. Por favor, faça login novamente.";
+                return RedirectToAction("Index", "Login");
+            }
         }
 
        

@@ -10,6 +10,7 @@ using DocumentFormat.OpenXml.Office2016.Excel;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using WebAppSystems.Models.ViewModels;
 using WebAppSystems.Migrations;
+using static WebAppSystems.Helper.Sessao;
 
 namespace WebAppSystems.Controllers
 {
@@ -31,25 +32,24 @@ namespace WebAppSystems.Controllers
                 _clientService = clientService;
                 _departmentService = departmentService;
             }
-            public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index()
+        {
+            try
             {
                 Attorney usuario = _isessao.BuscarSessaoDoUsuario();
                 ViewBag.LoggedUserId = usuario.Id;
 
                 var clients = await _clientService.FindAllAsync();
-
                 var departments = await _departmentService.FindAllAsync();
 
                 var clientsOptions = clients
                     .OrderBy(c => c.Name)
                     .Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name })
-                    //.Prepend(new SelectListItem { Value = "0", Text = "Selecione o Cliente" })
                     .ToList();
 
                 var departmentsOptions = departments
                     .OrderBy(c => c.Name)
                     .Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name })
-                    //.Prepend(new SelectListItem { Value = "0", Text = "Selecione a Área" })
                     .ToList();
 
                 var recordTypeOptions = Enum.GetValues(typeof(RecordType))
@@ -61,17 +61,24 @@ namespace WebAppSystems.Controllers
                     })
                     .ToList();
 
-            var viewModel = new ProcessRecordViewModel
+                var viewModel = new ProcessRecordViewModel
                 {
                     ClientsOptions = clientsOptions,
                     DepartmentsOptions = departmentsOptions,
                     RecordTypesOptions = recordTypeOptions
-            };
+                };
 
-            return View(viewModel);
+                return View(viewModel);
             }
+            catch (SessionExpiredException)
+            {
+                // Redirecione para a página de login se a sessão expirou
+                TempData["MensagemAviso"] = "A sessão expirou. Por favor, faça login novamente.";
+                return RedirectToAction("Index", "Login");
+            }
+        }
 
-            [HttpGet]
+        [HttpGet]
             public async Task<IActionResult> GetUserRecords(int attorneyId)
             {
                 var records = await _context.ProcessRecord

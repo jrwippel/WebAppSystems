@@ -19,6 +19,7 @@ using WebAppSystems.Helper;
 using WebAppSystems.Models;
 using WebAppSystems.Models.Enums;
 using WebAppSystems.Services;
+using static WebAppSystems.Helper.Sessao;
 
 
 
@@ -56,8 +57,17 @@ namespace WebAppSystems.Controllers
 
         public async Task<IActionResult> Index()
         {
-            await PopulateViewBag();
-            return View();
+            try
+            {
+                await PopulateViewBag();
+                return View();
+            }
+            catch (SessionExpiredException)
+            {
+                // Redirecione para a página de login se a sessão expirou
+                TempData["MensagemAviso"] = "A sessão expirou. Por favor, faça login novamente.";
+                return RedirectToAction("Index", "Login");
+            }
         }
         public async Task<IActionResult> SimpleSearch(DateTime? minDate, DateTime? maxDate, int? clientId, int? attorneyId, string recordType)
         {

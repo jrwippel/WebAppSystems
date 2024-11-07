@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using WebAppSystems.Data;
 using WebAppSystems.Models;
+using static WebAppSystems.Helper.Sessao;
 
 namespace WebAppSystems.Controllers
 {
@@ -22,10 +23,19 @@ namespace WebAppSystems.Controllers
         // GET: Parametros
         public async Task<IActionResult> Index()
         {
-            var parametros = await _context.Parametros.ToListAsync();
-            bool canCreate = !parametros.Any(); // Permitir criar somente se não houver nenhum parâmetro
-            ViewBag.CanCreate = canCreate;
-            return View(parametros);
+            try
+            {
+                var parametros = await _context.Parametros.ToListAsync();
+                bool canCreate = !parametros.Any(); // Permitir criar somente se não houver nenhum parâmetro
+                ViewBag.CanCreate = canCreate;
+                return View(parametros);
+            }
+            catch (SessionExpiredException)
+            {
+                // Redirecione para a página de login se a sessão expirou
+                TempData["MensagemAviso"] = "A sessão expirou. Por favor, faça login novamente.";
+                return RedirectToAction("Index", "Login");
+            }
         }
 
         // GET: Parametros/Details/5
