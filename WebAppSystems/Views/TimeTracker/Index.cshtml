@@ -1,4 +1,5 @@
 ﻿@model WebAppSystems.Models.ViewModels.ProcessRecordViewModel
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -121,7 +122,7 @@
 
     <div id="content">
         <h1>Time Tracker</h1>
-        <div class="time-tracker">
+        <div class="time-tracker">            
             <div class="form-group inline-fields">
                 <select asp-for="ProcessRecord.RecordType" asp-items="Model.RecordTypesOptions" class="form-control"></select>
                 <select asp-for="ProcessRecord.ClientId" asp-items="Model.ClientsOptions" class="form-control"></select>
@@ -142,12 +143,17 @@
                 <div class="col-md-3 d-flex align-items-center time-display-container">
                     <span id="timeDisplay" class="small">00:00:00</span>
                 </div>
-            </div>
+            </div>            
 
-            <div class="form-group full-width">
-                <table class="table table-striped" id="recordsTable">
+            <input type="text" id="searchInput" placeholder="Pesquisar na tabela..." oninput="filterTable()" class="form-control" style="margin-bottom: 15px;">
+
+            
+           <div class="form-group full-width">
+                <!--<table class="table" id="table-SearchRecord" table-striped table-hover">-->
+                       <table class="table table-striped" id="recordsTable"> 
                     <thead>
                         <tr>
+                            <th>Data</th>
                             <th>Hora Inicial</th>
                             <th>Hora Final</th>
                             <th>Duração</th>
@@ -158,11 +164,11 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Registros serão inseridos aqui -->
+                        
                     </tbody>
                 </table>
-            </div>
-
+            </div>           
+            
         </div>
     </div>
 
@@ -200,8 +206,11 @@
                         const endTime = new Date(`1970-01-01T${record.horaFinal}Z`);
                         const duration = calculateDuration(startTime, endTime);
 
+                        const formattedDate = new Date(record.date).toLocaleDateString("pt-BR");
+
                         const row = document.createElement("tr");
                         row.innerHTML = `
+                                                            <td>${formattedDate}</td> 
                                                             <td>${record.horaInicial}</td>
                                                             <td>${record.horaFinal}</td>
                                                             <td>${duration}</td>
@@ -459,6 +468,34 @@
             // Atualiza o título da aba do navegador com o cronômetro
             document.title = `${hours}:${minutes}:${seconds} - Time Tracker`;
         }
+
+        function filterTable() {
+            const input = document.getElementById("searchInput").value.toLowerCase();
+            const table = document.getElementById("recordsTable");
+            const rows = table.getElementsByTagName("tr");
+
+            // Loop nas linhas da tabela, ignorando o cabeçalho
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                const cells = row.getElementsByTagName("td");
+                let rowContainsTerm = false;
+
+                // Loop nas células da linha
+                for (let j = 0; j < cells.length; j++) {
+                    const cellContent = cells[j].textContent || cells[j].innerText;
+
+                    // Verifica se o termo aparece em alguma célula da linha
+                    if (cellContent.toLowerCase().includes(input)) {
+                        rowContainsTerm = true;
+                        break;
+                    }
+                }
+
+                // Mostra ou oculta a linha com base no resultado da busca
+                row.style.display = rowContainsTerm ? "" : "none";
+            }
+        }
+
 
     </script>
 </body>

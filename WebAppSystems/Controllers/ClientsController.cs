@@ -10,6 +10,7 @@ using WebAppSystems.Data;
 using WebAppSystems.Filters;
 using WebAppSystems.Models;
 using WebAppSystems.Services;
+using static WebAppSystems.Helper.Sessao;
 
 namespace WebAppSystems.Controllers
 {
@@ -28,9 +29,18 @@ namespace WebAppSystems.Controllers
         // GET: Clients
         public async Task<IActionResult> Index()
         {
-              return _context.Client != null ? 
-                          View(await _context.Client.ToListAsync()) :
-                          Problem("Entity set 'WebAppSystemsContext.Client'  is null.");
+            try
+            {
+                return _context.Client != null ?
+                            View(await _context.Client.ToListAsync()) :
+                            Problem("Entity set 'WebAppSystemsContext.Client'  is null.");
+            }
+            catch (SessionExpiredException)
+            {
+                // Redirecione para a página de login se a sessão expirou
+                TempData["MensagemAviso"] = "A sessão expirou. Por favor, faça login novamente.";
+                return RedirectToAction("Index", "Login");
+            }
         }
 
         // GET: Clients/Details/5

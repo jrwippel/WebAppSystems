@@ -15,6 +15,7 @@ using WebAppSystems.Models;
 using WebAppSystems.Models.Enums;
 using WebAppSystems.Models.ViewModels;
 using WebAppSystems.Services;
+using static WebAppSystems.Helper.Sessao;
 
 namespace WebAppSystems.Controllers
 {
@@ -41,10 +42,19 @@ namespace WebAppSystems.Controllers
         // GET: ProcessRecords
         public async Task<IActionResult> Index()
         {
-            Attorney usuario = _isessao.BuscarSessaoDoUsuario();
-            ViewBag.LoggedUserId = usuario.Id;
-            var list = await _processRecordsService.FindAllAsync();
-            return View(list);
+            try
+            {
+                Attorney usuario = _isessao.BuscarSessaoDoUsuario();
+                ViewBag.LoggedUserId = usuario.Id;
+                var list = await _processRecordsService.FindAllAsync();
+                return View(list);
+            }
+            catch (SessionExpiredException)
+            {
+                // Redirecione para a página de login se a sessão expirou
+                TempData["MensagemAviso"] = "A sessão expirou. Por favor, faça login novamente.";
+                return RedirectToAction("Index", "Login");
+            }
         }
 
         // GET: ProcessRecords/Details/5

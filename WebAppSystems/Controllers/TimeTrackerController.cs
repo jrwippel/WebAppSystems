@@ -31,42 +31,52 @@ namespace WebAppSystems.Controllers
         [HttpPost]
         public async Task<IActionResult> StartTimer([FromBody] StartTimerRequest request)
         {
+            // Verificação dos dados de entrada
             if (request == null || string.IsNullOrWhiteSpace(request.Description) || request.ClientId <= 0 || request.DepartmentId <= 0)
             {
                 return BadRequest("Todos os campos da tela devem ser preenchidos");
             }
+
             if (!Enum.IsDefined(typeof(RecordType), request.RecordType))
             {
                 return BadRequest("Tipo de registro inválido");
-            }          
+            }
 
-
-            var recordType = (RecordType)request.RecordType;
+            // Verifica se a sessão do usuário está ativa
             Attorney usuario = _isessao.BuscarSessaoDoUsuario();
+            if (usuario == null)
+            {
+                // Retorna uma mensagem informando que a sessão expirou
+                return Unauthorized("Sessão expirada. Por favor, faça login novamente.");
+            }
+
+            // Obtém o ID do usuário a partir da sessão
             var attorneyId = usuario.Id;
 
+            // Configura o horário usando o fuso horário de Brasília
             var brasiliaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("E. South America Standard Time");
             var nowInBrasilia = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, brasiliaTimeZone);
 
+            // Cria o registro de processo com as informações fornecidas
             var processRecord = new ProcessRecord
             {
                 AttorneyId = attorneyId,
                 ClientId = request.ClientId,
-                DepartmentId = request.DepartmentId, // Capturando o DepartmentId
+                DepartmentId = request.DepartmentId,
                 Date = DateTime.Now.Date,
-                //HoraInicial = new TimeSpan(DateTime.Now.Hour, DateTime.Now.Minute, DateTime.Now.Second),
                 HoraInicial = new TimeSpan(nowInBrasilia.Hour, nowInBrasilia.Minute, nowInBrasilia.Second),
                 Description = request.Description,
-                RecordType = recordType,               
+                RecordType = (RecordType)request.RecordType,
                 Solicitante = request.Solicitante,
-                
             };
 
             _context.ProcessRecord.Add(processRecord);
             await _context.SaveChangesAsync();
 
+            // Retorna o ID do processo registrado
             return Ok(processRecord.Id);
         }
+
 
         [HttpPost]
         public async Task<IActionResult> StopTimer([FromBody] StopTimerRequest request)
@@ -187,10 +197,12 @@ namespace WebAppSystems.Controllers
         {
             var today = DateTime.Now.Date;
             var records = await _context.ProcessRecord
-                 .Where(r => r.AttorneyId == attorneyId && r.Date == today && r.HoraFinal != null && r.HoraFinal != TimeSpan.Zero)
+                .Where(r => r.AttorneyId == attorneyId && r.HoraFinal != null && r.HoraFinal != TimeSpan.Zero)
                 .Include(r => r.Client)
-                .OrderByDescending(r => r.HoraInicial)
+                .OrderByDescending(r => r.Date) // Ordena pela data, do mais recente ao mais antigo
+                .ThenByDescending(r => r.HoraInicial) // Dentro da mesma data, ordena pela hora inicial
                 .ToListAsync();
+
 
             var viewModel = new ProcessRecordViewModel
             {
@@ -207,7 +219,8 @@ namespace WebAppSystems.Controllers
                 r.HoraInicial,
                 r.HoraFinal,
                 r.RecordType,
-                r.Solicitante
+                r.Solicitante,
+                r.Date
                 
             }));
         }

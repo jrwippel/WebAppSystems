@@ -11,6 +11,7 @@ using WebAppSystems.Models;
 using WebAppSystems.Services.Exceptions;
 using WebAppSystems.Services;
 using System.Diagnostics;
+using static WebAppSystems.Helper.Sessao;
 
 namespace WebAppSystems.Controllers
 {
@@ -36,9 +37,18 @@ namespace WebAppSystems.Controllers
         // GET: Departments
         public async Task<IActionResult> Index()
         {
-              return _context.Department != null ? 
-                          View(await _context.Department.ToListAsync()) :
-                          Problem("Entity set 'WebAppSystemsContext.Department'  is null.");
+            try
+            {
+                return _context.Department != null ?
+                            View(await _context.Department.ToListAsync()) :
+                            Problem("Entity set 'WebAppSystemsContext.Department'  is null.");
+            }
+            catch (SessionExpiredException)
+            {
+                // Redirecione para a página de login se a sessão expirou
+                TempData["MensagemAviso"] = "A sessão expirou. Por favor, faça login novamente.";
+                return RedirectToAction("Index", "Login");
+            }
         }
 
         // GET: Departments/Details/5

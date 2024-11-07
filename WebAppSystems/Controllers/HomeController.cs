@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using WebAppSystems.Models;
 using WebAppSystems.Services;
+using static WebAppSystems.Helper.Sessao;
 
 namespace WebAppSystems.Controllers
 {
@@ -14,8 +15,17 @@ namespace WebAppSystems.Controllers
         }
         public async Task<IActionResult> Index()
         {
-            var chartData = _processRecordsService.GetChartData();
-            return View(chartData);
+            try
+            {
+                var chartData = _processRecordsService.GetChartData();
+                return View(chartData);
+            }
+            catch (SessionExpiredException)
+            {
+                // Redirecione para a página de login se a sessão expirou
+                TempData["MensagemAviso"] = "A sessão expirou. Por favor, faça login novamente.";
+                return RedirectToAction("Index", "Login");
+            }
         }
 
 
