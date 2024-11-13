@@ -122,10 +122,16 @@ namespace WebAppSystems.Controllers
                 .Prepend(new SelectListItem { Value = "0", Text = "Selecione o Cliente" })
                 .ToList();
 
+            // Carregar as opções de departamentos e pré-selecionar a área do usuário
             var departmentsOptions = departments
                 .OrderBy(d => d.Name)
-                .Select(d => new SelectListItem { Value = d.Id.ToString(), Text = d.Name })
-                .Prepend(new SelectListItem { Value = "0", Text = "Selecione a Área" }) 
+                .Select(d => new SelectListItem
+                {
+                    Value = d.Id.ToString(),
+                    Text = d.Name,
+                    Selected = d.Id == usuario.DepartmentId // Marcar a área do usuário como selecionada
+                })
+                .Prepend(new SelectListItem { Value = "0", Text = "Selecione a Área" })
                 .ToList();
 
             var recordTypeOptions = Enum.GetValues(typeof(RecordType))
@@ -302,6 +308,33 @@ namespace WebAppSystems.Controllers
             public string StartTime { get; set; }
             public string EndTime { get; set; }
         }
+
+        // Action para retornar o solicitante baseado no cliente
+        [HttpGet]
+        public async Task<IActionResult> GetSolicitanteByClientId(int clientId)
+        {
+            try
+            {
+                var solicitante = await _clientService.GetSolicitanteByClientIdAsync(clientId);
+
+                // Retorna como JSON o solicitante encontrado
+                return Json(new { solicitante });
+            }
+            catch (Exception ex)
+            {
+                // Caso ocorra erro, retorna um erro simples
+                return Json(new { solicitante = string.Empty });
+            }
+        }
+        /*
+        [HttpGet]
+        //[Route("keep-alive")]
+        public IActionResult KeepAlive()
+        {
+            // Resposta 200 OK para manter a aplicação ativa no Azure
+            return Ok();
+        }
+        */
 
 
     }
