@@ -128,6 +128,8 @@
                 <select asp-for="ProcessRecord.ClientId" asp-items="Model.ClientsOptions" class="form-control"></select>
                 <select asp-for="ProcessRecord.DepartmentId" asp-items="Model.DepartmentsOptions" class="form-control"></select>
                 <input type="text" asp-for="Solicitante" class="form-control" id="solicitante" placeholder="Informe o Solicitante" />
+                
+
             </div>
 
             <div class="form-group full-width">
@@ -188,6 +190,39 @@
             1: "Contencioso",
             2: "Proposta Específica"
         };
+
+        // Captura o evento de mudança no combo de clientes
+        document.addEventListener("DOMContentLoaded", function () {
+            const clientField = document.querySelector('select[name="ProcessRecord.ClientId"]');
+            const solicitanteField = document.getElementById("solicitante");
+
+            clientField.addEventListener('change', async function () {
+                const clientId = clientField.value;
+
+                // Verifica se um cliente foi selecionado
+                if (clientId && clientId !== "0") {
+                    try {
+                        const response = await fetch(`/TimeTracker/GetSolicitanteByClientId?clientId=${clientId}`);
+
+                        if (response.ok) {
+                            const data = await response.json();
+
+                            if (data && data.solicitante) {
+                                solicitanteField.value = data.solicitante; // Preenche o campo solicitante
+                            } else {
+                                solicitanteField.value = ""; // Limpa se não encontrar solicitante
+                            }
+                        } else {
+                            console.error('Erro ao obter solicitante.');
+                        }
+                    } catch (error) {
+                        console.error('Erro na requisição:', error);
+                    }
+                } else {
+                    solicitanteField.value = ""; // Limpa se o cliente não for válido
+                }
+            });
+        });
 
 
         async function loadRecordsForToday(attorneyId) {
@@ -373,10 +408,12 @@
         }
 
         async function startTimer() {
+            startKeepAlive();
             const description = document.getElementById("description").value;
             const clientId = document.querySelector('select[name="ProcessRecord.ClientId"]').value;
             const departmentId = document.querySelector('select[name="ProcessRecord.DepartmentId"]').value;
             const solicitante = document.getElementById("solicitante").value;
+
             const recordType = document.querySelector('select[name="ProcessRecord.RecordType"]').value;
 
 
@@ -415,6 +452,11 @@
                 console.log("processRecordId(Retorno):", processRecordId);
             }
         }
+        document.getElementById('btnPlay').addEventListener('click', () => {
+            console.log("startKeepAlive");
+            startKeepAlive();
+            // Qualquer outra lógica necessária ao iniciar o cronômetro...
+        });
 
 
         async function stopTimer() {
@@ -495,6 +537,17 @@
                 row.style.display = rowContainsTerm ? "" : "none";
             }
         }
+
+        function startKeepAlive() {
+            console.log('Iniciando Keep-alive bem-sucedido')
+            // Envia uma requisição a cada 5 minutos (300000 ms)
+            setInterval(() => {
+                fetch('/TimeTracker/KeepAlive') // Rota criada para manter a sessão ativa
+                    .then(response => response.ok ? console.log('Keep-alive bem-sucedido') : console.warn('Erro no keep-alive'))
+                    .catch(error => console.error('Erro na requisição de keep-alive:', error));
+            }, 300000); // 5 minutos
+        }
+
 
 
     </script>

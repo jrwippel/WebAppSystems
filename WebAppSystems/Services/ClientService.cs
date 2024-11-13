@@ -37,6 +37,21 @@ namespace WebAppSystems.Services
             }).ToList();
         }
 
+        public async Task<string> GetSolicitanteByClientIdAsync(int clientId)
+        {
+            var client = await _context.Client
+                .Where(c => c.Id == clientId)
+                .FirstOrDefaultAsync();
+
+            if (client != null)
+            {
+                // Retorne o solicitante (ajuste conforme seu modelo de dados)
+                return client.Solicitante;
+            }
+
+            return string.Empty;
+        }
+
 
     }
 }

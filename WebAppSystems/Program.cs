@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using OfficeOpenXml;
+using WebAppSystems.Services.Exceptions;
 
 namespace WebAppSystems
 {
@@ -71,6 +72,12 @@ namespace WebAppSystems
                     IssuerSigningKey = new SymmetricSecurityKey(key)
                 };
             });
+
+            // Registra o HttpClient
+            builder.Services.AddHttpClient();
+
+            // Registra o serviço KeepAlive
+            builder.Services.AddHostedService<KeepAliveService>();
 
             var app = builder.Build();
 
