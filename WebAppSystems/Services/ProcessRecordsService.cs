@@ -26,18 +26,24 @@ namespace WebAppSystems.Services
                 .FirstOrDefaultAsync(obj => obj.Id == id);
         }
 
-        public async Task<List<ProcessRecord>> FindAllAsync()
+        public async Task<(List<ProcessRecord>, int)> FindAllAsync(int page, int pageSize)
         {
-            var processRecords = await _context.ProcessRecord
+            var query = _context.ProcessRecord
                 .Include(pr => pr.Attorney)
                 .Include(pr => pr.Client)
-                .Where(pr => pr.HoraInicial != TimeSpan.Zero && pr.HoraFinal != TimeSpan.Zero) // Filtra registros com hora inicial e final preenchidos
+                .Where(pr => pr.HoraInicial != TimeSpan.Zero && pr.HoraFinal != TimeSpan.Zero)
                 .OrderByDescending(pr => pr.Date)
-                .ThenByDescending(pr => pr.HoraInicial) // Ordena por hora inicial em ordem descendente
+                .ThenByDescending(pr => pr.HoraInicial);
+
+            int totalRecords = await query.CountAsync(); // Total de registros
+            var processRecords = await query
+                .Skip((page - 1) * pageSize) // Pula os registros das páginas anteriores
+                .Take(pageSize) // Traz apenas o número de registros necessários
                 .ToListAsync();
 
-            return processRecords;
+            return (processRecords, totalRecords);
         }
+
 
 
         public ChartData GetChartData()
