@@ -3,12 +3,14 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Win32;
 using WebAppSystems.Data;
+using WebAppSystems.Extensions;
 using WebAppSystems.Filters;
 using WebAppSystems.Helper;
 using WebAppSystems.Models;
@@ -40,22 +42,22 @@ namespace WebAppSystems.Controllers
         }
 
         // GET: ProcessRecords
-        public async Task<IActionResult> Index()
+        public IActionResult Index()
         {
             try
-            {
+            {                
                 Attorney usuario = _isessao.BuscarSessaoDoUsuario();
                 ViewBag.LoggedUserId = usuario.Id;
-                var list = await _processRecordsService.FindAllAsync();
-                return View(list);
+                return View(Enumerable.Empty<ProcessRecord>()); // Retorna um modelo vazio
             }
             catch (SessionExpiredException)
             {
-                // Redirecione para a página de login se a sessão expirou
                 TempData["MensagemAviso"] = "A sessão expirou. Por favor, faça login novamente.";
                 return RedirectToAction("Index", "Login");
             }
         }
+
+
 
         // GET: ProcessRecords/Details/5
         public async Task<IActionResult> Details(int? id)
@@ -346,5 +348,53 @@ namespace WebAppSystems.Controllers
 
             return Json(new { success = true, solicitante = client.Solicitante });
         }
+
+        public async Task<JsonResult> GetProcessRecords(int draw, int start, int length)
+        {
+            try
+            {
+                // Calcula a página atual
+                int page = (start / length) + 1;
+
+                // Busca os registros e o total de registros
+                var (records, totalRecords) = await _processRecordsService.FindAllAsync(page, length);
+
+                Attorney usuario = _isessao.BuscarSessaoDoUsuario();
+                ViewBag.LoggedUserId = usuario.Id;
+
+                // Formata os dados no formato esperado pelo DataTables
+                var result = new
+                {
+                    draw,
+                    recordsTotal = totalRecords,
+                    recordsFiltered = totalRecords,
+                    data = records.Select(pr => new
+                    {
+                        pr.Date,
+                        pr.HoraInicial,
+                        pr.HoraFinal,
+                        Horas = pr.CalculoHoras(),
+                        Cliente = pr.Client.Name,
+                        Usuario = pr.Attorney.Name,
+                        Tipo = ((RecordType)pr.RecordType).GetDisplayName(),
+                        EditLink = pr.Attorney.Id == ViewBag.LoggedUserId
+                            ? Url.Action("Edit", new { id = pr.Id })
+                            : null,
+                        DetailsLink = Url.Action("Details", new { id = pr.Id }),
+                        DeleteLink = pr.Attorney.Id == ViewBag.LoggedUserId
+                            ? Url.Action("Delete", new { id = pr.Id })
+                            : null
+                    })
+                };
+
+                return Json(result);
+            }
+            catch (Exception ex)
+            {
+                // Log do erro
+                return Json(new { error = ex.Message });
+            }
+        }
+
     }
 }

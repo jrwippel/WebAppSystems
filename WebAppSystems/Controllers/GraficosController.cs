@@ -1,19 +1,19 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using WebAppSystems.Models;
 using WebAppSystems.Services;
 using static WebAppSystems.Helper.Sessao;
 
 namespace WebAppSystems.Controllers
 {
-    public class HomeController : Controller
+    public class GraficosController : Controller
     {
+
         private readonly ProcessRecordsService _processRecordsService;
 
-        public HomeController(ProcessRecordsService processRecordsService)
+        public GraficosController(ProcessRecordsService processRecordsService)
         {
             _processRecordsService = processRecordsService;
         }
-        public async Task<IActionResult> Index()
+        public IActionResult Index()
         {
             try
             {
@@ -26,12 +26,6 @@ namespace WebAppSystems.Controllers
                 TempData["MensagemAviso"] = "A sessão expirou. Por favor, faça login novamente.";
                 return RedirectToAction("Index", "Login");
             }
-        }
-
-
-        public IActionResult About()
-        {
-            return View();
         }
     }
 }
