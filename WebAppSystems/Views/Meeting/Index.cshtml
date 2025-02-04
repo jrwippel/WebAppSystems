@@ -1,0 +1,100 @@
+﻿
+<h2>Gerar Resumo de Reunião</h2>
+
+<div>
+    <button id="startBtn" onclick="startRecording()">Iniciar Gravação</button>
+    <button id="stopBtn" onclick="stopRecording()" disabled>Parar Gravação</button>
+</div>
+
+<div>
+    <p id="status">Status: Aguardando ação...</p>
+</div>
+
+<form id="uploadFileForm" enctype="multipart/form-data" method="post" asp-controller="Meeting" asp-action="ProcessFile">
+    <input type="file" name="uploadedFile" accept=".txt" />
+    <button type="submit">Enviar Arquivo</button>
+</form>
+
+
+<div id="summaryContainer" style="display: none;">
+    <h3>Resumo da Reunião:</h3>
+    <p id="summaryText"></p>
+</div>
+
+<script>
+    let mediaRecorder;
+    let audioChunks = [];
+
+    function startRecording() {
+        document.getElementById("status").textContent = "Gravando...";
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+                mediaRecorder.onstop = uploadAudio;
+                mediaRecorder.start();
+
+                document.getElementById("startBtn").disabled = true;
+                document.getElementById("stopBtn").disabled = false;
+            })
+            .catch(err => alert("Erro ao acessar o microfone: " + err));
+    }
+
+    function stopRecording() {
+        mediaRecorder.stop();
+        document.getElementById("status").textContent = "Processando áudio...";
+        document.getElementById("stopBtn").disabled = true;
+    }
+
+    function uploadAudio() {
+        const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
+        const formData = new FormData();
+        formData.append("audioFile", audioBlob, "audio.wav");
+
+        fetch('/Meeting/GenerateSummary', {
+            method: "POST",
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById("summaryText").textContent = data.summary;
+                document.getElementById("summaryContainer").style.display = "block";
+                document.getElementById("status").textContent = "Resumo gerado com sucesso.";
+            } else {
+                document.getElementById("status").textContent = "Erro ao gerar o resumo.";
+            }
+        })
+        .catch(err => {
+            document.getElementById("status").textContent = "Erro ao processar o áudio.";
+            console.error(err);
+        });
+    }
+
+    const form = document.getElementById('uploadFileForm');
+    const resultDiv = document.getElementById('summaryResult');
+
+    form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                resultDiv.innerHTML = `<h3>Resumo:</h3><p>${data.summary}</p>`;
+            } else {
+                resultDiv.innerHTML = `<p>Erro: ${data.message}</p>`;
+            }
+        } catch (error) {
+            resultDiv.innerHTML = `<p>Erro ao processar o arquivo.</p>`;
+            console.error(error);
+        }
+    });
+</script>

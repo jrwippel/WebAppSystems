@@ -36,28 +36,15 @@ $('#table-SearchRecords').DataTable({
     "ajax": {
         "url": "/ProcessRecords/GetProcessRecords",
         "type": "POST",
-        "dataType": "json",
-        "dataSrc": function (json) {
-            console.log("Resposta recebida do servidor:", json);
-            return json.data;
-        },
-        "error": function (xhr, error, thrown) {
-            console.error("Erro no DataTables:", xhr.responseText);
+        "data": function (d) {
+            // Adiciona parâmetros de pesquisa e ordenação
+            d.search = d.search.value; // Valor da pesquisa global
+            d.orderColumn = d.order[0].column; // Índice da coluna para ordenar
+            d.orderDir = d.order[0].dir; // Direção da ordenação (asc ou desc)
         }
     },
     "columns": [
-        {
-            "data": "date",
-            "title": "Data",
-            "render": function (data, type, row) {
-                if (!data) return ''; // Caso o campo seja nulo ou indefinido
-                let dateObj = new Date(data); // Cria um objeto Date a partir da string ISO
-                let dia = String(dateObj.getDate()).padStart(2, '0'); // Dia com 2 dígitos
-                let mes = String(dateObj.getMonth() + 1).padStart(2, '0'); // Mês com 2 dígitos (0 indexado)
-                let ano = dateObj.getFullYear(); // Ano completo
-                return `${dia}/${mes}/${ano}`; // Retorna no formato dd/MM/yyyy
-            }
-        },
+        { "data": "date", "title": "Data" },
         { "data": "horaInicial", "title": "Hora Inicial" },
         { "data": "horaFinal", "title": "Hora Final" },
         { "data": "horas", "title": "Horas" },
@@ -80,41 +67,6 @@ $('#table-SearchRecords').DataTable({
         }
     ],
     "language": {
-        "sEmptyTable": "Nenhum registro encontrado",
-        "sInfo": "Mostrando de _START_ até _END_ de _TOTAL_ registros",
-        "sInfoEmpty": "Mostrando 0 até 0 de 0 registros",
-        "sInfoFiltered": "(Filtrados de _MAX_ registros)",
-        "sInfoPostFix": "",
-        "sInfoThousands": ".",
-        "sLengthMenu": "_MENU_ resultados por página",
-        "sLoadingRecords": "Carregando...",
-        "sProcessing": "Processando...",
-        "sZeroRecords": "Nenhum registro encontrado",
-        "sSearch": "Pesquisar",
-        "oPaginate": {
-            "sNext": "Próximo",
-            "sPrevious": "Anterior",
-            "sFirst": "Primeiro",
-            "sLast": "Último"
-        },
-        "oAria": {
-            "sSortAscending": ": Ordenar colunas de forma ascendente",
-            "sSortDescending": ": Ordenar colunas de forma descendente"
-        },
-        "select": {
-            "rows": {
-                "_": "Selecionado %d linhas",
-                "0": "Nenhuma linha selecionada",
-                "1": "Selecionado 1 linha"
-            }
-        },
-        "buttons": {
-            "copy": "Copiar para a área de transferência",
-            "copyTitle": "Cópia bem sucedida",
-            "copySuccess": {
-                "1": "Uma linha copiada com sucesso",
-                "_": "%d linhas copiadas com sucesso"
-            }
-        }
+        "sSearch": "Pesquisar:"
     }
 });

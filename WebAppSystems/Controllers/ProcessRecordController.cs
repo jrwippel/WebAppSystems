@@ -342,6 +342,9 @@ namespace WebAppSystems.Controllers
                 totalRow.GetCell(7).CellStyle = headerStyle;
 
 
+
+
+
                 // Desativa as linhas de grade
                 sheet.DisplayGridlines = false;
 

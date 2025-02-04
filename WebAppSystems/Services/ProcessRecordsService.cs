@@ -26,23 +26,59 @@ namespace WebAppSystems.Services
                 .FirstOrDefaultAsync(obj => obj.Id == id);
         }
 
-        public async Task<(List<ProcessRecord>, int)> FindAllAsync(int page, int pageSize)
+
+        public async Task<(IEnumerable<ProcessRecord> records, int totalRecords)> FindAllAsync(
+            int page,
+            int length,
+            string searchValue = "",
+            int orderColumn = 0,
+            string orderDir = "desc"           
+            )
         {
             var query = _context.ProcessRecord
-                .Include(pr => pr.Attorney)
                 .Include(pr => pr.Client)
-                .Where(pr => pr.HoraInicial != TimeSpan.Zero && pr.HoraFinal != TimeSpan.Zero)
-                .OrderByDescending(pr => pr.Date)
-                .ThenByDescending(pr => pr.HoraInicial);
+                .Include(pr => pr.Attorney)
+                .AsQueryable();
 
-            int totalRecords = await query.CountAsync(); // Total de registros
-            var processRecords = await query
-                .Skip((page - 1) * pageSize) // Pula os registros das páginas anteriores
-                .Take(pageSize) // Traz apenas o número de registros necessários
+            // Filtro de pesquisa
+            if (!string.IsNullOrEmpty(searchValue))
+            {
+                query = query.Where(pr =>
+                    pr.Client.Name.ToLower().Contains(searchValue) ||
+                    pr.Attorney.Name.ToLower().Contains(searchValue) ||
+                    pr.Client.Solicitante.ToLower().Contains(searchValue) ||                    
+                    pr.Description.ToLower().Contains(searchValue));
+            }  
+
+            // Ordenação: padrão é Data desc e HoraInicial desc
+            query = orderColumn switch
+            {
+                0 => orderDir == "desc"
+                    ? query.OrderBy(pr => pr.Date).ThenBy(pr => pr.HoraInicial)
+                    : query.OrderByDescending(pr => pr.Date).ThenByDescending(pr => pr.HoraInicial),
+                1 => orderDir == "asc"
+                    ? query.OrderBy(pr => pr.HoraInicial).ThenBy(pr => pr.Date)
+                    : query.OrderByDescending(pr => pr.HoraInicial).ThenByDescending(pr => pr.Date),
+                2 => orderDir == "asc"
+                    ? query.OrderBy(pr => pr.Client.Name)
+                    : query.OrderByDescending(pr => pr.Client.Name),
+                _ => query.OrderByDescending(pr => pr.Date).ThenByDescending(pr => pr.HoraInicial) // Default
+            };
+
+            // Total de registros filtrados
+            int totalRecords = await query.CountAsync();
+
+            // Paginação após ordenação
+            var records = await query
+                .Skip((page - 1) * length)
+                .Take(length)
                 .ToListAsync();
 
-            return (processRecords, totalRecords);
+            return (records, totalRecords);
         }
+
+
+
 
 
 

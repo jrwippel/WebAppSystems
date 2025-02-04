@@ -28,6 +28,8 @@ namespace WebAppSystems.Models
 
         public bool ClienteInterno { get; set; }
 
+        public bool ClienteInativo { get; set; }
+
         public Client()
         {
         }
