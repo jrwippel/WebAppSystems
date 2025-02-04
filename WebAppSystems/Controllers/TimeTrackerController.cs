@@ -117,6 +117,7 @@ namespace WebAppSystems.Controllers
             ViewBag.LoggedUserId = usuario.Id;
 
             var clientsOptions = clients
+                .Where(c => !c.ClienteInativo) // Filtra apenas clientes ativos
                 .OrderBy(c => c.Name)
                 .Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name })
                 .Prepend(new SelectListItem { Value = "0", Text = "Selecione o Cliente" })

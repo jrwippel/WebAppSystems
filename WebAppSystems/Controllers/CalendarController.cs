@@ -43,6 +43,7 @@ namespace WebAppSystems.Controllers
                 var departments = await _departmentService.FindAllAsync();
 
                 var clientsOptions = clients
+                    .Where(c => !c.ClienteInativo)
                     .OrderBy(c => c.Name)
                     .Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name })
                     .ToList();
