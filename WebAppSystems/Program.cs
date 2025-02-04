@@ -37,7 +37,11 @@ namespace WebAppSystems
             builder.Services.AddScoped<IEmail, Email>();
             builder.Services.AddScoped<MensalistaService>();
             builder.Services.AddScoped<ValorClienteService>();
-            builder.Services.AddScoped<ParametroService>();            
+            builder.Services.AddScoped<ParametroService>();
+
+            builder.Services.AddScoped<ISpeechToTextService, SpeechToTextService>();
+            builder.Services.AddScoped<ISummaryService, SummaryService>();
+
             builder.Services.AddHttpClient();
 
             builder.Services.AddSession(o =>

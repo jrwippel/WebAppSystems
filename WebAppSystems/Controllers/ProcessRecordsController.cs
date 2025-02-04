@@ -21,7 +21,7 @@ using static WebAppSystems.Helper.Sessao;
 
 namespace WebAppSystems.Controllers
 {
-    [PaginaParaUsuarioLogado]    
+    [PaginaParaUsuarioLogado]
     public class ProcessRecordsController : Controller
     {
         private readonly WebAppSystemsContext _context;
@@ -45,7 +45,7 @@ namespace WebAppSystems.Controllers
         public IActionResult Index()
         {
             try
-            {                
+            {
                 Attorney usuario = _isessao.BuscarSessaoDoUsuario();
                 ViewBag.LoggedUserId = usuario.Id;
                 return View(Enumerable.Empty<ProcessRecord>()); // Retorna um modelo vazio
@@ -88,7 +88,7 @@ namespace WebAppSystems.Controllers
             var attorneys = _attorneyService.FindAll();
             Attorney usuario = _isessao.BuscarSessaoDoUsuario();
             var departments = await _departmentService.FindAllAsync();
-        
+
             ViewBag.LoggedUserId = usuario.Id;
             ViewBag.IsAdmin = usuario.Perfil == ProfileEnum.Admin;
 
@@ -98,6 +98,7 @@ namespace WebAppSystems.Controllers
             }
 
             var clientsOptions = clients
+                .Where(c => !c.ClienteInativo) // Filtra apenas clientes ativos
                 .OrderBy(c => c.Name)
                 .Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name })
                 .Prepend(new SelectListItem { Value = "0", Text = "Selecionar" })
@@ -348,16 +349,18 @@ namespace WebAppSystems.Controllers
 
             return Json(new { success = true, solicitante = client.Solicitante });
         }
-
-        public async Task<JsonResult> GetProcessRecords(int draw, int start, int length)
+        public async Task<JsonResult> GetProcessRecords(int draw, int start, int length, string search = "", int orderColumn = 0, string orderDir = "asc")
         {
             try
             {
                 // Calcula a página atual
                 int page = (start / length) + 1;
 
-                // Busca os registros e o total de registros
-                var (records, totalRecords) = await _processRecordsService.FindAllAsync(page, length);
+                // Configura filtros de pesquisa
+                string searchValue = search?.Trim().ToLower();
+
+                // Busca os registros com filtros e total de registros
+                var (records, totalRecords) = await _processRecordsService.FindAllAsync(page, length, searchValue, orderColumn, orderDir);
 
                 Attorney usuario = _isessao.BuscarSessaoDoUsuario();
                 ViewBag.LoggedUserId = usuario.Id;
@@ -370,7 +373,7 @@ namespace WebAppSystems.Controllers
                     recordsFiltered = totalRecords,
                     data = records.Select(pr => new
                     {
-                        pr.Date,
+                        Date = pr.Date.ToString("dd/MM/yyyy"),
                         pr.HoraInicial,
                         pr.HoraFinal,
                         Horas = pr.CalculoHoras(),

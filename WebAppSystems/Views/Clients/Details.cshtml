@@ -45,12 +45,25 @@
                         </dt>
                         <dd>
                             @Html.DisplayFor(model => model.Solicitante)
-                        </dd>
+                        </dd>        
                         <dt class="col-sm-2">
                         Interno
                         </dt>
                         <dd class="col-sm-10">
                             @if (Model.ClienteInterno)
+                            {
+                                <text>Sim</text>
+                            }
+                            else
+                            {
+                                <text>Não</text>
+                            }
+                        </dd>
+                        <dt class="col-sm-2">
+                            Inativo
+                        </dt>
+                        <dd class="col-sm-10">
+                            @if (Model.ClienteInativo)
                             {
                                 <text>Sim</text>
                             }
