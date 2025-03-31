@@ -58,8 +58,8 @@ namespace WebAppSystems.Controllers
             return RedirectToAction("Index", "Login");
         }
 
-        [HttpPost]
-        public IActionResult EnviarLinkParaRedefinirSenha(RedefinirSenhaModel redefinirSenhaModel)
+        [HttpPost]        
+        public async Task<IActionResult> EnviarLinkParaRedefinirSenha(RedefinirSenhaModel redefinirSenhaModel)
         {
             try
             {
@@ -71,7 +71,8 @@ namespace WebAppSystems.Controllers
                     {
                         string novaSenha = usuarioModel.GerarNovaSenha();
                         string mensagem = $"Sua nova senha é: {novaSenha}";
-                        bool emailEnviado = _email.Enviar(usuarioModel.Email, "Sistema de Controle Jurídico - Nova Senha", mensagem);
+                        bool emailEnviado = await _email.EnviarAsync(usuarioModel.Email, "Sistema de Controle Jurídico - Nova Senha", mensagem);
+                        //bool emailEnviado = await _email.EnviarAsync(usuarioModel.Email, "Stradale - Sistema de Controle Recolhas - Nova Senha", mensagem);
 
                         if (emailEnviado)
                         {

@@ -24,7 +24,7 @@ namespace WebAppSystems.Filters
                     context.Result = new RedirectToRouteResult(new RouteValueDictionary { { "controller", "Login" }, { "action", "Index" } });
                 }
 
-                if (attorney.Perfil != ProfileEnum.Admin)
+                if (attorney.Perfil == ProfileEnum.Padrao)
                 {
                     context.Result = new RedirectToRouteResult(new RouteValueDictionary { { "controller", "Restrito" }, { "action", "Index" } });
                 }

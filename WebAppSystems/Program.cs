@@ -18,6 +18,10 @@ namespace WebAppSystems
     {
         public static void Main(string[] args)
         {
+            // Define a cultura padrão para "pt-BR"
+            CultureInfo.DefaultThreadCurrentCulture = new CultureInfo("pt-BR");
+            CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo("pt-BR");
+
             var builder = WebApplication.CreateBuilder(args);
 
             // Configurar o contexto do banco de dados

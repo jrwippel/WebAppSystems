@@ -7,6 +7,8 @@ namespace WebAppSystems.Models.Enums
         Consultivo = 0,
         Contencioso = 1,
         [Display(Name = "Proposta Específica")]
-        PropostaEspecifica = 2
+        PropostaEspecifica = 2,
+        Deslocamento = 3
+
     }
 }

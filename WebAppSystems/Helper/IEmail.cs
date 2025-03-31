@@ -2,6 +2,7 @@
 {
     public interface IEmail
     {
-        bool Enviar(string email, string assunto, string mensagem);
+        Task<bool> EnviarAsync(string email, string assunto, string mensagem, string anexoPath = null); // Definindo o parâmetro com valor padrão null
+
     }
 }

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Diagnostics;
 using WebAppSystems.Filters;
+using WebAppSystems.Helper;
 using WebAppSystems.Models;
 using WebAppSystems.Models.Enums;
 using WebAppSystems.Models.ViewModels;
@@ -19,10 +20,13 @@ namespace WebAppSystems.Controllers
 
         private readonly DepartmentService _departmentService;
 
-        public AttorneysController (AttorneyService attorneyService, DepartmentService departmentService)
+        private readonly ISessao _isessao;
+
+        public AttorneysController (AttorneyService attorneyService, DepartmentService departmentService, ISessao isessao)
         {
             _attorneyService = attorneyService;
             _departmentService = departmentService;
+            _isessao = isessao;
         }
         public async Task<IActionResult> Index()
         {
@@ -51,6 +55,20 @@ namespace WebAppSystems.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Attorney attorney) 
         {
+
+            Attorney usuario = _isessao.BuscarSessaoDoUsuario();
+            ViewBag.LoggedUserId = usuario.Id;
+            ViewBag.CurrentUserPerfil = usuario.Perfil;
+
+            // Validação: somente Admin pode criar outro usuário com perfil de Admin
+            if (usuario.Perfil != ProfileEnum.Admin && attorney.Perfil == ProfileEnum.Admin)
+            {
+                ModelState.AddModelError(string.Empty, "Você não tem permissão para criar um usuário com perfil de Administrador.");
+                var departments = await _departmentService.FindAllAsync();
+                var viewModel = new AttorneyFormViewModel { Attorney = attorney, Departments = departments };
+                return View(viewModel);
+            }
+
             if (ModelState.IsValid)
             {
    
@@ -127,9 +145,22 @@ namespace WebAppSystems.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Attorney attorney)     
-        
+        public async Task<IActionResult> Edit(int id, Attorney attorney)             
         {
+            Attorney usuario = _isessao.BuscarSessaoDoUsuario();
+            ViewBag.LoggedUserId = usuario.Id;
+            ViewBag.CurrentUserPerfil = usuario.Perfil;
+
+            // Validação: somente Admin pode criar outro usuário com perfil de Admin
+            if (usuario.Perfil != ProfileEnum.Admin && attorney.Perfil == ProfileEnum.Admin)
+            {
+                ModelState.AddModelError(string.Empty, "Você não tem permissão para alterar um usuário com perfil de Administrador.");
+                var departments = await _departmentService.FindAllAsync();
+                var viewModel = new AttorneyFormViewModel { Attorney = attorney, Departments = departments };
+                return View(viewModel);
+            }
+
+
             if (ModelState.IsValid)
             {
                 var departments = await _departmentService.FindAllAsync();

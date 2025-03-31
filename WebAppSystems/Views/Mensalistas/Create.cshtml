@@ -20,7 +20,7 @@
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-group">
                 <label asp-for="ClientId" class="control-label"></label>
-                <select asp-for="ClientId" class="form-control" asp-items="ViewBag.Clients"></select>
+                <select asp-for="ClientId" class="form-control" asp-items="ViewBag.Clients" id="clienteSelect"></select>
             </div>
 
             <div class="form-group">
@@ -51,6 +51,31 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
-        </script>
+
+    <script>
+        $(document).ready(function () {
+            $("#clienteSelect").select2({
+                placeholder: "Selecione um cliente",
+                allowClear: true,
+                matcher: function (params, data) {
+                    if ($.trim(params.term) === '') {
+                        return data;
+                    }
+
+                    // Converte para minúsculas para comparação sem case sensitive
+                    var term = params.term.toLowerCase();
+                    var text = data.text.toLowerCase();
+
+                    // Retorna qualquer nome que contenha o termo digitado
+                    if (text.includes(term)) {
+                        return data;
+                    }
+
+                    return null;
+                }
+            });
+        });
+    </script>
 }
+
 

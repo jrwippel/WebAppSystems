@@ -266,12 +266,37 @@ namespace WebAppSystems.Controllers
 
                     row.GetCell(6).SetCellValue(item.HoraInicial.ToString(@"hh\:mm"));
                     row.GetCell(7).SetCellValue(item.HoraFinal.ToString(@"hh\:mm"));
-                    row.GetCell(8).SetCellValue(item.CalculoHoras());
+                    //row.GetCell(8).SetCellValue(item.CalculoHoras());
+
+                    // Verifica se o tipo de registro é "Deslocamento" para considerar apenas 50% das horas
+                    double horasCalculadas = item.CalculoHorasDecimal();
+                    if (item.RecordType.ToString().Equals("Deslocamento", StringComparison.OrdinalIgnoreCase))
+                    {
+                        horasCalculadas *= 0.5;
+                    }
+
+                    row.GetCell(8).SetCellValue(horasCalculadas);
+
+
                     //row.GetCell(7).SetCellValue(item.Department.Name);
                     string departmentName = item.Department != null ? item.Department.Name : "N/A";
                     row.GetCell(9).SetCellValue(departmentName);
 
-                    totalHoras += item.CalculoHorasDecimal();
+                    //totalHoras += item.CalculoHorasDecimal();
+
+                    double totalHorasCalculadas = item.CalculoHorasDecimal();
+
+                    // Se for "Deslocamento", aplica 50% apenas para esse item
+                    if (item.RecordType.ToString().Equals("Deslocamento", StringComparison.OrdinalIgnoreCase))
+                    {
+                        totalHorasCalculadas *= 0.5;
+                    }
+
+                    // Adiciona ao total corretamente
+                    totalHoras += totalHorasCalculadas;
+
+
+
 
 
                     // Aplique o estilo correto: justificado com ou sem sombreamento, dependendo se a linha é ímpar ou par
@@ -307,6 +332,11 @@ namespace WebAppSystems.Controllers
                     }
 
                     double hours = item.CalculoHorasDecimal();
+
+                    if (item.RecordType.ToString().Equals("Deslocamento", StringComparison.OrdinalIgnoreCase))
+                    {
+                        hours *= 0.5;
+                    }
 
                     var valorCliente = await _valorClienteService.GetValorForClienteAndUserAsync(item.ClientId, item.Attorney.Id); // supondo que haja um método que retorna o valor baseado no Cliente e Usuario
                     double value = 0;

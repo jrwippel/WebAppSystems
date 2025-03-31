@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using WebAppSystems.Data;
 using WebAppSystems.Filters;
+using WebAppSystems.Helper;
 using WebAppSystems.Models;
 
 namespace WebAppSystems.Controllers
@@ -16,15 +17,21 @@ namespace WebAppSystems.Controllers
     public class ValorClientesController : Controller
     {
         private readonly WebAppSystemsContext _context;
+        private readonly ISessao _isessao;
 
-        public ValorClientesController(WebAppSystemsContext context)
+        public ValorClientesController(WebAppSystemsContext context, ISessao isessao)
         {
             _context = context;
+            _isessao = isessao;
         }
 
         // GET: ValorClientes
         public async Task<IActionResult> Index()
         {
+            Attorney usuario = _isessao.BuscarSessaoDoUsuario();
+            ViewBag.LoggedUserId = usuario.Id;
+            ViewBag.CurrentUserPerfil = usuario.Perfil;
+
             var webAppSystemsContext = _context.ValorCliente.Include(v => v.Attorney).Include(v => v.Client);
             return View(await webAppSystemsContext.ToListAsync());
         }
