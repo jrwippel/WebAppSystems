@@ -1,5 +1,7 @@
 ﻿using System.Net.Mail;
 using System.Net;
+using Azure;
+using Azure.Communication.Email;
 
 namespace WebAppSystems.Helper
 {
@@ -11,42 +13,60 @@ namespace WebAppSystems.Helper
         {
             _configuration = configuration;
         }
-        public bool Enviar(string email, string assunto, string mensagem)
+
+        public async Task<bool> EnviarAsync(string email, string assunto, string mensagem, string anexoPath = null)
         {
             try
             {
+                string connectionString = _configuration["AzureEmail:ConnectionString"];
+                string senderAddress = _configuration["AzureEmail:SenderAddress"];
 
-                string host = _configuration.GetValue<string>("SMTP:Host");
-                string nome = _configuration.GetValue<string>("SMTP:Nome");
-                string username = _configuration.GetValue<string>("SMTP:UserName");
-                string senha = _configuration.GetValue<string>("SMTP:Senha");
-                int porta = _configuration.GetValue<int>("SMTP:Porta");
+                var emailClient = new EmailClient(connectionString);
 
-                MailMessage mail = new MailMessage()
+                var emailMessage = new EmailMessage(
+                    senderAddress: senderAddress,
+                    content: new EmailContent(assunto)
+                    {
+                        PlainText = mensagem,
+                        Html = $@"
+                        <html>
+                            <body>
+                                <h1>{assunto}</h1>
+                                <p>{mensagem}</p>
+                            </body>
+                        </html>"
+                    },
+                    recipients: new EmailRecipients(new List<EmailAddress> { new EmailAddress(email) })
+                );
+
+                if (!string.IsNullOrEmpty(anexoPath))
                 {
-                    From = new MailAddress(username, nome)
-                };
+                    // Extrai o nome do arquivo a partir do caminho completo
+                    string nomeArquivo = Path.GetFileName(anexoPath);
 
-                mail.To.Add(email);
-                mail.Subject = assunto;
-                mail.Body = mensagem;
-                mail.IsBodyHtml = true;
-                mail.Priority = MailPriority.High;
-                using (SmtpClient smtp = new SmtpClient(host, porta))
-                {
-                    smtp.Credentials = new NetworkCredential(username, senha);
-                    smtp.EnableSsl = true;
+                    var attachment = new EmailAttachment(
+                        name: nomeArquivo,  // Nome do arquivo
+                        content: BinaryData.FromBytes(File.ReadAllBytes(anexoPath)),  // Conteúdo do arquivo em bytes
+                        contentType: "application/pdf" // Tipo de conteúdo (MIME type)
+                    );
 
-                    smtp.Send(mail);
-                    return true;
+                    emailMessage.Attachments.Add(attachment); // Adiciona o anexo ao e-mail
                 }
 
 
+
+                // Envia o e-mail de forma assíncrona
+                EmailSendOperation emailSendOperation = await emailClient.SendAsync(
+                    WaitUntil.Completed, // Aguarda a conclusão da operação
+                    emailMessage
+                );
+
+                return true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                //Gravar log de erro ao fazer o envio de email
-                throw;
+                Console.WriteLine($"Erro ao enviar email: {ex.Message}");
+                return false;
             }
         }
     }

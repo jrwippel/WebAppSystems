@@ -326,7 +326,7 @@
                     const isClientValid = clientField.value !== "" && clientField.value !== "0";
                     const isDepartmentValid = departmentField.value !== "" && departmentField.value !== "0";
                     const isSolicitanteValid = solicitanteField.value.trim() !== "";
-
+                    console.log("Dados retorno GetActiveTime:", validateFields);
                     if (isDescriptionValid && isClientValid && isDepartmentValid && isSolicitanteValid) {
                         startStopButton.disabled = false;
                     } else {

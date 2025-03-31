@@ -62,7 +62,14 @@
                         <td>
                             @Html.DisplayFor(modelItem => item.Department.Name)
                         </td>
-                        <td>@(item.Perfil == WebAppSystems.Models.Enums.ProfileEnum.Admin ? "Administrador" : "Padrão")</td>
+                        <td>
+                            @(item.Perfil == WebAppSystems.Models.Enums.ProfileEnum.Admin
+                                ? "Administrador"
+                                : item.Perfil == WebAppSystems.Models.Enums.ProfileEnum.Controladoria
+                                ? "Controladoria"
+                                : "Padrão")
+                        </td>
+
                         <td>
                             <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-secondary btn-sm">
                                 <i class="fas fa-edit fa-xs"></i>

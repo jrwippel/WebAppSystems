@@ -17,17 +17,24 @@ namespace WebAppSystems.Controllers
     {
         private readonly WebAppSystemsContext _context;
         private readonly ClientService _clientService;
+        private readonly ISessao _isessao;
 
 
-        public MensalistasController(WebAppSystemsContext context, ClientService clientService)
+        public MensalistasController(WebAppSystemsContext context, ClientService clientService, ISessao isessao)
         {
             _context = context;
             _clientService = clientService;
+            _isessao = isessao;
         }
 
         // GET: Mensalistas
         public async Task<IActionResult> Index()
         {
+
+            Attorney usuario = _isessao.BuscarSessaoDoUsuario();
+            ViewBag.LoggedUserId = usuario.Id;
+            ViewBag.CurrentUserPerfil = usuario.Perfil;
+
             var webAppSystemsContext = _context.Mensalista.Include(m => m.Client);
             return View(await webAppSystemsContext.ToListAsync());
         }
@@ -113,16 +120,20 @@ namespace WebAppSystems.Controllers
         }
 
 
-        // Um método helper para fazer a conversão
         private decimal ConvertToDecimalWithDotSeparator(string valueWithCommaSeparator)
         {
-            string stringValue = valueWithCommaSeparator.Replace(",", ".");
-            if (Decimal.TryParse(stringValue, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal result))
-            {
+            if (string.IsNullOrWhiteSpace(valueWithCommaSeparator))
+                throw new FormatException("O valor recebido é nulo ou vazio.");
+
+            // Remove espaços extras e caracteres indesejados
+            string sanitizedValue = valueWithCommaSeparator.Trim().Replace("R$", "").Replace(" ", "").Replace(",", ".");
+
+            if (decimal.TryParse(sanitizedValue, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal result))
                 return result;
-            }
-            throw new FormatException("Unable to convert the provided value to decimal.");
+
+            throw new FormatException($"Erro ao converter o valor: '{valueWithCommaSeparator}'");
         }
+
 
 
         private async Task ConfigureViewData(int? clientId)

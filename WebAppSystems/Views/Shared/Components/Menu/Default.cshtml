@@ -1,5 +1,12 @@
 ﻿@using WebAppSystems.Models.Enums
 @model Attorney
+
+@{
+    // Supondo que Model.Perfil seja do tipo ProfileEnum, e que queremos
+    // exibir esses itens apenas para Admin ou Controladoria.
+    var showNavItem = Model.Perfil == ProfileEnum.Admin || Model.Perfil == ProfileEnum.Controladoria;
+}
+
 <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">@Model.Name's workspace</a>
 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
         aria-expanded="false" aria-label="Toggle navigation">
@@ -46,16 +53,21 @@
             </div>
         </li>
 
-        @if (Model.Perfil == ProfileEnum.Admin)
+        @if (Model.Perfil != ProfileEnum.Padrao)
         {
-            <li class="nav-item" title="Área">
+            // Restrição específica para "Controladoria" em "Valores/Cliente", "Resultados" e "Mensalistas"
+            var isAdmin = Model.Perfil == ProfileEnum.Admin;
+            var isControladoria = Model.Perfil == ProfileEnum.Controladoria;
+
+            <li class="nav-item @(isAdmin || isControladoria ? "" : "d-none")" title="Valores/Cliente">
                 <div class="text-center">
-                    <a class="nav-link text-dark" asp-area="" asp-controller="Departments" asp-action="Index">
-                        <i class="fas fa-building fa-2x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Área"></i>
-                        <span class="d-block">Área</span>
+                    <a class="nav-link text-dark @(isControladoria ? "d-none" : "")" asp-area="" asp-controller="ValorClientes" asp-action="Index">
+                        <i class="fas fa-money-bill fa-2x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Valores/Cliente"></i>
+                        <span class="d-block">Valores</span>
                     </a>
                 </div>
             </li>
+
             <li class="nav-item" title="Usuários">
                 <div class="text-center">
                     <a class="nav-link text-dark" asp-area="" asp-controller="Attorneys" asp-action="Index">
@@ -64,30 +76,34 @@
                     </a>
                 </div>
             </li>
-            <li class="nav-item" title="Valores/Cliente">
+
+            <li class="nav-item @(isAdmin || isControladoria ? "" : "d-none")" title="Mensalistas">
                 <div class="text-center">
-                    <a class="nav-link text-dark" asp-area="" asp-controller="ValorClientes" asp-action="Index">
-                        <i class="fas fa-money-bill fa-2x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Valores/Cliente"></i>
-                        <span class="d-block">Valores</span>
-                    </a>
-                </div>
-            </li>
-            <li class="nav-item" title="Mensalistas">
-                <div class="text-center">
-                    <a class="nav-link text-dark" asp-area="" asp-controller="Mensalistas" asp-action="Index">
+                    <a class="nav-link text-dark @(isControladoria ? "d-none" : "")" asp-area="" asp-controller="Mensalistas" asp-action="Index">
                         <i class="fas fa-calendar-alt fa-2x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Mensalistas"></i>
                         <span class="d-block">Mensalistas</span>
                     </a>
                 </div>
             </li>
-            <li class="nav-item" title="Percentuais Área">
+
+            <li class="nav-item @(isAdmin || isControladoria ? "" : "d-none")" title="Resultados">
                 <div class="text-center">
-                    <a class="nav-link text-dark" asp-area="" asp-controller="PercentualAreas" asp-action="Index">
+                    <a class="nav-link text-dark @(isControladoria ? "d-none" : "")" asp-area="" asp-controller="Mensalista" asp-action="Index">
+                        <i class="fas fa-chart-line fa-2x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Resultados"></i>
+                        <span class="d-block">Resultados</span>
+                    </a>
+                </div>
+            </li>
+
+            <li class="nav-item @(isAdmin || isControladoria ? "" : "d-none")" title="Percentuais Área">
+                <div class="text-center">
+                    <a class="nav-link text-dark @(isControladoria ? "d-none" : "")" asp-area="" asp-controller="PercentualAreas" asp-action="Index">
                         <i class="fas fa-chart-pie fa-2x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Percentuais Área"></i>
                         <span class="d-block">Percentuais</span>
                     </a>
                 </div>
             </li>
+ 
             <li class="nav-item" title="Clientes">
                 <div class="text-center">
                     <a class="nav-link text-dark" asp-area="" asp-controller="Clients" asp-action="Index">
@@ -96,11 +112,11 @@
                     </a>
                 </div>
             </li>
-            <li class="nav-item" title="Resultados">
+            <li class="nav-item" title="Área">
                 <div class="text-center">
-                    <a class="nav-link text-dark" asp-area="" asp-controller="Mensalista" asp-action="Index">
-                        <i class="fas fa-chart-line fa-2x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Resultados"></i>
-                        <span class="d-block">Resultados</span>
+                    <a class="nav-link text-dark" asp-area="" asp-controller="Departments" asp-action="Index">
+                        <i class="fas fa-building fa-2x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Área"></i>
+                        <span class="d-block">Área</span>
                     </a>
                 </div>
             </li>
