@@ -1,0 +1,208 @@
+﻿/* Estilo geral */
+body {
+    background-color: #f9fafb;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.main-container {
+    display: flex;
+    justify-content: space-between; /* Adiciona espaço entre os elementos */
+    align-items: center;
+    width: 100%;
+    max-width: 1200px; /* Limita a largura máxima */
+    gap: 40px; /* Define o espaço entre a imagem e o login */
+}
+
+
+.image-container {
+    flex: 1; /* Faz a imagem ocupar um lado */
+    display: none; /* Esconde por padrão */
+    background-color: #ffffff; /* Fundo branco */
+    text-align: center;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px; /* Adiciona um espaço abaixo da imagem */
+}
+
+    .image-container img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 12px;
+        margin-bottom: 20px;
+    }
+
+    .image-container h2 {
+        font-size: 28px;
+        color: #343a40;
+        margin-bottom: 20px;
+    }
+
+    .image-container p {
+        font-size: 18px;
+        color: #6c757d;
+        text-align: center;
+        margin: 0;
+    }
+
+.login-container {
+    flex: 1; /* Faz o login ocupar um lado */
+    max-width: 400px;
+    width: 100%;
+    border-radius: 12px;
+    overflow: hidden; /* Garante que os cantos arredondados fiquem consistentes */
+    box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.header-section {
+    background-color: #e9ecef; /* Cinza claro */
+    text-align: center;
+    padding: 20px;
+}
+
+    .header-section .title {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        font-size: 24px;
+        font-weight: bold;
+        color: #343a40;
+    }
+
+        .header-section .title i {
+            color: #0d6efd; /* Azul do botão */
+        }
+
+.login-section {
+    background-color: #fff; /* Branco para destacar o formulário */
+    padding: 30px;
+}
+
+    .login-section .subtitle {
+        font-size: 20px;
+        margin-bottom: 20px;
+        color: #343a40;
+        text-align: center;
+    }
+
+.form-control {
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 16px;
+}
+
+.input-group-text {
+    background-color: #e9ecef;
+    border-radius: 8px 0 0 8px;
+}
+
+.btn-primary {
+    border-radius: 8px;
+    font-size: 16px;
+    padding: 10px;
+    width: 100%;
+    margin-top: 20px;
+}
+
+.forgot-password {
+    margin-top: 15px;
+    text-align: center;
+    font-size: 14px;
+}
+
+    .forgot-password a {
+        color: #6c757d; /* Azul mais suave */
+        text-decoration: none; /* Texto simples sem sublinhado */
+        font-weight: normal;
+    }
+
+        .forgot-password a:hover {
+            text-decoration: underline; /* Apenas sublinhado ao passar o mouse */
+        }
+
+.forgot-password-description {
+    font-size: 12px; /* Tamanho menor para texto explicativo */
+    color: #6c757d;
+    margin-top: 5px; /* Espaço entre o link e o texto explicativo */
+    text-align: center;
+}
+
+.footer-section {
+    background-color: #e9ecef; /* Cinza claro */
+    text-align: center;
+    padding: 15px;
+    margin-top: 40px; /* Espaçamento maior do botão */
+}
+
+.primary-text {
+    font-size: 16px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.jrwit-com {
+    display: inline-block; /* Mantém JRWIT.COM na mesma linha */
+}
+
+.jrwit {
+    color: #8a8a8a; /* Cinza mais forte que o .COM */
+}
+
+.com {
+    color: #9a9a9a; /* Cinza mais claro para o .COM */
+}
+
+.secondary-text {
+    font-size: 6px; /* Texto bem menor */
+    text-transform: uppercase;
+    color: #bfc1c2;
+    margin-top: -2px; /* Bem colado ao JRWIT.COM */
+    display: block;
+}
+
+/* Media Queries para telas maiores */
+
+/* Layout para telas maiores (Desktop) */
+@media (min-width: 768px) {
+    .image-container {
+        display: flex; /* Exibe a imagem e os elementos em telas maiores */
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .main-container {
+        flex-direction: row; /* Layout lado a lado para desktops */
+        gap: 40px; /* Espaço entre a imagem e o login */
+    }
+}
+
+/* Layout para telas menores (Celulares) */
+/* Layout para telas menores (Celulares) */
+@media (max-width: 767px) {
+    .image-container {
+        display: none !important; /* Força a ocultação completa */
+        visibility: hidden; /* Esconde visualmente */
+        height: 0; /* Remove o espaço ocupado */
+        overflow: hidden; /* Previne conteúdo sobrando */
+    }
+
+    .main-container {
+        flex-direction: column; /* Centraliza login */
+        align-items: center; /* Alinha ao centro */
+        gap: 20px; /* Adiciona espaçamento adequado */
+    }
+}
+
+
+
+
+
+
