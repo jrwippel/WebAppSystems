@@ -2,45 +2,82 @@
 @{
     Layout = "_LayoutDeslogado";
     ViewData["Title"] = "Login";
-
-}
-@if (TempData["MensagemErro"] != null)
-{
-    <div class="alert alert-danger" role="alert">
-        <button type="button" class="btn btn-danger btn-sm close-alert" arial-label="Close">X</button>
-        @TempData["MensagemErro"]
-    </div>
 }
 
-@if (TempData["MensagemSucesso"] != null)
-{
-    <div class="alert alert-success" role="alert">
-        <button type="button" class="btn btn-danger btn-sm close-alert" arial-label="Close">X</button>
-        @TempData["MensagemSucesso"]
-    </div>
-}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - JRWIT Solutions</title>
 
-@if (TempData["MensagemAviso"] != null)
-{
-    <div class="alert alert-warning" role="alert">
-        <button type="button" class="btn btn-warning btn-sm close-alert" aria-label="Close">X</button>
-        @TempData["MensagemAviso"]
+    <!-- Bootstrap CSS -->
+    <link href="/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons CSS -->
+    <link href="/lib/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
+    <link href="/css/custom-styles.css" rel="stylesheet">
+</head>
+<body>
+    <div class="main-container">
+        <!-- Container da imagem (somente para telas maiores) -->
+        <div class="image-container">
+            <img src="/images/logoPrincipal.jpg" alt="Bem-vindo ao JRWIT | Solution">
+            <h2>Descubra o melhor para sua equipe</h2>
+            <p>
+                Organize seu tempo e acompanhe sua produtividade com eficiência. Soluções modernas, práticas e acessíveis para você.
+            </p>
+        </div>
+
+        <!-- Container do login -->
+        <div class="login-container">
+            <div class="header-section">
+                <div class="title">
+                    <i class="bi bi-clock"></i> timetrack
+                </div>
+            </div>
+
+            <div class="login-section">
+                <div class="subtitle">Log in</div>
+
+                <form asp-controller="Login" asp-action="Entrar" method="post">
+                    <div class="mb-3 input-group">
+                        <span class="input-group-text"><i class="bi bi-person"></i></span>
+                        <input type="text" asp-for="Login" class="form-control" id="login" placeholder="Enter your login">
+                        @Html.ValidationMessageFor(x => x.Login)
+                    </div>
+                    <div class="mb-3 input-group">
+                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                        <input type="password" asp-for="Senha" class="form-control" id="senha" placeholder="Enter your password">
+                        @Html.ValidationMessageFor(x => x.Senha)
+                    </div>
+                    <button type="submit" class="btn btn-primary">Login</button>
+                </form>
+
+                <div class="forgot-password">
+                    <a asp-action="RedefinirSenha" asp-controller="Login">Forgot your password?</a>
+                    <div class="forgot-password-description">
+                        You will be redirected to the password recovery page.
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-section">
+                <p class="primary-text">
+                    <span class="jrwit-com">
+                        <span class="jrwit">JRWIT</span><span class="com">.COM</span>
+                    </span>
+                    <span class="secondary-text">SMART SOLUTIONS FOR YOUR BUSINESS</span>
+                </p>
+            </div>
+        </div>
     </div>
-}
-<form asp-controller="Login" asp-action="Entrar" method="post">
-    <div class="mb-3">
-        <label for="login" class="form-label">Login</label>
-        <input type="login" asp-for=Login class="form-control" id="login">
-        @Html.ValidationMessageFor(x => x.Login)
-    </div>
-    <div class="mb-3">
-        <label for="senha" class="form-label">Senha</label>
-        <input type="password" asp-for=Senha class="form-control" id="senha">
-        @Html.ValidationMessageFor(x => x.Senha)
-    </div>
-    <p class="mb-4 text-sm mx-auto">
-        Esqueceu sua senha?
-        <a asp-action="RedefinirSenha" asp-controller="Login" class="text-primary text-gradient font-weight-bold">Redefinir minha senha</a>
-    </p>
-    <button type="submit" class="btn btn-primary w-100">Entrar</button>
-</form>
+
+    <!-- Bootstrap JS -->
+    <script src="/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
+
+
