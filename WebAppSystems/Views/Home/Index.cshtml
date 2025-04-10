@@ -1,44 +1,118 @@
 ﻿@model WebAppSystems.Models.ChartData
 
-<div class="text-center">
-    <canvas id="usoDoSistemaChart" width="800" height="400"></canvas>
+<div class="chart-container">
+    <div class="chart-item">
+        <h3>Horas por Cliente</h3>
+        <canvas id="usoDoSistemaChart" width="400" height="400"></canvas>
+    </div>
+    <div class="chart-item">
+        <h3>Horas por Área</h3>
+        <canvas id="usoPorAreaChart" width="400" height="400"></canvas>
+    </div>
 </div>
+
+@section Styles {
+    <style>
+        .chart-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-start;
+            margin-top: 20px;
+            padding: 10px;
+        }
+
+        .chart-item {
+            text-align: center;
+            flex: 1;
+        }
+
+            .chart-item h3 {
+                font-size: 16px;
+                margin-bottom: 10px;
+                color: #333;
+            }
+
+        canvas {
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+        }
+    </style>
+}
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        var clientNames = @Html.Raw(Json.Serialize(Model.ClientNames));
-        var clientValues = @Html.Raw(Json.Serialize(Model.ClientValues));
+        document.addEventListener('DOMContentLoaded', function () {
+            // Gráfico de barras (Horas por Cliente)
+            var clientNames = @Html.Raw(Json.Serialize(Model.ClientNames));
+            var clientValues = @Html.Raw(Json.Serialize(Model.ClientValues));
 
-        var data = {
-            labels: clientNames,
-            datasets: [{
-                label: 'Horas por Clientes',
-                data: clientValues,
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 1
-            }]
-        };
+            var dataCliente = {
+                labels: clientNames,
+                datasets: [{
+                    label: 'Clientes Horas',
+                    data: clientValues,
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            };
 
-        var ctx = document.getElementById('usoDoSistemaChart').getContext('2d');
-        var myChart = new Chart(ctx, {
-            type: 'bar',
-            data: data,
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function (value) {
-                                // Formata valores para exibir com duas casas decimais
-                                return value.toFixed(2);
+            var ctxCliente = document.getElementById('usoDoSistemaChart').getContext('2d');
+            var myBarChart = new Chart(ctxCliente, {
+                type: 'bar',
+                data: dataCliente,
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function (value) {
+                                    return value.toFixed(2); // Formata os valores
+                                }
                             }
                         }
                     }
                 }
-            }
+            });
+
+            // Gráfico de pizza (Horas por Área)
+            fetch(`/Home/GetChartData?type=area`) // Busca os dados do servidor
+                .then(response => response.json())
+                .then(dataArea => {
+                    var dataPizza = {
+                        labels: dataArea.labels, // Áreas
+                        datasets: [{
+                            label: 'Horas por Área',
+                            data: dataArea.values,
+                            backgroundColor: [
+                                'rgba(255, 99, 132, 0.2)',
+                                'rgba(54, 162, 235, 0.2)',
+                                'rgba(255, 206, 86, 0.2)',
+                                'rgba(75, 192, 192, 0.2)',
+                                'rgba(153, 102, 255, 0.2)'
+                            ],
+                            borderColor: [
+                                'rgba(255, 99, 132, 1)',
+                                'rgba(54, 162, 235, 1)',
+                                'rgba(255, 206, 86, 1)',
+                                'rgba(75, 192, 192, 1)',
+                                'rgba(153, 102, 255, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    };
+
+                    var ctxArea = document.getElementById('usoPorAreaChart').getContext('2d');
+                    var myPieChart = new Chart(ctxArea, {
+                        type: 'pie',
+                        data: dataPizza,
+                        options: {
+                            responsive: true
+                        }
+                    });
+                });
         });
     </script>
 }
