@@ -77,11 +77,6 @@ namespace WebAppSystems.Services
             return (records, totalRecords);
         }
 
-
-
-
-
-
         public ChartData GetChartData()
         {
             // Obtém o mês e o ano correntes
@@ -113,9 +108,34 @@ namespace WebAppSystems.Services
             return new ChartData { ClientNames = clientNames, ClientValues = clientValues };
         }
 
+        public ChartData GetChartDataByArea()
+        {
+            // Obtém o mês e o ano correntes
+            var currentMonth = DateTime.Now.Month;
+            var currentYear = DateTime.Now.Year;
 
+            var areaHours = _context.ProcessRecord
+                .Where(pr => pr.Date.Month == currentMonth && pr.Date.Year == currentYear && pr.HoraFinal != TimeSpan.Zero)
+                .ToList()
+                .GroupBy(pr => pr.DepartmentId) // Agrupar por área
+                .Select(g => new { AreaId = g.Key, TotalHours = g.Sum(pr => (pr.HoraFinal - pr.HoraInicial).TotalHours) })
+                .ToList();
 
+            var areaNames = new List<string>();
+            var areaValues = new List<double>();
 
+            foreach (var item in areaHours)
+            {
+                var area = _context.Department.FirstOrDefault(d => d.Id == item.AreaId);
+                if (area != null)
+                {
+                    areaNames.Add(area.Name);
+                    areaValues.Add(Math.Round(item.TotalHours, 2));
+                }
+            }
+
+            return new ChartData { ClientNames = areaNames, ClientValues = areaValues };
+        }
 
 
     }
