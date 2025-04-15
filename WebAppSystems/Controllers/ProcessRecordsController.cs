@@ -349,23 +349,28 @@ namespace WebAppSystems.Controllers
 
             return Json(new { success = true, solicitante = client.Solicitante });
         }
+
         public async Task<JsonResult> GetProcessRecords(int draw, int start, int length, string search = "", int orderColumn = 0, string orderDir = "asc")
         {
             try
             {
-                // Calcula a página atual
                 int page = (start / length) + 1;
-
-                // Configura filtros de pesquisa
                 string searchValue = search?.Trim().ToLower();
-
-                // Busca os registros com filtros e total de registros
-                var (records, totalRecords) = await _processRecordsService.FindAllAsync(page, length, searchValue, orderColumn, orderDir);
 
                 Attorney usuario = _isessao.BuscarSessaoDoUsuario();
                 ViewBag.LoggedUserId = usuario.Id;
+                bool isAdmin = usuario.Perfil == ProfileEnum.Admin;
 
-                // Formata os dados no formato esperado pelo DataTables
+                var (records, totalRecords) = await _processRecordsService.FindAllAsync(
+                    page,
+                    length,
+                    searchValue,
+                    orderColumn,
+                    orderDir,
+                    loggedUserId: usuario.Id,
+                    isAdmin: isAdmin
+                );
+
                 var result = new
                 {
                     draw,
@@ -394,10 +399,11 @@ namespace WebAppSystems.Controllers
             }
             catch (Exception ex)
             {
-                // Log do erro
                 return Json(new { error = ex.Message });
             }
         }
+
+
 
     }
 }

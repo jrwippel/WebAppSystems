@@ -69,6 +69,19 @@
                         <text>Não</text>
                     }
                 </dd>
+                <dt class="col-sm-2">
+                    Usuário Inativo
+                </dt>
+                <dd class="col-sm-10">
+                    @if (Model.Inativo)
+                    {
+                        <text>Sim</text>
+                    }
+                    else
+                    {
+                        <text>Não</text>
+                    }
+                </dd>
             </dl>
             <div>
                 <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-primary">Editar</a>

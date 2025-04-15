@@ -1,49 +1,117 @@
 ﻿@model WebAppSystems.Models.ChartData
 
-<div class="chart-container">
-    <div class="chart-item">
-        <h3>Horas por Cliente</h3>
-        <canvas id="usoDoSistemaChart" width="400" height="400"></canvas>
+<div class="tabs-container">
+    <div class="tab-buttons">
+        <button class="tab-btn active" data-tab="tab1">Horas por Cliente</button>
+        <button class="tab-btn" data-tab="tab2">Horas por Tipo</button>
+        <button class="tab-btn" data-tab="tab3">Horas por Área</button>        
     </div>
-    <div class="chart-item">
-        <h3>Horas por Área</h3>
-        <canvas id="usoPorAreaChart" width="400" height="400"></canvas>
+
+    <div class="tab-content active" id="tab1">
+        <canvas id="usoDoSistemaChart" ></canvas>
     </div>
+
+    <div class="tab-content" id="tab2">
+        <canvas id="usoPorTipoChart"></canvas>
+    </div>
+    <div class="tab-content" id="tab3">
+        <canvas id="usoPorAreaChart"></canvas>
+    </div>
+
 </div>
+
 
 @section Styles {
     <style>
-        .chart-container {
-            display: flex;
-            justify-content: space-around;
-            align-items: flex-start;
+        .tabs-container {
+            width: 100%;
             margin-top: 20px;
+        }
+
+        .tab-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background-color: #f0f0f0;
+            border-radius: 5px 5px 0 0;
+            font-weight: bold;
+        }
+
+            .tab-btn.active {
+                background-color: #ffffff;
+                border-bottom: 2px solid #007bff;
+                color: #007bff;
+            }
+
+        .tab-content {
+            display: none;
             padding: 10px;
-        }
-
-        .chart-item {
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-radius: 0 0 5px 5px;
+            background-color: #ffffff;
             text-align: center;
-            flex: 1;
         }
 
-            .chart-item h3 {
-                font-size: 16px;
-                margin-bottom: 10px;
-                color: #333;
+            .tab-content.active {
+                display: block;
             }
 
         canvas {
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            border-radius: 4px;
+            margin-top: 10px;
         }
+
+        .tab-content {
+            display: none;
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-radius: 0 0 5px 5px;
+            background-color: #ffffff;
+            text-align: center;
+            height: 400px; /* altura padrão das abas */
+        }
+
+            .tab-content.active {
+                display: block;
+            }
+
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
+            max-height: 100%;
+        }
+
     </style>
+
 }
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Gráfico de barras (Horas por Cliente)
+            // Lógica das abas
+            const buttons = document.querySelectorAll('.tab-btn');
+            const contents = document.querySelectorAll('.tab-content');
+
+            buttons.forEach(btn => {
+                btn.addEventListener('click', function () {
+                    // Remove classe ativa de todos
+                    buttons.forEach(b => b.classList.remove('active'));
+                    contents.forEach(c => c.classList.remove('active'));
+
+                    // Ativa o botão e o conteúdo correto
+                    this.classList.add('active');
+                    const tabId = this.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+
+            // Gráfico de barras (já está no seu script)
             var clientNames = @Html.Raw(Json.Serialize(Model.ClientNames));
             var clientValues = @Html.Raw(Json.Serialize(Model.ClientValues));
 
@@ -64,25 +132,65 @@
                 data: dataCliente,
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     scales: {
                         y: {
                             beginAtZero: true,
                             ticks: {
                                 callback: function (value) {
-                                    return value.toFixed(2); // Formata os valores
+                                    return value.toFixed(2);
                                 }
                             }
                         }
                     }
                 }
+
             });
 
-            // Gráfico de pizza (Horas por Área)
-            fetch(`/Home/GetChartData?type=area`) // Busca os dados do servidor
+            // Gráfico de pizza
+            fetch(`/Home/GetChartData?type=tipo`)
+                .then(response => response.json())
+                .then(dataTipo => {
+                    var dataPizza = {
+                        labels: dataTipo.labels,
+                        datasets: [{
+                            label: 'Horas por Tipo',
+                            data: dataTipo.values,
+                            backgroundColor: [
+                                'rgba(255, 99, 132, 0.2)',
+                                'rgba(54, 162, 235, 0.2)',
+                                'rgba(255, 206, 86, 0.2)',
+                                'rgba(75, 192, 192, 0.2)',
+                                'rgba(153, 102, 255, 0.2)'
+                            ],
+                            borderColor: [
+                                'rgba(255, 99, 132, 1)',
+                                'rgba(54, 162, 235, 1)',
+                                'rgba(255, 206, 86, 1)',
+                                'rgba(75, 192, 192, 1)',
+                                'rgba(153, 102, 255, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    };
+
+                    var ctxTipo = document.getElementById('usoPorTipoChart').getContext('2d');
+                    var myPieChart = new Chart(ctxTipo, {
+                        type: 'pie',
+                        data: dataPizza,
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false
+                        }
+                    });
+                });
+
+            // Gráfico de pizza
+            fetch(`/Home/GetChartData?type=area`)
                 .then(response => response.json())
                 .then(dataArea => {
                     var dataPizza = {
-                        labels: dataArea.labels, // Áreas
+                        labels: dataArea.labels,
                         datasets: [{
                             label: 'Horas por Área',
                             data: dataArea.values,
@@ -109,10 +217,13 @@
                         type: 'pie',
                         data: dataPizza,
                         options: {
-                            responsive: true
+                            responsive: true,
+                            maintainAspectRatio: false
                         }
                     });
                 });
+
         });
     </script>
+
 }

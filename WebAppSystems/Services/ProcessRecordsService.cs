@@ -32,13 +32,21 @@ namespace WebAppSystems.Services
             int length,
             string searchValue = "",
             int orderColumn = 0,
-            string orderDir = "desc"           
+            string orderDir = "desc",
+             int? loggedUserId = null,
+            bool isAdmin = false
             )
         {
             var query = _context.ProcessRecord
                 .Include(pr => pr.Client)
                 .Include(pr => pr.Attorney)
                 .AsQueryable();
+
+            // Aplica filtro por usuário se não for admin
+            if (!isAdmin && loggedUserId.HasValue)
+            {
+                query = query.Where(pr => pr.AttorneyId == loggedUserId.Value);
+            }
 
             // Filtro de pesquisa
             if (!string.IsNullOrEmpty(searchValue))
@@ -136,6 +144,36 @@ namespace WebAppSystems.Services
 
             return new ChartData { ClientNames = areaNames, ClientValues = areaValues };
         }
+
+        public ChartData GetChartDataByRecordType()
+        {
+            // Obtém o mês e o ano correntes
+            var currentMonth = DateTime.Now.Month;
+            var currentYear = DateTime.Now.Year;
+
+            var recordTypeHours = _context.ProcessRecord
+                .Where(pr => pr.Date.Month == currentMonth && pr.Date.Year == currentYear && pr.HoraFinal != TimeSpan.Zero)
+                .ToList()
+                .GroupBy(pr => pr.RecordType) // Agrupar por tipo de registro
+                .Select(g => new
+                {
+                    RecordType = g.Key,
+                    TotalHours = g.Sum(pr => (pr.HoraFinal - pr.HoraInicial).TotalHours)
+                })
+                .ToList();
+
+            var recordTypeNames = new List<string>();
+            var recordTypeValues = new List<double>();
+
+            foreach (var item in recordTypeHours)
+            {
+                recordTypeNames.Add(item.RecordType.ToString()); // Adiciona o nome do tipo de registro
+                recordTypeValues.Add(Math.Round(item.TotalHours, 2)); // Arredonda o valor de horas
+            }
+
+            return new ChartData { ClientNames = recordTypeNames, ClientValues = recordTypeValues };
+        }
+
 
 
     }
