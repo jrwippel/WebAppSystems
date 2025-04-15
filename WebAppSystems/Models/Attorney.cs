@@ -34,6 +34,7 @@ namespace WebAppSystems.Models
         public ICollection<ProcessRecord> ProcessRecords { get; set; } = new List<ProcessRecord>();
         public bool UseBorder { get; set; }
         public bool UseCronometroAlwaysOnTop { get; set; }
+        public bool Inativo { get; set; }
         public Attorney()
         {
         }

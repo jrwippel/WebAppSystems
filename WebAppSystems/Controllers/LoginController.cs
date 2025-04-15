@@ -102,22 +102,36 @@ namespace WebAppSystems.Controllers
         {
             try
             {
+                // Verifica se o estado do modelo é válido
                 if (ModelState.IsValid)
                 {
                     var usuario = _attorneyService.FindByLoginAsync(loginModel.Login);
+
                     if (usuario != null)
                     {
+                        if (usuario.Inativo)
+                        {
+                            TempData["MensagemErro"] = "Usuário inativo. Contate o administrador para mais informações.";
+                            return View("Index");
+                        }
+
                         if (usuario.ValidaSenha(loginModel.Senha))
                         {
                             _sessao.CriarSessaoDoUsuario(usuario);
                             return RedirectToAction("Index", "Home");
                         }
+
                         TempData["MensagemErro"] = "Senha do usuário é inválida.";
                     }
                     else
                     {
                         TempData["MensagemErro"] = "Usuário e/ou senha inválido(s).";
                     }
+                }
+                else
+                {
+                    // Remove mensagens de erro desnecessárias caso a validação inicial falhe
+                    TempData["MensagemErro"] = null;
                 }
 
                 return View("Index");
@@ -133,5 +147,7 @@ namespace WebAppSystems.Controllers
                 return RedirectToAction("Index");
             }
         }
+
+
     }
 }

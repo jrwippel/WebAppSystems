@@ -40,6 +40,10 @@ namespace WebAppSystems.Controllers
                 {
                     chartData = _processRecordsService.GetChartData();
                 }
+                else if (type == "tipo")
+                {
+                    chartData = _processRecordsService.GetChartDataByRecordType();
+                }
                 else if (type == "area")
                 {
                     chartData = _processRecordsService.GetChartDataByArea();
