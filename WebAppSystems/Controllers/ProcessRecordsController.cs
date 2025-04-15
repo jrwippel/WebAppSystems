@@ -147,6 +147,21 @@ namespace WebAppSystems.Controllers
                 ModelState.AddModelError("ProcessRecord.HoraInicial", "A hora inicial deve ser menor que a hora final.");
             }
 
+            // >>> Validação de sobreposição de horários
+            bool temConflito = await _context.ProcessRecord
+                .AnyAsync(pr =>
+                    pr.AttorneyId == processRecord.AttorneyId &&
+                    pr.Date.Date == processRecord.Date.Date &&
+                    pr.Id != processRecord.Id && // Evita conflito consigo mesmo na edição
+                    processRecord.HoraInicial < pr.HoraFinal &&
+                    processRecord.HoraFinal > pr.HoraInicial
+                );
+
+            if (temConflito)
+            {
+                ModelState.AddModelError("", "O horário informado conflita com outro registro do mesmo dia.");
+            }
+
             if (!ModelState.IsValid)
             {
                 var clients = await _clientService.FindAllAsync();
