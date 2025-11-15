@@ -71,6 +71,29 @@
                     </select>
                 </div>
 
+                
+<!-- Área / Departamento -->
+<div class="form-group col-md-3">
+    <label for="departmentId">Área</label>
+    <select class="form-control" name="departmentId" id="departmentId">
+        <option value="">Todas</option>
+                        @foreach (var dept in ViewBag.Departments)
+                        {
+                            if (dept.Id.ToString() == ViewData["departmentId"]?.ToString())
+                            {
+                                <option value="@dept.Id" selected>@dept.Name</option>
+                            }
+                            else
+                            {
+                                <option value="@dept.Id">@dept.Name</option>
+                            }
+                        }
+
+    </select>
+</div>
+
+
+
 
                 <!-- Botões -->
                 <div class="form-group col-md-2">

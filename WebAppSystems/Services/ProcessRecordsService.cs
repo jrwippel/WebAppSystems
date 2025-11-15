@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using WebAppSystems.Data;
 using WebAppSystems.Models;
+using WebAppSystems.Models.Enums;
 
 namespace WebAppSystems.Services
 {
@@ -33,8 +34,8 @@ namespace WebAppSystems.Services
             string searchValue = "",
             int orderColumn = 0,
             string orderDir = "desc",
-             int? loggedUserId = null,
-            bool isAdmin = false
+            int? loggedUserId = null,
+            ProfileEnum? perfil = null
             )
         {
             var query = _context.ProcessRecord
@@ -42,11 +43,11 @@ namespace WebAppSystems.Services
                 .Include(pr => pr.Attorney)
                 .AsQueryable();
 
-            // Aplica filtro por usuário se não for admin
-            if (!isAdmin && loggedUserId.HasValue)
+            if (perfil == ProfileEnum.Padrao && loggedUserId.HasValue)
             {
                 query = query.Where(pr => pr.AttorneyId == loggedUserId.Value);
             }
+
 
             // Filtro de pesquisa
             if (!string.IsNullOrEmpty(searchValue))

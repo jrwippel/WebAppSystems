@@ -41,6 +41,7 @@ namespace WebAppSystems.Controllers
             _departmentService = departmentService;
         }
 
+
         // GET: ProcessRecords
         public IActionResult Index()
         {
@@ -146,7 +147,7 @@ namespace WebAppSystems.Controllers
             {
                 ModelState.AddModelError("ProcessRecord.HoraInicial", "A hora inicial deve ser menor que a hora final.");
             }
-
+            /*
             // >>> Validação de sobreposição de horários
             bool temConflito = await _context.ProcessRecord
                 .AnyAsync(pr =>
@@ -161,7 +162,7 @@ namespace WebAppSystems.Controllers
             {
                 ModelState.AddModelError("", "O horário informado conflita com outro registro do mesmo dia.");
             }
-
+            */
             if (!ModelState.IsValid)
             {
                 var clients = await _clientService.FindAllAsync();
@@ -374,7 +375,6 @@ namespace WebAppSystems.Controllers
 
                 Attorney usuario = _isessao.BuscarSessaoDoUsuario();
                 ViewBag.LoggedUserId = usuario.Id;
-                bool isAdmin = usuario.Perfil == ProfileEnum.Admin;
 
                 var (records, totalRecords) = await _processRecordsService.FindAllAsync(
                     page,
@@ -383,7 +383,7 @@ namespace WebAppSystems.Controllers
                     orderColumn,
                     orderDir,
                     loggedUserId: usuario.Id,
-                    isAdmin: isAdmin
+                    perfil: usuario.Perfil // <-- AQUI
                 );
 
                 var result = new
@@ -400,6 +400,7 @@ namespace WebAppSystems.Controllers
                         Cliente = pr.Client.Name,
                         Usuario = pr.Attorney.Name,
                         Tipo = ((RecordType)pr.RecordType).GetDisplayName(),
+                        Descricao = pr.Description,
                         EditLink = pr.Attorney.Id == ViewBag.LoggedUserId
                             ? Url.Action("Edit", new { id = pr.Id })
                             : null,
@@ -417,6 +418,7 @@ namespace WebAppSystems.Controllers
                 return Json(new { error = ex.Message });
             }
         }
+
 
 
 

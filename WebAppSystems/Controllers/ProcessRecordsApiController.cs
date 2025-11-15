@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Authorization;
 using WebAppSystems.Helper;
 using WebAppSystems.Services;
 using WebAppSystems.Models.Enums;
+using Humanizer;
+using System.Globalization;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -96,4 +98,83 @@ public class ProcessRecordsApiController : ControllerBase
             return StatusCode(500, new { status = "Error", message = ex.Message });
         }
     }
+
+    [HttpGet("activities")]
+    [Authorize]
+    public IActionResult GetUserActivities()
+    {
+        try
+        {
+            var userIdClaim = User.FindFirst("userId")?.Value;
+            if (string.IsNullOrEmpty(userIdClaim))
+                return Unauthorized("Usuário não autenticado.");
+
+            int userId = int.Parse(userIdClaim);
+
+            var atividades = _context.ProcessRecord
+    .Where(x => x.AttorneyId == userId)
+    .OrderByDescending(x => x.Date)
+    .Select(x => new
+    {
+        id = x.Id,
+        data = x.Date.ToString("dd/MM/yyyy"),
+        clientId = x.ClientId,
+        clienteNome = x.Client.Name,
+        descricao = x.Description,
+        solicitante = x.Solicitante,
+        horaInicial = x.HoraInicial.ToString(@"hh\:mm"),
+        horaFinal = x.HoraFinal.ToString(@"hh\:mm"),
+        departmentId = x.DepartmentId,
+        recordType = x.RecordType
+    })
+    .ToList();
+
+
+
+
+            return Ok(atividades);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { status = "Error", message = ex.Message });
+        }
+    }
+
+    [HttpPut("update/{id}")]
+    [Authorize]
+    public IActionResult UpdateActivity(int id, [FromBody] ProcessRecord updatedActivity)
+    {
+        try
+        {
+            var activity = _context.ProcessRecord.FirstOrDefault(x => x.Id == id);
+            if (activity == null)
+                return NotFound("Atividade não encontrada.");
+
+            // Atualiza os campos           
+
+            activity.Description = updatedActivity.Description;
+            activity.Solicitante = updatedActivity.Solicitante;
+           // activity.Date = updatedActivity.Date;
+            activity.HoraInicial = updatedActivity.HoraInicial;
+            activity.HoraFinal = updatedActivity.HoraFinal;
+            activity.ClientId = updatedActivity.ClientId;
+            activity.DepartmentId = updatedActivity.DepartmentId;
+            activity.RecordType = updatedActivity.RecordType;
+
+
+
+            _context.SaveChanges();
+
+            return Ok(new { status = "Success", message = "Atividade atualizada com sucesso!" });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { status = "Error", message = ex.Message });
+        }
+    }
+
+
+
+
+
 }

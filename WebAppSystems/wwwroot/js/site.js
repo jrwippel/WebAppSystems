@@ -30,6 +30,7 @@ $('#table-SearchRecord').DataTable({
 $('.close-alert').click(function () {
     $('.alert').hide('hide');
 });
+
 $('#table-SearchRecords').DataTable({
     "serverSide": true,
     "processing": true,
@@ -37,10 +38,9 @@ $('#table-SearchRecords').DataTable({
         "url": "/ProcessRecords/GetProcessRecords",
         "type": "POST",
         "data": function (d) {
-            // Adiciona parâmetros de pesquisa e ordenação
-            d.search = d.search.value; // Valor da pesquisa global
-            d.orderColumn = d.order[0].column; // Índice da coluna para ordenar
-            d.orderDir = d.order[0].dir; // Direção da ordenação (asc ou desc)
+            d.search = d.search.value;
+            d.orderColumn = d.order[0].column;
+            d.orderDir = d.order[0].dir;
         }
     },
     "columns": [
@@ -66,7 +66,11 @@ $('#table-SearchRecords').DataTable({
             "orderable": false
         }
     ],
+    "createdRow": function (row, data, dataIndex) {
+        $(row).attr('title', data.descricao); // <-- Aqui entra o tooltip
+    },
     "language": {
         "sSearch": "Pesquisar:"
     }
 });
+

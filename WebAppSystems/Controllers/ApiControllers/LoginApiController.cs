@@ -11,7 +11,7 @@ using WebAppSystems.Helper;
 using WebAppSystems.Models;
 using WebAppSystems.Services;
 
-namespace WebAppSystems.Controllers
+namespace WebAppSystems.Controllers.ApiControllers
 {
     [Route("api/[controller]")] // Esta linha define a rota base para este controller
     [ApiController] // Esta linha indica que este é um Controller de API
@@ -50,7 +50,7 @@ namespace WebAppSystems.Controllers
                             usuario.DepartmentId,
                             usuario.UseBorder,
                             usuario.UseCronometroAlwaysOnTop,
-                            token = token
+                            token
                         });
                     }
                     return Unauthorized(new { message = "Usuário e/ou senha inválidos!" });
@@ -90,7 +90,7 @@ namespace WebAppSystems.Controllers
         public IActionResult Index()
         {
             // Se usuario estiver logado direcionar ele para a Home
-            if ( _sessao.BuscarSessaoDoUsuario() != null ) return RedirectToAction("Index", "Home");
+            if (_sessao.BuscarSessaoDoUsuario() != null) return RedirectToAction("Index", "Home");
             return View();
         }
         public IActionResult TimeTracking()
@@ -155,21 +155,21 @@ namespace WebAppSystems.Controllers
                 {
                     Attorney usuario = _attorneyService.FindByLoginAsync(loginModel.Login);
                     if (usuario != null)
-                      {
-                          if (usuario.ValidaSenha(loginModel.Senha))
-                          {
-                             _sessao.CriarSessaoDoUsuario(usuario);
-                             return RedirectToAction("Index", "Home");
-                            
+                    {
+                        if (usuario.ValidaSenha(loginModel.Senha))
+                        {
+                            _sessao.CriarSessaoDoUsuario(usuario);
+                            return RedirectToAction("Index", "Home");
+
                         }
-                          TempData["MensagemErro"] = $"Senha do Usuário é Inválida";
+                        TempData["MensagemErro"] = $"Senha do Usuário é Inválida";
                     }
                     TempData["MensagemErro"] = $"Usuário e/ou Senha Inválido(s)";
 
                 }
 
                 return View("Index");
-                
+
             }
             catch (Exception erro)
             {

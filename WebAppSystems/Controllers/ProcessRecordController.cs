@@ -43,8 +43,11 @@ namespace WebAppSystems.Controllers
 
         private readonly ParametroService _parametroService;
 
+        private readonly DepartmentService _departmentService;
+
+
         public ProcessRecordController(ProcessRecordService processRecordService, ClientService clientService, AttorneyService attorneyService, IWebHostEnvironment env, ISessao isessao, 
-            ValorClienteService valorClienteService, ParametroService parametroService)
+            ValorClienteService valorClienteService, ParametroService parametroService, DepartmentService departmentService)
         {
             _processRecordService = processRecordService;
             _clientService = clientService;
@@ -53,6 +56,7 @@ namespace WebAppSystems.Controllers
             _env = env;
             _isessao = isessao;
             _parametroService = parametroService;
+            _departmentService = departmentService;
         }
 
         public async Task<IActionResult> Index()
@@ -69,7 +73,7 @@ namespace WebAppSystems.Controllers
                 return RedirectToAction("Index", "Login");
             }
         }
-        public async Task<IActionResult> SimpleSearch(DateTime? minDate, DateTime? maxDate, int? clientId, int? attorneyId, string recordType)
+        public async Task<IActionResult> SimpleSearch(DateTime? minDate, DateTime? maxDate, int? clientId, int? attorneyId, int? departmentId, string recordType)
         {
             SetDefaultDateValues(ref minDate, ref maxDate);
 
@@ -82,14 +86,14 @@ namespace WebAppSystems.Controllers
             PopulateViewData(minDate, maxDate, clientId, attorneyId, recordTypeEnum.ToString());
             await PopulateViewBag();
 
-            var result = await _processRecordService.FindByDateAsync(minDate, maxDate, clientId, attorneyId, recordTypeEnum);
+            var result = await _processRecordService.FindByDateAsync(minDate, maxDate, clientId, attorneyId, departmentId, recordTypeEnum);
             return View(result);
 
         }
 
         // Ação para gerar e baixar o arquivo CSV
 
-        public async Task<IActionResult> DownloadReport(DateTime? minDate, DateTime? maxDate, int? clientId, int? attorneyId, string recordType = null, string format = "xlsx")
+        public async Task<IActionResult> DownloadReport(DateTime? minDate, DateTime? maxDate, int? clientId, int? attorneyId, int? departmentId, string recordType = null, string format = "xlsx")
         {
 
             RecordType? recordTypeEnum = null;
@@ -99,7 +103,7 @@ namespace WebAppSystems.Controllers
             }
 
             // Obter os registros filtrados usando a função FindByDateAsync
-            var filteredRecords = await _processRecordService.FindByDateAsync(minDate, maxDate, clientId, attorneyId, recordTypeEnum);
+            var filteredRecords = await _processRecordService.FindByDateAsync(minDate, maxDate, clientId, attorneyId, departmentId, recordTypeEnum);
 
             string clientName = null;
             if (clientId.HasValue)
@@ -646,6 +650,7 @@ namespace WebAppSystems.Controllers
         {
             ViewBag.Clients = await _clientService.FindAllAsync();
             ViewBag.Attorneys = await _attorneyService.FindAllAsync();
+            ViewBag.Departments = await _departmentService.FindAllAsync();
 
             Attorney usuario = _isessao.BuscarSessaoDoUsuario();
             ViewBag.UserProfile = usuario.Perfil;        
