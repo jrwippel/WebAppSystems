@@ -4,11 +4,12 @@
     <div class="tab-buttons">
         <button class="tab-btn active" data-tab="tab1">Horas por Cliente</button>
         <button class="tab-btn" data-tab="tab2">Horas por Tipo</button>
-        <button class="tab-btn" data-tab="tab3">Horas por Área</button>        
+        <button class="tab-btn" data-tab="tab3">Horas por Área</button>
     </div>
 
     <div class="tab-content active" id="tab1">
-        <canvas id="usoDoSistemaChart" ></canvas>
+        <canvas id="usoDoSistemaChart"></canvas>
+        <canvas id="usoDoSistemaChartHorizontal"></canvas> <!-- Gráfico horizontal grande -->
     </div>
 
     <div class="tab-content" id="tab2">
@@ -17,9 +18,7 @@
     <div class="tab-content" id="tab3">
         <canvas id="usoPorAreaChart"></canvas>
     </div>
-
 </div>
-
 
 @section Styles {
     <style>
@@ -56,23 +55,6 @@
             border-radius: 0 0 5px 5px;
             background-color: #ffffff;
             text-align: center;
-        }
-
-            .tab-content.active {
-                display: block;
-            }
-
-        canvas {
-            margin-top: 10px;
-        }
-
-        .tab-content {
-            display: none;
-            padding: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            border-radius: 0 0 5px 5px;
-            background-color: #ffffff;
-            text-align: center;
             height: 400px; /* altura padrão das abas */
         }
 
@@ -82,12 +64,13 @@
 
         canvas {
             width: 100% !important;
-            height: 100% !important;
-            max-height: 100%;
         }
 
+        #usoDoSistemaChartHorizontal {
+            margin-top: 20px;
+            height: 1500px; /* Aumentando para um espaço ainda maior */
+        }
     </style>
-
 }
 
 @section Scripts {
@@ -111,7 +94,7 @@
                 });
             });
 
-            // Gráfico de barras (já está no seu script)
+            // Gráfico de barras original
             var clientNames = @Html.Raw(Json.Serialize(Model.ClientNames));
             var clientValues = @Html.Raw(Json.Serialize(Model.ClientValues));
 
@@ -144,10 +127,57 @@
                         }
                     }
                 }
-
             });
 
-            // Gráfico de pizza
+            // Gráfico de barras horizontal ordenado
+            var combinedData = clientNames.map((name, index) => ({ name, value: clientValues[index] }));
+            combinedData.sort((a, b) => b.value - a.value);
+
+            var sortedNames = combinedData.map(data => data.name);
+            var sortedValues = combinedData.map(data => data.value);
+
+            var dataHorizontal = {
+                labels: sortedNames,
+                datasets: [{
+                    label: 'Clientes Horas (Horizontal)',
+                    data: sortedValues,
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            };
+
+            var ctxHorizontal = document.getElementById('usoDoSistemaChartHorizontal').getContext('2d');
+            var myBarHorizontalChart = new Chart(ctxHorizontal, {
+                type: 'bar',
+                data: dataHorizontal,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y', // Barras na horizontal
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function (value) {
+                                    return value.toFixed(2);
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                font: {
+                                    size: 16 // Melhor tamanho para legendas
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Gráfico de pizza por tipo
             fetch(`/Home/GetChartData?type=tipo`)
                 .then(response => response.json())
                 .then(dataTipo => {
@@ -185,7 +215,7 @@
                     });
                 });
 
-            // Gráfico de pizza
+            // Gráfico de pizza por área
             fetch(`/Home/GetChartData?type=area`)
                 .then(response => response.json())
                 .then(dataArea => {
@@ -222,8 +252,6 @@
                         }
                     });
                 });
-
         });
     </script>
-
 }

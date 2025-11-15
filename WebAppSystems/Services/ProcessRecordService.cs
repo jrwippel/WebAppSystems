@@ -19,7 +19,58 @@ namespace WebAppSystems.Services
             _context = context;
         }
 
-        public async Task<List<ProcessRecord>> FindByDateAsync(DateTime? minDate, DateTime? maxDate, int? clientId, int? attorneyId, RecordType? recordType)
+        public async Task<List<ProcessRecord>> FindByDateAsync(
+    DateTime? minDate,
+    DateTime? maxDate,
+    int? clientId,
+    int? attorneyId,
+    int? departmentId,
+    RecordType? recordType)
+        {
+            var result = from obj in _context.ProcessRecord select obj;
+
+            if (minDate.HasValue)
+            {
+                result = result.Where(x => x.Date >= minDate.Value);
+            }
+
+            if (maxDate.HasValue)
+            {
+                result = result.Where(x => x.Date <= maxDate.Value);
+            }
+
+            if (clientId.HasValue)
+            {
+                result = result.Where(x => x.ClientId == clientId.Value);
+            }
+
+            if (attorneyId.HasValue)
+            {
+                result = result.Where(x => x.AttorneyId == attorneyId.Value);
+            }
+
+            if (departmentId.HasValue)
+            {
+                result = result.Where(x => x.DepartmentId == departmentId.Value);
+            }
+
+            if (recordType.HasValue)
+            {
+                result = result.Where(x => x.RecordType == recordType.Value);
+            }
+
+            return await result
+                .Include(x => x.Attorney)
+                .Include(x => x.Attorney.Department)
+                .Include(x => x.Client)
+                .Include(x => x.Department)
+                .OrderBy(x => x.Date)
+                .ThenBy(x => x.HoraInicial)
+                .ToListAsync();
+        }
+
+
+        public async Task<List<ProcessRecord>> FindByDateAsyncRes(DateTime? minDate, DateTime? maxDate, int? clientId, int? attorneyId, RecordType? recordType)
         {
             var result = from obj in _context.ProcessRecord select obj;
             if (minDate.HasValue)

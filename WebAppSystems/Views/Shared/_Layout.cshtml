@@ -11,8 +11,15 @@
     <link href="https://cdn.datatables.net/v/dt/dt-1.13.4/datatables.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link rel="shortcut icon" type="image/x-icon" href="~/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0078D7">
 </head>
+
+
+
 <body>
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
@@ -27,15 +34,8 @@
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
-    </div> 
-    
-    
-
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy 2023 - WebAppSystems - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-        </div>
-    </footer>
+    </div>  
+     
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.datatables.net/v/dt/dt-1.13.4/datatables.min.js"></script>
@@ -43,5 +43,13 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(reg => console.log('Service Worker registrado:', reg))
+                .catch(err => console.log('Erro ao registrar Service Worker:', err));
+        }
+    </script>
 </body>
 </html>

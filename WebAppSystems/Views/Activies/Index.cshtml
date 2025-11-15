@@ -1,0 +1,61 @@
+﻿@{
+    ViewData["Title"] = "Atividades";
+}
+
+<div class="container">
+    <h2 class="text-center my-3">Lista de Atividades</h2>
+    <div id="records-container">
+        <!-- Os cards serão inseridos aqui via JavaScript -->
+    </div>
+</div>
+
+<style>
+    /* Estilo dos Cards */
+    .card-custom {
+        width: 100%;
+        max-width: 400px;
+        margin: 10px auto;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 2px 2px 10px rgba(0,0,0,0.2);
+        background: #f8f9fa;
+    }
+
+    .card-header-custom {
+        font-size: 18px;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .card-body-custom {
+        font-size: 14px;
+        color: #555;
+    }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        fetch("/Activies/GetProcessRecords")
+            .then(response => response.json())
+            .then(data => {
+                let container = document.getElementById("records-container");
+                container.innerHTML = ""; // Garante que a lista seja atualizada corretamente
+
+                data.forEach(record => {
+                    let clientName = record.client ? record.client.name : "Não informado"; // Evita erro se client for null
+
+                    let card = `
+                            <div class="card-custom">
+                                <div class="card-header-custom">${new Date(record.date).toLocaleDateString()}</div>
+                                <div class="card-body-custom">
+                                    <p><strong>Hora:</strong> ${record.horaInicial} - ${record.horaFinal}</p>
+                                    <p><strong>Cliente:</strong> ${clientName}</p>
+                                </div>
+                            </div>
+                        `;
+                    container.innerHTML += card;
+                });
+            })
+            .catch(error => console.error("Erro ao buscar registros:", error));
+    });
+</script>

@@ -270,7 +270,7 @@ namespace WebAppSystems.Controllers
                 recordTypeEnum = Enum.Parse<RecordType>(recordType, true);
             }
 
-            var filteredRecords = await _processRecordService.FindByDateAsync(minDate, maxDate, clientId, departmentId, recordTypeEnum);
+            var filteredRecords = await _processRecordService.FindByDateAsyncRes(minDate, maxDate, clientId, departmentId, recordTypeEnum);
 
             if (format != "xlsx")
             {
