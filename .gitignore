@@ -403,3 +403,7 @@ FodyWeavers.xsd
 *.sln.iml
 
 .env
+# ASP.NET Core configuration (sensitive)
+appsettings.json
+appsettings.*.json
+
