@@ -1,43 +1,280 @@
 ﻿@model WebAppSystems.Models.PercentualArea
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Detalhes do Percentual";
 }
 
-<h1>Detalhes</h1>
-
-<hr />
-
-<div class="card">
-    <div class="card-body">
-        <h4 class="card-title">Percentual por Cliente/Área</h4>
-        <hr />
-        <form asp-action="Create">
-            <dl class="row">
-                <dt class="col-sm-2">
-                    Cliente
-                </dt>
-                <dd class="col-sm-10">
-                    @Html.DisplayFor(model => model.Client.Name)
-                </dd>
-                <dt class="col-sm-2">
-                    Área
-                </dt>
-                <dd class="col-sm-10">
-                    @Html.DisplayFor(model => model.Department.Name)
-                </dd>
-                <dt class="col-sm-2">
-                    @Html.DisplayNameFor(model => model.Percentual)
-                </dt>
-                <dd class="col-sm-10">
-                    @Html.DisplayFor(model => model.Percentual)
-                </dd>
-            </dl>
-            <div>
-                <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-primary">Editar</a>
-                <a asp-action="Index" class="btn btn-secondary">Voltar</a>
+<div class="details-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-left">
+                <div class="header-icon">
+                    <i class="bi bi-info-circle"></i>
+                </div>
+                <div class="header-text">
+                    <h1 class="page-title">Detalhes do Percentual</h1>
+                    <p class="page-subtitle">Informações completas</p>
+                </div>
             </div>
-        </form>
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn-edit-header">
+                <i class="bi bi-pencil"></i>
+                Editar
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Card -->
+    <div class="main-card">
+        <div class="info-grid">
+            <div class="info-item">
+                <i class="bi bi-person-circle"></i>
+                <div>
+                    <label>Cliente</label>
+                    <span>@Model.Client.Name</span>
+                </div>
+            </div>
+
+            <div class="info-item">
+                <i class="bi bi-building"></i>
+                <div>
+                    <label>Área</label>
+                    <span>@Model.Department.Name</span>
+                </div>
+            </div>
+
+            <div class="info-item highlight">
+                <i class="bi bi-percent"></i>
+                <div>
+                    <label>Percentual</label>
+                    <span class="percent-value">@Model.Percentual %</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions-card">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn-action btn-primary">
+            <i class="bi bi-pencil-square"></i>
+            Editar Percentual
+        </a>
+        <a asp-action="Index" class="btn-action btn-secondary">
+            <i class="bi bi-arrow-left"></i>
+            Voltar para Lista
+        </a>
     </div>
 </div>
 
+<style>
+    .details-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        padding: 24px 28px;
+        margin-bottom: 24px;
+        box-shadow: 0 6px 25px rgba(102, 126, 234, 0.25);
+    }
+
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .header-icon {
+        width: 50px;
+        height: 50px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: white;
+        backdrop-filter: blur(10px);
+    }
+
+    .page-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: white;
+        margin: 0 0 6px 0;
+    }
+
+    .page-subtitle {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.9);
+        margin: 0;
+    }
+
+    .btn-edit-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        background: white;
+        color: #667eea;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+
+    .btn-edit-header:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 255, 255, 0.3);
+        color: #764ba2;
+    }
+
+    .main-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+        padding: 32px;
+        margin-bottom: 24px;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 24px;
+    }
+
+    .info-item {
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+        padding: 20px;
+        background: #f7fafc;
+        border-radius: 10px;
+        border-left: 4px solid #667eea;
+    }
+
+    .info-item.highlight {
+        background: linear-gradient(135deg, rgba(72, 187, 120, 0.1) 0%, rgba(56, 161, 105, 0.1) 100%);
+        border-left-color: #48bb78;
+    }
+
+    .info-item i {
+        font-size: 28px;
+        color: #667eea;
+        flex-shrink: 0;
+        margin-top: 4px;
+    }
+
+    .info-item.highlight i {
+        color: #48bb78;
+    }
+
+    .info-item div {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        flex: 1;
+    }
+
+    .info-item label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #718096;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .info-item span {
+        font-size: 18px;
+        font-weight: 600;
+        color: #2d3748;
+    }
+
+    .percent-value {
+        font-size: 32px !important;
+        font-weight: 700 !important;
+        color: #48bb78 !important;
+    }
+
+    .actions-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+        padding: 24px;
+        display: flex;
+        gap: 12px;
+    }
+
+    .btn-action {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 14px 24px;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        border: none;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+        background: #f7fafc;
+        color: #4a5568;
+        border: 2px solid #e2e8f0;
+    }
+
+    .btn-secondary:hover {
+        background: #e2e8f0;
+        color: #2d3748;
+    }
+
+    @@media (max-width: 768px) {
+        .details-container {
+            padding: 12px;
+        }
+
+        .header-content {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .btn-edit-header {
+            justify-content: center;
+        }
+
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .actions-card {
+            flex-direction: column;
+        }
+    }
+</style>

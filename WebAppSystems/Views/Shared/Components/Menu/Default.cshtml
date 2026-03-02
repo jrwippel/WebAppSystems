@@ -2,183 +2,547 @@
 @model Attorney
 
 @{
-    // Supondo que Model.Perfil seja do tipo ProfileEnum, e que queremos
-    // exibir esses itens apenas para Admin ou Controladoria.
-    var showNavItem = Model.Perfil == ProfileEnum.Admin || Model.Perfil == ProfileEnum.Controladoria;
+    var isAdmin = Model.Perfil == ProfileEnum.Admin;
+    var isControladoria = Model.Perfil == ProfileEnum.Controladoria;
+    var showAdminItems = Model.Perfil != ProfileEnum.Padrao;
 }
 
-<a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">@Model.Name's workspace</a>
+<style>
+    /* Modern Navigation Styles */
+    .navbar {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        padding: 0 !important;
+    }
+
+    .navbar-brand-container {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        padding: 12px 20px;
+        position: relative;
+    }
+
+    /* User Dropdown */
+    .user-dropdown {
+        position: relative;
+    }
+
+    .user-dropdown-toggle {
+        background: none;
+        border: none;
+        color: white;
+        font-weight: 600;
+        font-size: 16px;
+        padding: 8px 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .user-dropdown-toggle:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .user-icon {
+        font-size: 18px;
+    }
+
+    .dropdown-arrow {
+        font-size: 12px;
+        transition: transform 0.3s ease;
+    }
+
+    .user-dropdown.active .dropdown-arrow {
+        transform: rotate(180deg);
+    }
+
+    .workspace-name {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    /* Dropdown Menu */
+    .user-dropdown-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        margin-top: 8px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        min-width: 280px;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-10px);
+        transition: all 0.3s ease;
+        z-index: 1000;
+    }
+
+    .user-dropdown.active .user-dropdown-menu {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+
+    .dropdown-header {
+        padding: 16px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px 12px 0 0;
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .user-icon-large {
+        font-size: 40px;
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+    }
+
+    .user-details {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        color: white;
+    }
+
+    .user-details strong {
+        font-size: 15px;
+        font-weight: 600;
+    }
+
+    .user-email {
+        font-size: 12px;
+        opacity: 0.9;
+    }
+
+    .dropdown-divider {
+        height: 1px;
+        background: #e2e8f0;
+        margin: 8px 0;
+    }
+
+    .dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        color: #2d3748;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        font-size: 14px;
+    }
+
+    .dropdown-item:hover {
+        background: #f7fafc;
+        color: #667eea;
+    }
+
+    .dropdown-item i {
+        font-size: 16px;
+        width: 20px;
+        text-align: center;
+    }
+
+    .logout-item {
+        color: #e53e3e;
+    }
+
+    .logout-item:hover {
+        background: #fff5f5;
+        color: #c53030;
+    }
+
+    .hours-today {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 500;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .hours-today i {
+        font-size: 14px;
+    }
+
+    .hours-today strong {
+        font-weight: 700;
+        color: #ffeb3b;
+        font-size: 14px;
+    }
+
+    .navbar-brand:hover {
+        color: rgba(255, 255, 255, 0.9) !important;
+        text-decoration: none;
+    }
+
+    .navbar-brand::before {
+        content: '👤';
+        font-size: 18px;
+    }
+
+    .navbar-toggler {
+        border-color: rgba(255, 255, 255, 0.3) !important;
+        margin: 8px 16px;
+    }
+
+    .navbar-toggler-icon {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255, 255, 255, 0.9)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+    }
+
+    .navbar-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        padding: 8px 12px;
+    }
+
+    /* Language Selector - Right Side */
+    .language-selector-right {
+        margin-left: auto;
+        align-self: flex-end;
+    }
+
+    .language-flags-group {
+        display: flex;
+        gap: 6px;
+        padding: 4px;
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 6px;
+        margin-bottom: 4px;
+    }
+
+    .language-flags-group .flag-btn {
+        background: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        cursor: pointer;
+        padding: 3px 5px;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+        opacity: 0.7;
+        width: 32px;
+        height: 22px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .language-flags-group .flag-icon {
+        width: 22px;
+        height: 14px;
+        border-radius: 2px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    .language-flags-group .flag-btn:hover {
+        background: rgba(255, 255, 255, 0.25);
+        opacity: 1;
+        transform: scale(1.05);
+        border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    .language-flags-group .flag-btn.active {
+        opacity: 1;
+        background: rgba(255, 255, 255, 0.35);
+        border-color: rgba(255, 255, 255, 0.6);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .language-flags-group .flag-btn[data-lang="pt"].active {
+        border-color: #009c3b;
+        box-shadow: 0 0 0 1px rgba(0, 156, 59, 0.4);
+    }
+
+    .language-flags-group .flag-btn[data-lang="en"].active {
+        border-color: #012169;
+        box-shadow: 0 0 0 1px rgba(1, 33, 105, 0.4);
+    }
+
+    .language-flags-group .flag-btn[data-lang="es"].active {
+        border-color: #c60b1e;
+        box-shadow: 0 0 0 1px rgba(198, 11, 30, 0.4);
+    }
+
+    .nav-item {
+        list-style: none;
+    }
+
+    .nav-link {
+        color: white !important;
+        padding: 8px 12px !important;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        transition: all 0.2s ease;
+        border-radius: 8px;
+        min-width: 70px;
+        text-align: center;
+    }
+
+    .nav-link:hover {
+        background: rgba(255, 255, 255, 0.15) !important;
+        transform: translateY(-1px);
+    }
+
+    .nav-link.active {
+        background: rgba(255, 255, 255, 0.2) !important;
+    }
+
+    .nav-icon {
+        font-size: 20px;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .nav-link:hover .nav-icon {
+        background: rgba(255, 255, 255, 0.25);
+        transform: scale(1.05);
+    }
+
+    .nav-text {
+        font-size: 11px;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
+    @@media (max-width: 768px) {
+        .navbar-nav {
+            padding: 16px;
+        }
+
+        .nav-link {
+            width: 100%;
+            flex-direction: row;
+            justify-content: flex-start;
+            gap: 12px;
+            padding: 12px 16px !important;
+            min-width: auto;
+        }
+
+        .nav-text {
+            font-size: 14px;
+        }
+
+        .nav-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 22px;
+        }
+
+        .language-selector-top {
+            margin-right: 8px;
+        }
+
+        .navbar-brand-wrapper {
+            padding: 12px 16px;
+            flex-wrap: wrap;
+        }
+    }
+</style>
+
+<div class="navbar-brand-container">
+    <div class="user-dropdown">
+        <button class="user-dropdown-toggle" id="userDropdownToggle">
+            <span class="workspace-name">
+                <span class="user-icon">👤</span>
+                @Model.Name's <span data-i18n="menu.workspace">workspace</span>
+            </span>
+            <i class="bi bi-chevron-down dropdown-arrow"></i>
+        </button>
+        
+        <div class="user-dropdown-menu" id="userDropdownMenu">
+            <div class="dropdown-header">
+                <div class="user-info">
+                    <span class="user-icon-large">👤</span>
+                    <div class="user-details">
+                        <strong>@Model.Name</strong>
+                        <span class="user-email">@Model.Login</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="dropdown-divider"></div>
+            
+            <a class="dropdown-item" asp-area="" asp-controller="AlterarSenha" asp-action="Index">
+                <i class="bi bi-shield-lock"></i>
+                <span data-i18n="menu.senha">Senha</span>
+            </a>
+            
+            <a class="dropdown-item" asp-area="" asp-controller="Parametros" asp-action="Index">
+                <i class="bi bi-gear"></i>
+                <span data-i18n="menu.configuracoes">Configurações</span>
+            </a>
+            
+            <a class="dropdown-item" asp-area="" asp-controller="Home" asp-action="About">
+                <i class="bi bi-info-circle"></i>
+                <span data-i18n="menu.about">Sobre</span>
+            </a>
+            
+            <div class="dropdown-divider"></div>
+            
+            <a class="dropdown-item logout-item" asp-area="" asp-controller="Login" asp-action="Sair">
+                <i class="bi bi-box-arrow-right"></i>
+                <span data-i18n="menu.sair">Sair</span>
+            </a>
+        </div>
+    </div>
+    
+    <div class="hours-today">
+        <i class="bi bi-clock-history"></i>
+        <span data-i18n="menu.hourstoday">Hoje:</span>
+        <strong>@ViewBag.HorasHoje.ToString("F1")h</strong>
+    </div>
+</div>
 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
         aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
 </button>
 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
     <ul class="navbar-nav flex-grow-1">
-        <li class="nav-item" title="Home">
-            <div class="text-center">
-                <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">
-                    <i class="fas fa-home fa-2x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Home"></i>
-                    <span class="d-block">Home</span>
-                </a>
-            </div>
+        <li class="nav-item">
+            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index" title="Home">
+                <span class="nav-icon"><i class="bi bi-house-door"></i></span>
+                <span class="nav-text" data-i18n="menu.home">Home</span>
+            </a>
         </li>
 
-        <!--
-        <li class="nav-item" title="Gráficos">
-            <div class="text-center">
-                <a class="nav-link text-dark" asp-area="" asp-controller="Graficos" asp-action="Index">
-                    <i class="fas fa-chart-bar fa-2x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Gráficos"></i>
-                    <span id="graficos" class="d-block">Gráficos</span>
-                </a>
-            </div>
+        <li class="nav-item">
+            <a class="nav-link" asp-area="" asp-controller="TimeTracker" asp-action="Index" title="Time Tracker">
+                <span class="nav-icon"><i class="bi bi-stopwatch"></i></span>
+                <span class="nav-text" data-i18n="menu.timetracker">Time Tracker</span>
+            </a>
         </li>
 
-        -->
-        <!--
-        <li class="nav-item" title="Meeting">
-            <div class="text-center">
-                <a class="nav-link text-dark" asp-area="" asp-controller="Meeting" asp-action="Index">
-                    <i class="fas fa-building fa-2x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Meeting"></i>
-                    <span class="d-block">Meeting</span>
-                </a>
-            </div>
-        </li>
-         -->
-        <li class="nav-item" title="Time Tracker">
-            <div class="text-center">
-                <a class="nav-link text-dark" asp-area="" asp-controller="TimeTracker" asp-action="Index">
-                    <i class="fas fa-stopwatch fa-2x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Time Tracker"></i>
-                    <span id="timeTrackerLabel" class="d-block">Time Tracker</span> <!-- ID para alterar o texto -->
-                </a>
-            </div>
-        </li>
-        @if (Model.Perfil != ProfileEnum.Padrao)
+        @if (showAdminItems)
         {
-            // Restrição específica para "Controladoria" em "Valores/Cliente", "Resultados" e "Mensalistas"
-            var isAdmin = Model.Perfil == ProfileEnum.Admin;
-            var isControladoria = Model.Perfil == ProfileEnum.Controladoria;
-
-            <li class="nav-item @(isAdmin || isControladoria ? "" : "d-none")" title="Valores/Cliente">
-                <div class="text-center">
-                    <a class="nav-link text-dark @(isControladoria ? "d-none" : "")" asp-area="" asp-controller="ValorClientes" asp-action="Index">
-                        <i class="fas fa-money-bill fa-2x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Valores/Cliente"></i>
-                        <span class="d-block">Valores</span>
+            @if (isAdmin)
+            {
+                <li class="nav-item">
+                    <a class="nav-link" asp-area="" asp-controller="ValorClientes" asp-action="Index" title="Valores">
+                        <span class="nav-icon"><i class="bi bi-cash-coin"></i></span>
+                        <span class="nav-text" data-i18n="menu.valores">Valores</span>
                     </a>
-                </div>
-            </li>
+                </li>
+            }
 
-            <li class="nav-item" title="Usuários">
-                <div class="text-center">
-                    <a class="nav-link text-dark" asp-area="" asp-controller="Attorneys" asp-action="Index">
-                        <i class="fas fa-users fa-2x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Usuários"></i>
-                        <span class="d-block">Usuários</span>
-                    </a>
-                </div>
+            <li class="nav-item">
+                <a class="nav-link" asp-area="" asp-controller="Attorneys" asp-action="Index" title="Usuários">
+                    <span class="nav-icon"><i class="bi bi-people"></i></span>
+                    <span class="nav-text" data-i18n="menu.usuarios">Usuários</span>
+                </a>
             </li>
 
-            <li class="nav-item @(isAdmin || isControladoria ? "" : "d-none")" title="Mensalistas">
-                <div class="text-center">
-                    <a class="nav-link text-dark @(isControladoria ? "d-none" : "")" asp-area="" asp-controller="Mensalistas" asp-action="Index">
-                        <i class="fas fa-calendar-alt fa-2x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Mensalistas"></i>
-                        <span class="d-block">Mensalistas</span>
-                    </a>
-                </div>
+            <li class="nav-item">
+                <a class="nav-link" asp-area="" asp-controller="Clients" asp-action="Index" title="Clientes">
+                    <span class="nav-icon"><i class="bi bi-person-badge"></i></span>
+                    <span class="nav-text" data-i18n="menu.clientes">Clientes</span>
+                </a>
             </li>
 
-            <li class="nav-item @(isAdmin || isControladoria ? "" : "d-none")" title="Resultados">
-                <div class="text-center">
-                    <a class="nav-link text-dark @(isControladoria ? "d-none" : "")" asp-area="" asp-controller="Mensalista" asp-action="Index">
-                        <i class="fas fa-chart-line fa-2x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Resultados"></i>
-                        <span class="d-block">Resultados</span>
-                    </a>
-                </div>
+            <li class="nav-item">
+                <a class="nav-link" asp-area="" asp-controller="Departments" asp-action="Index" title="Área">
+                    <span class="nav-icon"><i class="bi bi-building"></i></span>
+                    <span class="nav-text" data-i18n="menu.area">Área</span>
+                </a>
             </li>
 
-            <li class="nav-item @(isAdmin || isControladoria ? "" : "d-none")" title="Percentuais Área">
-                <div class="text-center">
-                    <a class="nav-link text-dark @(isControladoria ? "d-none" : "")" asp-area="" asp-controller="PercentualAreas" asp-action="Index">
-                        <i class="fas fa-chart-pie fa-2x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Percentuais Área"></i>
-                        <span class="d-block">Percentuais</span>
+            @if (isAdmin)
+            {
+                <li class="nav-item">
+                    <a class="nav-link" asp-area="" asp-controller="Mensalistas" asp-action="Index" title="Mensalistas">
+                        <span class="nav-icon"><i class="bi bi-calendar-check"></i></span>
+                        <span class="nav-text" data-i18n="menu.mensalistas">Mensalistas</span>
                     </a>
-                </div>
-            </li>
- 
-            <li class="nav-item" title="Clientes">
-                <div class="text-center">
-                    <a class="nav-link text-dark" asp-area="" asp-controller="Clients" asp-action="Index">
-                        <i class="fas fa-users fa-2x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Clientes"></i>
-                        <span class="d-block">Clientes</span>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" asp-area="" asp-controller="Mensalista" asp-action="Index" title="Resultados">
+                        <span class="nav-icon"><i class="bi bi-graph-up-arrow"></i></span>
+                        <span class="nav-text" data-i18n="menu.resultados">Resultados</span>
                     </a>
-                </div>
-            </li>
-            <li class="nav-item" title="Área">
-                <div class="text-center">
-                    <a class="nav-link text-dark" asp-area="" asp-controller="Departments" asp-action="Index">
-                        <i class="fas fa-building fa-2x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Área"></i>
-                        <span class="d-block">Área</span>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" asp-area="" asp-controller="PercentualAreas" asp-action="Index" title="Percentuais">
+                        <span class="nav-icon"><i class="bi bi-percent"></i></span>
+                        <span class="nav-text" data-i18n="menu.percentuais">Percentuais</span>
                     </a>
-                </div>
-            </li>
+                </li>
+            }
         }
 
-        <li class="nav-item" title="Relatórios">
-            <div class="text-center">
-                <a class="nav-link text-dark" asp-area="" asp-controller="ProcessRecord" asp-action="Index">
-                    <i class="fas fa-file-alt fa-2x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Relatórios"></i>
-                    <span class="d-block">Relatórios</span>
-                </a>
-            </div>
+        <li class="nav-item">
+            <a class="nav-link" asp-area="" asp-controller="ProcessRecord" asp-action="Index" title="Relatórios">
+                <span class="nav-icon"><i class="bi bi-file-earmark-text"></i></span>
+                <span class="nav-text" data-i18n="menu.relatorios">Relatórios</span>
+            </a>
         </li>
 
-        <li class="nav-item" title="Registro de Atividades">
-            <div class="text-center">
-                <a class="nav-link text-dark" asp-area="" asp-controller="ProcessRecords" asp-action="Index">
-                    <i class="fas fa-list-alt fa-2x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Registro de Atividades"></i>
-                    <span class="d-block">Atividades</span>
-                </a>
-            </div>
-        </li>
-        
-        <li class="nav-item" title="Calendário">
-            <div class="text-center">
-                <a class="nav-link text-dark" asp-area="" asp-controller="Calendar" asp-action="Index">
-                    <i class="fas fa-calendar-alt fa-2x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Calendário"></i>
-                    <span class="d-block">Calendário</span>
-                </a>
-            </div>
-        </li>        
-        
-        <li class="nav-item" title="Alterar Senha">
-            <div class="text-center">
-                <a class="nav-link text-dark" asp-area="" asp-controller="AlterarSenha" asp-action="Index">
-                    <i class="fas fa-lock fa-2x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Alterar Senha"></i>
-                    <span class="d-block">Senha</span>
-                </a>
-            </div>
-        </li>
-        <li class="nav-item" title="Configurações">
-            <div class="text-center">
-                <a class="nav-link text-dark" asp-area="" asp-controller="Parametros" asp-action="Index">
-                    <i class="fas fa-cog fa-2x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Configurações"></i>
-                    <span class="d-block">Configurações</span>
-                </a>
-            </div>
+        <li class="nav-item">
+            <a class="nav-link" asp-area="" asp-controller="ProcessRecords" asp-action="Index" title="Atividades">
+                <span class="nav-icon"><i class="bi bi-list-check"></i></span>
+                <span class="nav-text" data-i18n="menu.atividades">Atividades</span>
+            </a>
         </li>
 
-        <li class="nav-item" title="Sair">
-            <div class="text-center">
-                <a class="nav-link text-dark" asp-area="" asp-controller="Login" asp-action="Sair">
-                    <i class="fas fa-sign-out-alt fa-2x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Sair"></i>
-                    <span class="d-block">Sair</span>
-                </a>
-            </div>
+        <li class="nav-item">
+            <a class="nav-link" asp-area="" asp-controller="Calendar" asp-action="Index" title="Calendário">
+                <span class="nav-icon"><i class="bi bi-calendar3"></i></span>
+                <span class="nav-text" data-i18n="menu.calendario">Calendário</span>
+            </a>
         </li>
-        <li class="nav-item" title="Sobre">
-            <div class="text-center">
-                <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="About">
-                    <i class="fas fa-info-circle fa-2x mb-2 d-block border rounded p-2" data-toggle="tooltip" title="Sobre"></i>
-                    <span class="d-block">Sobre</span>
-                </a>
+
+        <!-- Language Selector - Right Side -->
+        <li class="nav-item language-selector-right">
+            <div class="language-flags-group">
+                <button class="flag-btn active" data-lang="pt" title="Português">
+                    <svg class="flag-icon" viewBox="0 0 36 24" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="36" height="24" fill="#009b3a"/>
+                        <path d="M18 3 L33 12 L18 21 L3 12 Z" fill="#fedf00"/>
+                        <circle cx="18" cy="12" r="4" fill="#002776"/>
+                    </svg>
+                </button>
+                <button class="flag-btn" data-lang="en" title="English">
+                    <svg class="flag-icon" viewBox="0 0 36 24" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="36" height="24" fill="#012169"/>
+                        <path d="M0 0 L36 24 M36 0 L0 24" stroke="#fff" stroke-width="4"/>
+                        <path d="M0 0 L36 24 M36 0 L0 24" stroke="#C8102E" stroke-width="2.5"/>
+                        <path d="M18 0 V24 M0 12 H36" stroke="#fff" stroke-width="6"/>
+                        <path d="M18 0 V24 M0 12 H36" stroke="#C8102E" stroke-width="3.5"/>
+                    </svg>
+                </button>
+                <button class="flag-btn" data-lang="es" title="Español">
+                    <svg class="flag-icon" viewBox="0 0 36 24" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="36" height="6" fill="#AA151B"/>
+                        <rect y="6" width="36" height="12" fill="#F1BF00"/>
+                        <rect y="18" width="36" height="6" fill="#AA151B"/>
+                    </svg>
+                </button>
             </div>
         </li>
     </ul>
@@ -187,3 +551,34 @@
 
 
 
+
+
+<script>
+    // User Dropdown Toggle
+    document.addEventListener('DOMContentLoaded', function() {
+        const dropdownToggle = document.getElementById('userDropdownToggle');
+        const dropdown = dropdownToggle?.closest('.user-dropdown');
+        
+        if (dropdownToggle && dropdown) {
+            dropdownToggle.addEventListener('click', function(e) {
+                e.stopPropagation();
+                dropdown.classList.toggle('active');
+            });
+            
+            // Fechar ao clicar fora
+            document.addEventListener('click', function(e) {
+                if (!dropdown.contains(e.target)) {
+                    dropdown.classList.remove('active');
+                }
+            });
+            
+            // Fechar ao clicar em um item do menu
+            const dropdownItems = dropdown.querySelectorAll('.dropdown-item');
+            dropdownItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    dropdown.classList.remove('active');
+                });
+            });
+        }
+    });
+</script>

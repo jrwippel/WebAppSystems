@@ -175,7 +175,62 @@ namespace WebAppSystems.Services
             return new ChartData { ClientNames = recordTypeNames, ClientValues = recordTypeValues };
         }
 
+        public ChartData GetChartDataByTimeline(string period = "month")
+        {
+            var now = DateTime.Now;
+            var labels = new List<string>();
+            var values = new List<double>();
 
+            if (period == "day")
+            {
+                // Últimos 30 dias
+                for (int i = 29; i >= 0; i--)
+                {
+                    var date = now.AddDays(-i);
+                    var hours = _context.ProcessRecord
+                        .Where(pr => pr.Date.Date == date.Date && pr.HoraFinal != TimeSpan.Zero)
+                        .ToList()
+                        .Sum(pr => (pr.HoraFinal - pr.HoraInicial).TotalHours);
+                    
+                    labels.Add(date.ToString("dd/MM"));
+                    values.Add(Math.Round(hours, 2));
+                }
+            }
+            else if (period == "week")
+            {
+                // Últimas 12 semanas
+                for (int i = 11; i >= 0; i--)
+                {
+                    var startDate = now.AddDays(-i * 7 - (int)now.DayOfWeek);
+                    var endDate = startDate.AddDays(6);
+                    
+                    var hours = _context.ProcessRecord
+                        .Where(pr => pr.Date >= startDate && pr.Date <= endDate && pr.HoraFinal != TimeSpan.Zero)
+                        .ToList()
+                        .Sum(pr => (pr.HoraFinal - pr.HoraInicial).TotalHours);
+                    
+                    labels.Add($"Sem {12 - i}");
+                    values.Add(Math.Round(hours, 2));
+                }
+            }
+            else // month
+            {
+                // Últimos 12 meses
+                for (int i = 11; i >= 0; i--)
+                {
+                    var date = now.AddMonths(-i);
+                    var hours = _context.ProcessRecord
+                        .Where(pr => pr.Date.Month == date.Month && pr.Date.Year == date.Year && pr.HoraFinal != TimeSpan.Zero)
+                        .ToList()
+                        .Sum(pr => (pr.HoraFinal - pr.HoraInicial).TotalHours);
+                    
+                    labels.Add(date.ToString("MMM/yy"));
+                    values.Add(Math.Round(hours, 2));
+                }
+            }
+
+            return new ChartData { ClientNames = labels, ClientValues = values };
+        }
 
     }
 }

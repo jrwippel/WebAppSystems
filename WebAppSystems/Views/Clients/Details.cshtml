@@ -1,101 +1,442 @@
 ﻿@model WebAppSystems.Models.Client
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Detalhes do Cliente";
 }
 
-<h1>Detalhes</h1>
+<div class="details-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-left">
+                <div class="header-icon">
+                    <i class="bi bi-info-circle"></i>
+                </div>
+                <div class="header-text">
+                    <h1 class="page-title">Detalhes do Cliente</h1>
+                    <p class="page-subtitle">Informações completas</p>
+                </div>
+            </div>
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn-edit-header">
+                <i class="bi bi-pencil"></i>
+                Editar
+            </a>
+        </div>
+    </div>
 
-<hr />
-
-<div class="card">
-    <div class="card-body">
-        <h4 class="card-title">Clientes</h4>
-        <hr />
-        <form asp-action="Create">
-            <div class="row">
-                <div class="col-sm-6">
-                    <dl>
-                        <dt>
-                            @Html.DisplayNameFor(model => model.Name)
-                        </dt>
-                        <dd>
-                            @Html.DisplayFor(model => model.Name)
-                        </dd>
-                        <dt>
-                            @Html.DisplayNameFor(model => model.Document)
-                        </dt>
-                        <dd>
-                            @Html.DisplayFor(model => model.Document)
-                        </dd>
-                        <dt>
-                            @Html.DisplayNameFor(model => model.Email)
-                        </dt>
-                        <dd>
-                            @Html.DisplayFor(model => model.Email)
-                        </dd>
-                        <dt>
-                            @Html.DisplayNameFor(model => model.Telephone)
-                        </dt>
-                        <dd>
-                            @Html.DisplayFor(model => model.Telephone)
-                        </dd>
-                        <dt>
-                            @Html.DisplayNameFor(model => model.Solicitante)
-                        </dt>
-                        <dd>
-                            @Html.DisplayFor(model => model.Solicitante)
-                        </dd>        
-                        <dt class="col-sm-2">
-                        Interno
-                        </dt>
-                        <dd class="col-sm-10">
-                            @if (Model.ClienteInterno)
-                            {
-                                <text>Sim</text>
-                            }
-                            else
-                            {
-                                <text>Não</text>
-                            }
-                        </dd>
-                        <dt class="col-sm-2">
+    <!-- Main Info Card -->
+    <div class="main-card">
+        <div class="client-header">
+            <div class="client-avatar-large">
+                @if (Model.ImageData != null && !string.IsNullOrEmpty(Model.ImageMimeType))
+                {
+                    var imageBase64 = Convert.ToBase64String(Model.ImageData);
+                    var imageSrc = $"data:{Model.ImageMimeType};base64,{imageBase64}";
+                    <img src="@imageSrc" alt="@Model.Name" />
+                }
+                else
+                {
+                    <i class="bi bi-person-fill"></i>
+                }
+            </div>
+            <div class="client-info">
+                <h2>@Model.Name</h2>
+                <p>@Model.Email</p>
+                <div class="status-badges">
+                    @if (Model.ClienteInativo)
+                    {
+                        <span class="badge badge-inactive">
+                            <i class="bi bi-x-circle"></i>
                             Inativo
-                        </dt>
-                        <dd class="col-sm-10">
-                            @if (Model.ClienteInativo)
-                            {
-                                <text>Sim</text>
-                            }
-                            else
-                            {
-                                <text>Não</text>
-                            }
-                        </dd>
-                    </dl>
-                </div>
-                <div class="col-sm-6">
-                    <dt>
-                        Imagem
-                    </dt>
-                    <dd>
-                        @if (Model.ImageData != null && !string.IsNullOrEmpty(Model.ImageMimeType))
-                        {
-                            var imageBase64 = Convert.ToBase64String(Model.ImageData);
-                            var imageSrc = $"data:{Model.ImageMimeType};base64,{imageBase64}";
-                            <img src="@imageSrc" alt="Client Image" class="img-fluid" style="border: 1px solid #ccc; padding: 5px;" />
-                        }
-                        else
-                        {
-                            <p>Sem imagem disponível</p>
-                        }
-                    </dd>
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge badge-active">
+                            <i class="bi bi-check-circle"></i>
+                            Ativo
+                        </span>
+                    }
+                    @if (Model.ClienteInterno)
+                    {
+                        <span class="badge badge-internal">
+                            <i class="bi bi-building"></i>
+                            Interno
+                        </span>
+                    }
                 </div>
             </div>
-            <div>
-                <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-primary">Edit</a>
-                <a asp-action="Index" class="btn btn-secondary">Voltar</a>
+        </div>
+    </div>
+
+    <!-- Details Grid -->
+    <div class="details-grid">
+        <!-- Contact Info -->
+        <div class="info-card">
+            <div class="card-header">
+                <i class="bi bi-telephone"></i>
+                <h3>Informações de Contato</h3>
             </div>
-        </form>
+            <div class="card-content">
+                <div class="info-item">
+                    <label>
+                        <i class="bi bi-envelope"></i>
+                        Email
+                    </label>
+                    <span>@Model.Email</span>
+                </div>
+                <div class="info-item">
+                    <label>
+                        <i class="bi bi-telephone"></i>
+                        Telefone
+                    </label>
+                    <span>@Model.Telephone</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Document Info -->
+        <div class="info-card">
+            <div class="card-header">
+                <i class="bi bi-file-text"></i>
+                <h3>Documentação</h3>
+            </div>
+            <div class="card-content">
+                <div class="info-item">
+                    <label>
+                        <i class="bi bi-card-text"></i>
+                        Documento
+                    </label>
+                    <span>@Model.Document</span>
+                </div>
+                <div class="info-item">
+                    <label>
+                        <i class="bi bi-person-badge"></i>
+                        Solicitante
+                    </label>
+                    <span>@Model.Solicitante</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions-card">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn-action btn-primary">
+            <i class="bi bi-pencil-square"></i>
+            Editar Cliente
+        </a>
+        <a asp-action="Index" class="btn-action btn-secondary">
+            <i class="bi bi-arrow-left"></i>
+            Voltar para Lista
+        </a>
     </div>
 </div>
+
+<style>
+    .details-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        padding: 24px 28px;
+        margin-bottom: 24px;
+        box-shadow: 0 6px 25px rgba(102, 126, 234, 0.25);
+    }
+
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .header-icon {
+        width: 50px;
+        height: 50px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: white;
+        backdrop-filter: blur(10px);
+    }
+
+    .page-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: white;
+        margin: 0 0 6px 0;
+    }
+
+    .page-subtitle {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.9);
+        margin: 0;
+    }
+
+    .btn-edit-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        background: white;
+        color: #667eea;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+
+    .btn-edit-header:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 255, 255, 0.3);
+        color: #764ba2;
+    }
+
+    .main-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        margin-bottom: 24px;
+    }
+
+    .client-header {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        padding: 32px;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+    }
+
+    .client-avatar-large {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        overflow: hidden;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .client-avatar-large img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .client-avatar-large i {
+        font-size: 48px;
+        color: white;
+    }
+
+    .client-info h2 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #2d3748;
+        margin: 0 0 8px 0;
+    }
+
+    .client-info p {
+        font-size: 16px;
+        color: #718096;
+        margin: 0 0 12px 0;
+    }
+
+    .status-badges {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .badge-active {
+        background: #c6f6d5;
+        color: #22543d;
+    }
+
+    .badge-inactive {
+        background: #fed7d7;
+        color: #742a2a;
+    }
+
+    .badge-internal {
+        background: #bee3f8;
+        color: #2c5282;
+    }
+
+    .details-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 24px;
+        margin-bottom: 24px;
+    }
+
+    .info-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+    }
+
+    .card-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 20px 24px;
+        background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .card-header i {
+        font-size: 20px;
+        color: #667eea;
+    }
+
+    .card-header h3 {
+        font-size: 16px;
+        font-weight: 700;
+        color: #2d3748;
+        margin: 0;
+    }
+
+    .card-content {
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .info-item label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #718096;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .info-item label i {
+        font-size: 14px;
+        color: #a0aec0;
+    }
+
+    .info-item span {
+        font-size: 15px;
+        font-weight: 500;
+        color: #2d3748;
+        padding-left: 22px;
+    }
+
+    .actions-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+        padding: 24px;
+        display: flex;
+        gap: 12px;
+    }
+
+    .btn-action {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 14px 24px;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        border: none;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+        background: #f7fafc;
+        color: #4a5568;
+        border: 2px solid #e2e8f0;
+    }
+
+    .btn-secondary:hover {
+        background: #e2e8f0;
+        color: #2d3748;
+    }
+
+    @@media (max-width: 768px) {
+        .details-container {
+            padding: 12px;
+        }
+
+        .header-content {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .btn-edit-header {
+            justify-content: center;
+        }
+
+        .client-header {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .details-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .actions-card {
+            flex-direction: column;
+        }
+    }
+</style>

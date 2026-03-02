@@ -32,6 +32,10 @@ namespace WebAppSystems.Controllers
         {
             try
             {
+                Attorney usuario = _isessao.BuscarSessaoDoUsuario();
+                ViewBag.LoggedUserId = usuario.Id;
+                ViewBag.CurrentUserPerfil = usuario.Perfil;
+
                 var list = await _attorneyService.FindAllAsync();
                 return View(list);
             }

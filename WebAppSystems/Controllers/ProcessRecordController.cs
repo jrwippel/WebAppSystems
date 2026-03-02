@@ -20,6 +20,11 @@ using WebAppSystems.Models;
 using WebAppSystems.Models.Enums;
 using WebAppSystems.Services;
 using static WebAppSystems.Helper.Sessao;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
+using NPOIHorizontalAlignment = NPOI.SS.UserModel.HorizontalAlignment;
+using NPOIVerticalAlignment = NPOI.SS.UserModel.VerticalAlignment;
 
 
 
@@ -57,6 +62,9 @@ namespace WebAppSystems.Controllers
             _isessao = isessao;
             _parametroService = parametroService;
             _departmentService = departmentService;
+            
+            // Configurar licença do QuestPDF (Community License)
+            QuestPDF.Settings.License = LicenseType.Community;
         }
 
         public async Task<IActionResult> Index()
@@ -73,7 +81,7 @@ namespace WebAppSystems.Controllers
                 return RedirectToAction("Index", "Login");
             }
         }
-        public async Task<IActionResult> SimpleSearch(DateTime? minDate, DateTime? maxDate, int? clientId, int? attorneyId, int? departmentId, string recordType)
+        public async Task<IActionResult> SimpleSearch(DateTime? minDate, DateTime? maxDate, string clientIds, int? attorneyId, int? departmentId, string recordType)
         {
             SetDefaultDateValues(ref minDate, ref maxDate);
 
@@ -83,17 +91,27 @@ namespace WebAppSystems.Controllers
                 recordTypeEnum = Enum.Parse<RecordType>(recordType, true);
             }
 
-            PopulateViewData(minDate, maxDate, clientId, attorneyId, recordTypeEnum.ToString());
+            // Converter string de IDs separados por vírgula em lista de inteiros
+            List<int> clientIdList = null;
+            if (!string.IsNullOrEmpty(clientIds))
+            {
+                clientIdList = clientIds.Split(',')
+                    .Where(id => !string.IsNullOrWhiteSpace(id))
+                    .Select(id => int.Parse(id.Trim()))
+                    .ToList();
+            }
+
+            PopulateViewData(minDate, maxDate, clientIdList, attorneyId, recordTypeEnum?.ToString());
             await PopulateViewBag();
 
-            var result = await _processRecordService.FindByDateAsync(minDate, maxDate, clientId, attorneyId, departmentId, recordTypeEnum);
+            var result = await _processRecordService.FindByDateAsync(minDate, maxDate, clientIdList, attorneyId, departmentId, recordTypeEnum);
             return View(result);
 
         }
 
         // Ação para gerar e baixar o arquivo CSV
 
-        public async Task<IActionResult> DownloadReport(DateTime? minDate, DateTime? maxDate, int? clientId, int? attorneyId, int? departmentId, string recordType = null, string format = "xlsx")
+        public async Task<IActionResult> DownloadReport(DateTime? minDate, DateTime? maxDate, string clientIds, int? attorneyId, int? departmentId, string recordType = null, string format = "xlsx")
         {
 
             RecordType? recordTypeEnum = null;
@@ -102,17 +120,31 @@ namespace WebAppSystems.Controllers
                 recordTypeEnum = Enum.Parse<RecordType>(recordType, true);
             }
 
+            // Converter string de IDs separados por vírgula em lista de inteiros
+            List<int> clientIdList = null;
+            if (!string.IsNullOrEmpty(clientIds))
+            {
+                clientIdList = clientIds.Split(',')
+                    .Where(id => !string.IsNullOrWhiteSpace(id))
+                    .Select(id => int.Parse(id.Trim()))
+                    .ToList();
+            }
+
             // Obter os registros filtrados usando a função FindByDateAsync
-            var filteredRecords = await _processRecordService.FindByDateAsync(minDate, maxDate, clientId, attorneyId, departmentId, recordTypeEnum);
+            var filteredRecords = await _processRecordService.FindByDateAsync(minDate, maxDate, clientIdList, attorneyId, departmentId, recordTypeEnum);
 
             string clientName = null;
-            if (clientId.HasValue)
+            if (clientIdList != null && clientIdList.Count == 1)
             {
-                var client = await _clientService.FindByIdAsync(clientId.Value);
+                var client = await _clientService.FindByIdAsync(clientIdList.First());
                 if (client != null)
                 {
                     clientName = client.Name;
                 }
+            }
+            else if (clientIdList != null && clientIdList.Count > 1)
+            {
+                clientName = "Multiplos_Clientes";
             }
 
             if (format == "csv")
@@ -188,8 +220,8 @@ namespace WebAppSystems.Controllers
                 headerStyle.SetFont(font);
 
                 // Centralizar o texto no cabeçalho
-                headerStyle.Alignment = HorizontalAlignment.Center;
-                headerStyle.VerticalAlignment = VerticalAlignment.Center;
+                headerStyle.Alignment = NPOIHorizontalAlignment.Center;
+                headerStyle.VerticalAlignment = NPOIVerticalAlignment.Center;
 
                 // Criar o cabeçalho na linha 8
                 var headerRow = sheet.CreateRow(5);
@@ -214,8 +246,8 @@ namespace WebAppSystems.Controllers
                 // Cria um estilo para as células com texto justificado e centralizado (para as outras colunas)
                 ICellStyle justifiedCellStyle = workbook.CreateCellStyle();
                 justifiedCellStyle.WrapText = true; // Permite a quebra de linha dentro da célula
-                justifiedCellStyle.Alignment = HorizontalAlignment.Center; // Alinhamento central horizontal
-                justifiedCellStyle.VerticalAlignment = VerticalAlignment.Center; // Alinhamento central vertical
+                justifiedCellStyle.Alignment = NPOIHorizontalAlignment.Center; // Alinhamento central horizontal
+                justifiedCellStyle.VerticalAlignment = NPOIVerticalAlignment.Center; // Alinhamento central vertical
 
                 // Definindo a cor azul claro Ênfase 1 mais claro 80% em RGB
                 //XSSFColor lightBlueEmphasis = new XSSFColor(new byte[] { 222, 235, 247 });
@@ -229,8 +261,8 @@ namespace WebAppSystems.Controllers
                 // Cria um estilo específico para a coluna 5 (alinhamento à esquerda e no topo)
                 ICellStyle justifiedLeftTopStyle = workbook.CreateCellStyle();
                 justifiedLeftTopStyle.WrapText = true; // Permite quebra de linha dentro da célula
-                justifiedLeftTopStyle.Alignment = HorizontalAlignment.Left; // Alinhamento à esquerda
-                justifiedLeftTopStyle.VerticalAlignment = VerticalAlignment.Top; // Alinhamento vertical no topo
+                justifiedLeftTopStyle.Alignment = NPOIHorizontalAlignment.Left; // Alinhamento à esquerda
+                justifiedLeftTopStyle.VerticalAlignment = NPOIVerticalAlignment.Top; // Alinhamento vertical no topo
 
                 // Cria um estilo para a coluna 5 com sombreamento azul claro Ênfase 1
                 ICellStyle justifiedLeftTopShadedStyle = workbook.CreateCellStyle();
@@ -246,7 +278,7 @@ namespace WebAppSystems.Controllers
                 sheet.SetColumnWidth(columnIndex, columannWidth);
 
 
-                for (int i = 0; i < filteredRecords.Count; i++)
+                for (int i = 0; i < filteredRecords.Count(); i++)
                 {
                     var item = filteredRecords[i];
                     var row = sheet.CreateRow(rowNum);
@@ -270,7 +302,6 @@ namespace WebAppSystems.Controllers
 
                     row.GetCell(6).SetCellValue(item.HoraInicial.ToString(@"hh\:mm"));
                     row.GetCell(7).SetCellValue(item.HoraFinal.ToString(@"hh\:mm"));
-                    //row.GetCell(8).SetCellValue(item.CalculoHoras());
 
                     // Verifica se o tipo de registro é "Deslocamento" para considerar apenas 50% das horas
                     double horasCalculadas = item.CalculoHorasDecimal();
@@ -279,7 +310,11 @@ namespace WebAppSystems.Controllers
                         horasCalculadas *= 0.5;
                     }
 
-                    row.GetCell(8).SetCellValue(horasCalculadas);
+                    // Converter horas decimais para formato hh:mm
+                    int horasItem = (int)horasCalculadas;
+                    int minutosItem = (int)Math.Round((horasCalculadas - horasItem) * 60);
+                    string horasFormatadas = string.Format("{0}:{1:00}", horasItem, minutosItem);
+                    row.GetCell(8).SetCellValue(horasFormatadas);
 
 
                     //row.GetCell(7).SetCellValue(item.Department.Name);
@@ -514,8 +549,8 @@ namespace WebAppSystems.Controllers
                 timeSheetStyle.SetFont(font1);
 
                 // Centralizar o texto na célula
-                timeSheetStyle.Alignment = HorizontalAlignment.Center;
-                timeSheetStyle.VerticalAlignment = VerticalAlignment.Center;
+                timeSheetStyle.Alignment = NPOIHorizontalAlignment.Center;
+                timeSheetStyle.VerticalAlignment = NPOIVerticalAlignment.Center;
 
                 // Adicionar a palavra "TimeSheet" na célula (coluna 6, linha 3)
                 var row3 = sheet.GetRow(2) ?? sheet.CreateRow(2); // Linha 3 é índice 2 (começa do 0)
@@ -537,8 +572,8 @@ namespace WebAppSystems.Controllers
                             ICellStyle clonedStyle = workbook.CreateCellStyle();
                             clonedStyle.CloneStyleFrom(previousStyle);
                             clonedStyle.SetFont(font1); // Manter a fonte definida
-                            clonedStyle.Alignment = HorizontalAlignment.Center; // Manter centralizado
-                            clonedStyle.VerticalAlignment = VerticalAlignment.Center; // Manter centralizado
+                            clonedStyle.Alignment = NPOIHorizontalAlignment.Center; // Manter centralizado
+                            clonedStyle.VerticalAlignment = NPOIVerticalAlignment.Center; // Manter centralizado
                             cell3.CellStyle = clonedStyle; // Aplicar o estilo clonado à célula
                         }
                     }
@@ -548,9 +583,9 @@ namespace WebAppSystems.Controllers
                 // Adicionar a imagem do cliente ao relatório Excel
                 byte[] clientImageData = null;
                 string clientImageMimeType = null;
-                if (clientId.HasValue)
+                if (clientIdList != null && clientIdList.Count == 1)
                 {
-                    var client = await _clientService.FindByIdAsync(clientId.Value);
+                    var client = await _clientService.FindByIdAsync(clientIdList.First());
                     if (client != null)
                     {
                         clientImageData = client.ImageData;
@@ -607,6 +642,155 @@ namespace WebAppSystems.Controllers
             }
         }
 
+        // Ação para gerar e baixar o arquivo PDF
+        public async Task<IActionResult> DownloadPdfReport(DateTime? minDate, DateTime? maxDate, string clientIds, int? attorneyId, int? departmentId, string recordType = null)
+        {
+            RecordType? recordTypeEnum = null;
+            if (!string.IsNullOrEmpty(recordType))
+            {
+                recordTypeEnum = Enum.Parse<RecordType>(recordType, true);
+            }
+
+            // Converter string de IDs separados por vírgula em lista de inteiros
+            List<int> clientIdList = null;
+            if (!string.IsNullOrEmpty(clientIds))
+            {
+                clientIdList = clientIds.Split(',')
+                    .Where(id => !string.IsNullOrWhiteSpace(id))
+                    .Select(id => int.Parse(id.Trim()))
+                    .ToList();
+            }
+
+            // Obter os registros filtrados
+            var filteredRecords = await _processRecordService.FindByDateAsync(minDate, maxDate, clientIdList, attorneyId, departmentId, recordTypeEnum);
+
+            // Calcular total de horas
+            TimeSpan totalHours = TimeSpan.Zero;
+            foreach (var item in filteredRecords)
+            {
+                totalHours += item.CalculoHorasTotal();
+            }
+            int totalDays = (int)totalHours.TotalDays;
+            TimeSpan correctedTotalHours = totalHours - TimeSpan.FromDays(totalDays);
+            string totalFormatted = $"{totalDays * 24 + correctedTotalHours.Hours}:{correctedTotalHours.Minutes:00}";
+
+            // Nome do cliente para o arquivo
+            string clientName = "Todos";
+            if (clientIdList != null && clientIdList.Count == 1)
+            {
+                var client = await _clientService.FindByIdAsync(clientIdList.First());
+                if (client != null)
+                {
+                    clientName = client.Name;
+                }
+            }
+            else if (clientIdList != null && clientIdList.Count > 1)
+            {
+                clientName = "Multiplos_Clientes";
+            }
+
+            // Gerar PDF
+            var document = Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Size(PageSizes.A4.Landscape());
+                    page.Margin(30);
+                    page.PageColor(Colors.White);
+                    page.DefaultTextStyle(x => x.FontSize(10).FontFamily("Arial"));
+
+                    // Header
+                    page.Header().Row(row =>
+                    {
+                        row.RelativeItem().Column(column =>
+                        {
+                            column.Item().Text("Relatório de Horas")
+                                .FontSize(20)
+                                .Bold()
+                                .FontColor(Colors.Grey.Darken4);
+                            
+                            column.Item().Text($"Período: {minDate?.ToString("dd/MM/yyyy")} a {maxDate?.ToString("dd/MM/yyyy")}")
+                                .FontSize(10)
+                                .FontColor(Colors.Grey.Medium);
+                        });
+
+                        row.ConstantItem(120).AlignRight().Column(column =>
+                        {
+                            column.Item().Background(Colors.Purple.Medium)
+                                .Padding(10)
+                                .AlignCenter()
+                                .Text(text =>
+                                {
+                                    text.Span("Total: ").FontColor(Colors.White).FontSize(10);
+                                    text.Span(totalFormatted).FontColor(Colors.White).FontSize(16).Bold();
+                                });
+                        });
+                    });
+
+                    // Content
+                    page.Content().PaddingVertical(10).Table(table =>
+                    {
+                        // Definir colunas
+                        table.ColumnsDefinition(columns =>
+                        {
+                            columns.ConstantColumn(70);  // Data
+                            columns.RelativeColumn(2);   // Usuário
+                            columns.RelativeColumn(1.5f); // Área
+                            columns.ConstantColumn(50);  // Horas
+                            columns.RelativeColumn(2);   // Cliente
+                            columns.RelativeColumn(2);   // Solicitante
+                            columns.RelativeColumn(1.5f); // Tipo
+                        });
+
+                        // Header da tabela
+                        table.Header(header =>
+                        {
+                            header.Cell().Background(Colors.Purple.Medium).Padding(5).Text("Data").FontColor(Colors.White).Bold();
+                            header.Cell().Background(Colors.Purple.Medium).Padding(5).Text("Usuário").FontColor(Colors.White).Bold();
+                            header.Cell().Background(Colors.Purple.Medium).Padding(5).Text("Área").FontColor(Colors.White).Bold();
+                            header.Cell().Background(Colors.Purple.Medium).Padding(5).Text("Horas").FontColor(Colors.White).Bold();
+                            header.Cell().Background(Colors.Purple.Medium).Padding(5).Text("Cliente").FontColor(Colors.White).Bold();
+                            header.Cell().Background(Colors.Purple.Medium).Padding(5).Text("Solicitante").FontColor(Colors.White).Bold();
+                            header.Cell().Background(Colors.Purple.Medium).Padding(5).Text("Tipo").FontColor(Colors.White).Bold();
+                        });
+
+                        // Dados
+                        int rowIndex = 0;
+                        foreach (var item in filteredRecords)
+                        {
+                            var bgColor = rowIndex % 2 == 0 ? Colors.White : Colors.Grey.Lighten4;
+                            
+                            table.Cell().Background(bgColor).Padding(5).Text(item.Date.ToString("dd/MM/yyyy"));
+                            table.Cell().Background(bgColor).Padding(5).Text(item.Attorney.Name);
+                            table.Cell().Background(bgColor).Padding(5).Text(item.Department.Name);
+                            table.Cell().Background(bgColor).Padding(5).Text(item.CalculoHoras());
+                            table.Cell().Background(bgColor).Padding(5).Text(item.Client.Name);
+                            table.Cell().Background(bgColor).Padding(5).Text(item.Solicitante);
+                            table.Cell().Background(bgColor).Padding(5).Text(item.RecordType.ToString());
+                            
+                            rowIndex++;
+                        }
+                    });
+
+                    // Footer
+                    page.Footer().AlignCenter().Text(text =>
+                    {
+                        text.Span("Página ");
+                        text.CurrentPageNumber();
+                        text.Span(" de ");
+                        text.TotalPages();
+                    });
+                });
+            });
+
+            // Gerar o PDF em memória
+            var pdfBytes = document.GeneratePdf();
+            
+            string fileName = $"Relatorio_Horas_{clientName}_{DateTime.Now:yyyyMMdd}.pdf";
+            
+            return File(pdfBytes, "application/pdf", fileName);
+        }
+
         private PictureType GetPictureType(string mimeType)
         {
             switch (mimeType)
@@ -636,14 +820,13 @@ namespace WebAppSystems.Controllers
             }
         }
 
-        private void PopulateViewData(DateTime? minDate, DateTime? maxDate, int? clientId, int? attorneyId, string recordType)
+        private void PopulateViewData(DateTime? minDate, DateTime? maxDate, List<int> clientIds, int? attorneyId, string recordType)
         {
             ViewData["minDate"] = minDate.Value.ToString("yyyy-MM-dd");
             ViewData["maxDate"] = maxDate.Value.ToString("yyyy-MM-dd");
-            ViewData["clientId"] = clientId;
+            ViewData["clientIds"] = clientIds != null && clientIds.Any() ? string.Join(",", clientIds) : null;
             ViewData["attorneyId"] = attorneyId;
             ViewData["selectedRecordType"] = recordType;
-
         }
 
         private async Task PopulateViewBag()
@@ -653,7 +836,9 @@ namespace WebAppSystems.Controllers
             ViewBag.Departments = await _departmentService.FindAllAsync();
 
             Attorney usuario = _isessao.BuscarSessaoDoUsuario();
-            ViewBag.UserProfile = usuario.Perfil;        
+            ViewBag.LoggedUserId = usuario.Id;
+            ViewBag.UserProfile = usuario.Perfil;
+            ViewBag.CurrentUserPerfil = usuario.Perfil;
         }
 
         #endregion

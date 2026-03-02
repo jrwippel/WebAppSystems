@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using WebAppSystems.Data;
 using WebAppSystems.Models;
+using WebAppSystems.Helper;
 using static WebAppSystems.Helper.Sessao;
 
 namespace WebAppSystems.Controllers
@@ -14,10 +15,12 @@ namespace WebAppSystems.Controllers
     public class ParametrosController : Controller
     {
         private readonly WebAppSystemsContext _context;
+        private readonly ISessao _isessao;
 
-        public ParametrosController(WebAppSystemsContext context)
+        public ParametrosController(WebAppSystemsContext context, ISessao isessao)
         {
             _context = context;
+            _isessao = isessao;
         }
 
         // GET: Parametros
@@ -25,6 +28,10 @@ namespace WebAppSystems.Controllers
         {
             try
             {
+                Attorney usuario = _isessao.BuscarSessaoDoUsuario();
+                ViewBag.LoggedUserId = usuario.Id;
+                ViewBag.CurrentUserPerfil = usuario.Perfil;
+                
                 var parametros = await _context.Parametros.ToListAsync();
                 bool canCreate = !parametros.Any(); // Permitir criar somente se não houver nenhum parâmetro
                 ViewBag.CanCreate = canCreate;

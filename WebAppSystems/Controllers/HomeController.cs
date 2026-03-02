@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using WebAppSystems.Helper;
 using WebAppSystems.Models;
 using WebAppSystems.Services;
 using static WebAppSystems.Helper.Sessao;
@@ -8,16 +9,21 @@ namespace WebAppSystems.Controllers
     public class HomeController : Controller
     {
         private readonly ProcessRecordsService _processRecordsService;
+        private readonly ISessao _isessao;
 
-        public HomeController(ProcessRecordsService processRecordsService)
+        public HomeController(ProcessRecordsService processRecordsService, ISessao isessao)
         {
             _processRecordsService = processRecordsService;
+            _isessao = isessao;
         }
         public async Task<IActionResult> Index()
         {
             try
             {
-                //var chartData = _processRecordsService.GetChartData();
+                Attorney usuario = _isessao.BuscarSessaoDoUsuario();
+                ViewBag.LoggedUserId = usuario.Id;
+                ViewBag.CurrentUserPerfil = usuario.Perfil;
+
                 var chartData = _processRecordsService.GetChartData();                
                 return View(chartData);
             }
@@ -48,6 +54,12 @@ namespace WebAppSystems.Controllers
                 {
                     chartData = _processRecordsService.GetChartDataByArea();
                 }
+                else if (type == "timeline")
+                {
+                    string period = Request.Query["period"].ToString();
+                    if (string.IsNullOrEmpty(period)) period = "month";
+                    chartData = _processRecordsService.GetChartDataByTimeline(period);
+                }
                 else
                 {
                     return BadRequest("Tipo de gráfico inválido.");
@@ -55,8 +67,8 @@ namespace WebAppSystems.Controllers
 
                 return Json(new
                 {
-                    labels = chartData.ClientNames, // Nomes (Clientes ou Áreas)
-                    values = chartData.ClientValues // Valores correspondentes
+                    labels = chartData.ClientNames,
+                    values = chartData.ClientValues
                 });
             }
             catch (Exception ex)
@@ -71,7 +83,18 @@ namespace WebAppSystems.Controllers
 
         public IActionResult About()
         {
-            return View();
+            try
+            {
+                Attorney usuario = _isessao.BuscarSessaoDoUsuario();
+                ViewBag.LoggedUserId = usuario.Id;
+                ViewBag.CurrentUserPerfil = usuario.Perfil;
+                return View();
+            }
+            catch (SessionExpiredException)
+            {
+                TempData["MensagemAviso"] = "A sessão expirou. Por favor, faça login novamente.";
+                return RedirectToAction("Index", "Login");
+            }
         }
     }
 }

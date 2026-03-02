@@ -53,6 +53,17 @@ namespace WebAppSystems.Controllers
             // Obtém o ID do usuário a partir da sessão
             var attorneyId = usuario.Id;
 
+            // Verifica se já existe um timer em execução para este usuário
+            var activeTimer = await _context.ProcessRecord
+                .Where(pr => pr.AttorneyId == attorneyId &&
+                             (pr.HoraFinal == null || pr.HoraFinal == TimeSpan.Zero))
+                .FirstOrDefaultAsync();
+
+            if (activeTimer != null)
+            {
+                return BadRequest("Já existe um timer em execução. Pare o timer atual antes de iniciar um novo.");
+            }
+
             // Configura o horário usando o fuso horário de Brasília
             var brasiliaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("E. South America Standard Time");
             var nowInBrasilia = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, brasiliaTimeZone);
@@ -63,7 +74,7 @@ namespace WebAppSystems.Controllers
                 AttorneyId = attorneyId,
                 ClientId = request.ClientId,
                 DepartmentId = request.DepartmentId,
-                Date = DateTime.Now.Date,
+                Date = nowInBrasilia.Date,
                 HoraInicial = new TimeSpan(nowInBrasilia.Hour, nowInBrasilia.Minute, nowInBrasilia.Second),
                 Description = request.Description,
                 RecordType = (RecordType)request.RecordType,
@@ -100,12 +111,133 @@ namespace WebAppSystems.Controllers
 
             var brasiliaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("E. South America Standard Time");
             var nowInBrasilia = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, brasiliaTimeZone);
-            //processRecord.HoraFinal = new TimeSpan(DateTime.Now.Hour, DateTime.Now.Minute, DateTime.Now.Second);            
-            processRecord.HoraFinal = new TimeSpan(nowInBrasilia.Hour, nowInBrasilia.Minute, nowInBrasilia.Second);
+            var horaFinalAtual = new TimeSpan(nowInBrasilia.Hour, nowInBrasilia.Minute, nowInBrasilia.Second);
+            var dataAtual = nowInBrasilia.Date;
 
-            await _context.SaveChangesAsync();
+            // Verifica se o timer passou da meia-noite (data atual diferente da data de início)
+            if (dataAtual > processRecord.Date)
+            {
+                // Calcula quantos dias se passaram
+                var diasPassados = (dataAtual - processRecord.Date).Days;
+
+                // Fecha o registro do primeiro dia até 23:59:59
+                processRecord.HoraFinal = new TimeSpan(23, 59, 59);
+                await _context.SaveChangesAsync();
+
+                // Cria registros para os dias intermediários (se houver)
+                for (int i = 1; i < diasPassados; i++)
+                {
+                    var diaIntermediario = processRecord.Date.AddDays(i);
+                    var registroIntermediario = new ProcessRecord
+                    {
+                        AttorneyId = processRecord.AttorneyId,
+                        ClientId = processRecord.ClientId,
+                        DepartmentId = processRecord.DepartmentId,
+                        Date = diaIntermediario,
+                        HoraInicial = new TimeSpan(0, 0, 0),
+                        HoraFinal = new TimeSpan(23, 59, 59),
+                        Description = processRecord.Description + " (continuação)",
+                        RecordType = processRecord.RecordType,
+                        Solicitante = processRecord.Solicitante
+                    };
+                    _context.ProcessRecord.Add(registroIntermediario);
+                }
+
+                // Cria registro para o dia atual desde 00:00:00 até a hora atual
+                var registroFinal = new ProcessRecord
+                {
+                    AttorneyId = processRecord.AttorneyId,
+                    ClientId = processRecord.ClientId,
+                    DepartmentId = processRecord.DepartmentId,
+                    Date = dataAtual,
+                    HoraInicial = new TimeSpan(0, 0, 0),
+                    HoraFinal = horaFinalAtual,
+                    Description = processRecord.Description + " (continuação)",
+                    RecordType = processRecord.RecordType,
+                    Solicitante = processRecord.Solicitante
+                };
+                _context.ProcessRecord.Add(registroFinal);
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                // Timer parado no mesmo dia - comportamento normal
+                processRecord.HoraFinal = horaFinalAtual;
+                await _context.SaveChangesAsync();
+            }
 
             return Ok();
+        }
+
+        // MÉTODO DE TESTE - Simula timer que passou da meia-noite
+        [HttpPost]
+        public async Task<IActionResult> TestMidnightScenario([FromBody] TestMidnightRequest request)
+        {
+            Attorney usuario = _isessao.BuscarSessaoDoUsuario();
+            if (usuario == null)
+            {
+                return Unauthorized("Sessão expirada.");
+            }
+
+            // Cria um registro simulando que começou ontem às 18:00
+            var ontem = DateTime.Now.Date.AddDays(-1);
+            var processRecord = new ProcessRecord
+            {
+                AttorneyId = usuario.Id,
+                ClientId = request.ClientId,
+                DepartmentId = request.DepartmentId,
+                Date = ontem,
+                HoraInicial = new TimeSpan(18, 0, 0), // 18:00
+                HoraFinal = new TimeSpan(0, 0, 0), // Ainda rodando
+                Description = request.Description + " (TESTE - Iniciado ontem às 18:00)",
+                RecordType = (RecordType)request.RecordType,
+                Solicitante = request.Solicitante
+            };
+
+            _context.ProcessRecord.Add(processRecord);
+            await _context.SaveChangesAsync();
+
+            // Agora simula o stop hoje às 08:00
+            var brasiliaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("E. South America Standard Time");
+            var nowInBrasilia = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, brasiliaTimeZone);
+            var horaFinalSimulada = new TimeSpan(8, 0, 0); // Simula 08:00
+            var dataAtual = DateTime.Now.Date;
+
+            // Fecha o registro de ontem até 23:59:59
+            processRecord.HoraFinal = new TimeSpan(23, 59, 59);
+            await _context.SaveChangesAsync();
+
+            // Cria registro para hoje desde 00:00:00 até 08:00:00
+            var registroHoje = new ProcessRecord
+            {
+                AttorneyId = processRecord.AttorneyId,
+                ClientId = processRecord.ClientId,
+                DepartmentId = processRecord.DepartmentId,
+                Date = dataAtual,
+                HoraInicial = new TimeSpan(0, 0, 0),
+                HoraFinal = horaFinalSimulada,
+                Description = processRecord.Description + " (continuação - parado hoje às 08:00)",
+                RecordType = processRecord.RecordType,
+                Solicitante = processRecord.Solicitante
+            };
+            _context.ProcessRecord.Add(registroHoje);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { 
+                message = "Teste criado com sucesso!", 
+                registroOntem = new { 
+                    data = ontem.ToString("dd/MM/yyyy"), 
+                    inicio = "18:00:00", 
+                    fim = "23:59:59",
+                    duracao = "5h 59min 59s"
+                },
+                registroHoje = new { 
+                    data = dataAtual.ToString("dd/MM/yyyy"), 
+                    inicio = "00:00:00", 
+                    fim = "08:00:00",
+                    duracao = "8h"
+                }
+            });
         }
 
         [HttpGet]
@@ -172,6 +304,7 @@ namespace WebAppSystems.Controllers
             return Ok(new
             {
                 ProcessRecordId = activeRecord.Id,
+                Date = activeRecord.Date.ToString("yyyy-MM-dd"),
                 HoraInicial = activeRecord.HoraInicial.ToString(@"hh\:mm\:ss"),
                 ClientId = activeRecord.ClientId,
                 DepartmentId = activeRecord.DepartmentId,
@@ -199,36 +332,45 @@ namespace WebAppSystems.Controllers
             public string Description { get; set; }
         }
 
+        public class TestMidnightRequest
+        {
+            public int ClientId { get; set; }
+            public string Description { get; set; }
+            public int DepartmentId { get; set; }
+            public string Solicitante { get; set; }
+            public int RecordType { get; set; }
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetRecordsForToday(int attorneyId)
         {
-            var today = DateTime.Now.Date;
+            var brasiliaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("E. South America Standard Time");
+            var nowInBrasilia = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, brasiliaTimeZone);
+            var today = nowInBrasilia.Date;
+            
             var records = await _context.ProcessRecord
-                .Where(r => r.AttorneyId == attorneyId && r.HoraFinal != null && r.HoraFinal != TimeSpan.Zero)
+                .Where(r => r.AttorneyId == attorneyId && 
+                           r.HoraFinal != null && 
+                           r.HoraFinal != TimeSpan.Zero)
                 .Include(r => r.Client)
-                .OrderByDescending(r => r.Date) // Ordena pela data, do mais recente ao mais antigo
-                .ThenByDescending(r => r.HoraInicial) // Dentro da mesma data, ordena pela hora inicial
                 .ToListAsync();
 
+            // Filtrar por data de hoje após carregar do banco
+            var todayRecords = records
+                .Where(r => r.Date.Date == today)
+                .OrderByDescending(r => r.Id) // Ordenar por ID (mais recente primeiro)
+                .ToList();
 
-            var viewModel = new ProcessRecordViewModel
-            {
-                ProcessRecords = records,
-                Clients = records.Select(r => r.Client).ToList(),
-                // Outras propriedades que o ViewModel pode precisar
-            };
-
-            return Json(records.Select(r => new
+            return Json(todayRecords.Select(r => new
             {
                 r.Id,
                 r.Description,
-                ClienteNome = r.Client.Name, // Inclui o nome do cliente no JSON
+                ClienteNome = r.Client.Name,
                 r.HoraInicial,
                 r.HoraFinal,
                 r.RecordType,
                 r.Solicitante,
                 r.Date
-                
             }));
         }
 

@@ -2,46 +2,728 @@
     ViewData["Title"] = "Sobre";
 }
 
-<div style="text-align: center;">
-    <img src="~/images/Juridico2.webp" alt="Sua Imagem" style="width: 200px; height: auto; margin-bottom: 20px;">
+<div class="about-container">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="hero-content">
+            <div class="logo-wrapper">
+                <div class="logo-professional">
+                    <!-- Círculo externo com animação -->
+                    <div class="logo-circle">
+                        <div class="logo-circle-inner">
+                            <!-- Ícone de relógio estilizado -->
+                            <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                <!-- Círculo do relógio -->
+                                <circle cx="50" cy="50" r="45" fill="none" stroke="url(#gradient1)" stroke-width="3"/>
+                                
+                                <!-- Marcadores de hora -->
+                                <circle cx="50" cy="10" r="2" fill="url(#gradient1)"/>
+                                <circle cx="90" cy="50" r="2" fill="url(#gradient1)"/>
+                                <circle cx="50" cy="90" r="2" fill="url(#gradient1)"/>
+                                <circle cx="10" cy="50" r="2" fill="url(#gradient1)"/>
+                                
+                                <!-- Ponteiros do relógio -->
+                                <line x1="50" y1="50" x2="50" y2="25" stroke="url(#gradient1)" stroke-width="3" stroke-linecap="round"/>
+                                <line x1="50" y1="50" x2="70" y2="50" stroke="url(#gradient2)" stroke-width="2.5" stroke-linecap="round"/>
+                                
+                                <!-- Centro do relógio -->
+                                <circle cx="50" cy="50" r="4" fill="url(#gradient1)"/>
+                                
+                                <!-- Gradientes -->
+                                <defs>
+                                    <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+                                        <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+                                    </linearGradient>
+                                    <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" style="stop-color:#f093fb;stop-opacity:1" />
+                                        <stop offset="100%" style="stop-color:#f5576c;stop-opacity:1" />
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                            
+                            <!-- Efeito de brilho -->
+                            <div class="logo-shine"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Texto do logo -->
+                    <div class="logo-brand">
+                        <span class="logo-brand-main">TimeSheet</span>
+                        <span class="logo-brand-sub">Professional Time Management</span>
+                    </div>
+                </div>
+            </div>
+            <h1 class="hero-title" data-i18n="hero.title">TimeSheet System</h1>
+            <p class="hero-subtitle" data-i18n="hero.subtitle">Gestão de tempo com precisão e simplicidade</p>
+            <div class="version-badge">v1.0.3</div>
+        </div>
+    </div>
+
+    <!-- Features Grid -->
+    <div class="features-section">
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="bi bi-clock-history"></i>
+            </div>
+            <h3 data-i18n="features.control.title">Controle Preciso</h3>
+            <p data-i18n="features.control.desc">Rastreamento automático de horas com relatórios detalhados</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="bi bi-graph-up-arrow"></i>
+            </div>
+            <h3 data-i18n="features.productivity.title">Produtividade</h3>
+            <p data-i18n="features.productivity.desc">Análises inteligentes para otimizar seu tempo</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="bi bi-shield-check"></i>
+            </div>
+            <h3 data-i18n="features.compliance.title">Conformidade</h3>
+            <p data-i18n="features.compliance.desc">Relatórios transparentes para auditorias</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="bi bi-people"></i>
+            </div>
+            <h3 data-i18n="features.team.title">Gestão de Equipe</h3>
+            <p data-i18n="features.team.desc">Visão completa do desempenho da equipe</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="bi bi-file-earmark-bar-graph"></i>
+            </div>
+            <h3 data-i18n="features.reports.title">Relatórios Avançados</h3>
+            <p data-i18n="features.reports.desc">Exportação em Excel e PDF com dados precisos</p>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="bi bi-lightning-charge"></i>
+            </div>
+            <h3 data-i18n="features.automation.title">Automação Inteligente</h3>
+            <p data-i18n="features.automation.desc">Processos automatizados para economizar tempo</p>
+        </div>
+    </div>
+
+    <!-- Stats Section -->
+    <div class="stats-section">
+        <div class="stat-item">
+            <div class="stat-number">100%</div>
+            <div class="stat-label" data-i18n="stats.precision">Precisão</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+            <div class="stat-number">24/7</div>
+            <div class="stat-label" data-i18n="stats.available">Disponível</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+            <div class="stat-number">∞</div>
+            <div class="stat-label" data-i18n="stats.scalable">Escalável</div>
+        </div>
+    </div>
+
+    <!-- CTA Section -->
+    <div class="cta-section">
+        <h2 data-i18n="cta.title">Transforme a gestão do seu tempo</h2>
+        <p data-i18n="cta.subtitle">Solução profissional para escritórios que valorizam eficiência</p>
+    </div>
+
+    <!-- Footer -->
+    <div class="about-footer">
+        <div class="brand-footer">
+            <span class="brand-text">JRWIT.COM</span>
+            <span class="brand-tagline">SMART SOLUTIONS FOR YOUR BUSINESS</span>
+        </div>
+    </div>
 </div>
 
-<div style="text-align: center;">
-    <h1 style="font-size: 24px;">Informações sobre o Sistema</h1>
-    <p style="font-size: 18px;">Versão: 1.0.3</p>    
-    <p style="font-size: 18px;">by  Soluções em TI</p>
-</div>
+<style>
+    .about-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 40px 20px;
+    }
 
-<!-- Texto promocional sobre o sistema de Timesheet -->
-<div style="margin-top: 40px;">
-    <h2 style="font-size: 28px; text-align: center;">Descubra o Power of Time Management com o nosso Sistema de Timesheet!</h2>
-    <p style="font-size: 18px;">Em um mundo cada vez mais dinâmico e conectado, <strong>gerenciar o tempo de maneira eficiente</strong> tornou-se uma habilidade essencial para empresas de todos os tamanhos. É por isso que apresentamos o <strong>Sistema de Timesheet </strong>, a solução que vai transformar a maneira como você acompanha, gerencia e utiliza seu tempo de trabalho.</p>
+    /* Hero Section */
+    .hero-section {
+        text-align: center;
+        padding: 60px 20px;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+        border-radius: 24px;
+        margin-bottom: 60px;
+        position: relative;
+        overflow: hidden;
+    }
 
-    <h3 style="font-size: 24px;">Por que você precisa de um sistema de Timesheet?</h3>
-    <ul style="font-size: 18px;">
-        <li><strong>Controle total sobre o tempo gasto em cada tarefa</strong>: Com a nossa ferramenta intuitiva, você pode facilmente registrar as atividades diárias e gerar relatórios precisos.</li>
-        <li><strong>Aumento da produtividade</strong>: Identifique onde você pode otimizar processos e melhorar sua eficiência.</li>
-        <li><strong>Transparência e conformidade</strong>: Gere relatórios detalhados e transparentes para facilitar auditorias.</li>
-        <li><strong>Gestão de equipe simplificada</strong>: Líderes podem acompanhar o desempenho da equipe e melhorar a distribuição das tarefas.</li>
-    </ul>
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 500px;
+        height: 500px;
+        background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
+        border-radius: 50%;
+    }
 
-    <h3 style="font-size: 24px;">Como o Sistema de Timesheet vai transformar seu dia a dia?</h3>
-    <p style="font-size: 18px;">O <strong>Sistema de Timesheet </strong> não é apenas uma ferramenta – é uma <strong>revolução</strong> na maneira como você organiza e utiliza o seu tempo. Imagine um sistema que:</p>
-    <ul style="font-size: 18px;">
-        <li>Permite que você <strong>inicie e pare o cronômetro com um clique</strong>, registrando com precisão cada minuto trabalhado.</li>
-        <li>Fornece relatórios automáticos e fácil visualização de horas trabalhadas por projeto, tarefa e até cliente.</li>
-        <li>Oferece <strong>alertas e notificações</strong> para que você nunca perca um prazo ou deixe de registrar uma tarefa importante.</li>
-        <li>Se integra perfeitamente com outras ferramentas de gestão, proporcionando uma visão unificada do seu dia a dia profissional.</li>
-    </ul>
+    .hero-content {
+        position: relative;
+        z-index: 1;
+    }
 
-    <h3 style="font-size: 24px;">Benefícios Imediatos para Você e Sua Equipe:</h3>
-    <ul style="font-size: 18px;">
-        <li><strong>Economia de tempo</strong>: Menos tempo gasto tentando lembrar ou calcular horas, mais tempo para focar no que realmente importa.</li>
-        <li><strong>Precisão nos relatórios</strong>: Com dados 100% precisos, os relatórios financeiros e de performance se tornam mais confiáveis.</li>
-        <li><strong>Análise inteligente</strong>: Visualize padrões, avalie como os recursos estão sendo utilizados e tome decisões mais rápidas e acertadas.</li>
-        <li><strong>Facilidade de uso</strong>: A interface é simples e intuitiva, para que você possa começar a usar a ferramenta em minutos – sem necessidade de treinamento complexo.</li>
-    </ul>
+    .logo-wrapper {
+        margin-bottom: 40px;
+        animation: fadeInDown 0.8s ease;
+    }
 
-    <h3 style="font-size: 24px; text-align: center;">Junte-se a milhares de empresas que já estão mais produtivas!</h3>
-    <p style="font-size: 18px; text-align: center;">A cada dia, mais e mais empresas estão adotando o <strong>Sistema de Timesheet </strong> para transformar a forma como gerenciam o tempo de trabalho. Não perca mais tempo com processos manuais ou soluções ineficazes. <strong>Experimente o Sistema de Timesheet  hoje mesmo</strong> e descubra como a gestão eficiente do tempo pode transformar a sua produtividade!</p>
-</div>
+    .logo-professional {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .logo-circle {
+        width: 140px;
+        height: 140px;
+        background: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 15px 50px rgba(102, 126, 234, 0.25);
+        position: relative;
+        animation: float 3s ease-in-out infinite;
+    }
+
+    .logo-circle-inner {
+        width: 120px;
+        height: 120px;
+        background: linear-gradient(135deg, #f7fafc 0%, #ffffff 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .logo-svg {
+        width: 100px;
+        height: 100px;
+        filter: drop-shadow(0 2px 8px rgba(102, 126, 234, 0.3));
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    .logo-shine {
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.3) 50%, transparent 70%);
+        animation: shine 3s ease-in-out infinite;
+    }
+
+    .logo-brand {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .logo-brand-main {
+        font-size: 32px;
+        font-weight: 800;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: -1px;
+        text-shadow: 0 2px 10px rgba(102, 126, 234, 0.2);
+    }
+
+    .logo-brand-sub {
+        font-size: 11px;
+        color: #718096;
+        font-weight: 600;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+    }
+
+    /* Animações */
+    @@keyframes float {
+        0%, 100% {
+            transform: translateY(0px);
+        }
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+
+    @@keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+    }
+
+    @@keyframes shine {
+        0% {
+            transform: translateX(-100%) translateY(-100%) rotate(45deg);
+        }
+        100% {
+            transform: translateX(100%) translateY(100%) rotate(45deg);
+        }
+    }
+
+    .logo-modern {
+        display: inline-flex;
+        align-items: center;
+        gap: 15px;
+        padding: 20px 30px;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(102, 126, 234, 0.15);
+    }
+
+    .logo-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 32px;
+        color: white;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .logo-text {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .logo-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: #2d3748;
+        line-height: 1;
+        letter-spacing: -0.5px;
+    }
+
+    .logo-subtitle {
+        font-size: 16px;
+        font-weight: 500;
+        color: #718096;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+    }
+
+    .hero-logo {
+        width: 120px;
+        height: auto;
+        filter: drop-shadow(0 10px 30px rgba(102, 126, 234, 0.2));
+    }
+
+    .hero-title {
+        font-size: 48px;
+        font-weight: 700;
+        color: #2d3748;
+        margin: 0 0 15px 0;
+        letter-spacing: -1px;
+        animation: fadeInUp 0.8s ease 0.2s both;
+    }
+
+    .hero-subtitle {
+        font-size: 20px;
+        color: #718096;
+        margin: 0 0 25px 0;
+        font-weight: 400;
+        animation: fadeInUp 0.8s ease 0.4s both;
+    }
+
+    .version-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 8px 20px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        animation: fadeInUp 0.8s ease 0.6s both;
+    }
+
+    /* Features Grid */
+    .features-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 30px;
+        margin-bottom: 60px;
+    }
+
+    .feature-card {
+        background: white;
+        padding: 40px 30px;
+        border-radius: 20px;
+        text-align: center;
+        transition: all 0.3s ease;
+        border: 2px solid #f7fafc;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .feature-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 30px rgba(102, 126, 234, 0.15);
+        border-color: rgba(102, 126, 234, 0.2);
+    }
+
+    .feature-icon {
+        width: 70px;
+        height: 70px;
+        margin: 0 auto 25px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 32px;
+        color: white;
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .feature-card h3 {
+        font-size: 20px;
+        font-weight: 600;
+        color: #2d3748;
+        margin: 0 0 12px 0;
+    }
+
+    .feature-card p {
+        font-size: 15px;
+        color: #718096;
+        margin: 0;
+        line-height: 1.6;
+    }
+
+    /* Stats Section */
+    .stats-section {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 40px;
+        padding: 50px 30px;
+        background: white;
+        border-radius: 20px;
+        margin-bottom: 60px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-number {
+        font-size: 48px;
+        font-weight: 700;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 8px;
+    }
+
+    .stat-label {
+        font-size: 14px;
+        color: #718096;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .stat-divider {
+        width: 1px;
+        height: 60px;
+        background: linear-gradient(to bottom, transparent, #e2e8f0, transparent);
+    }
+
+    /* CTA Section */
+    .cta-section {
+        text-align: center;
+        padding: 60px 30px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 24px;
+        margin-bottom: 40px;
+        box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+    }
+
+    .cta-section h2 {
+        font-size: 36px;
+        font-weight: 700;
+        color: white;
+        margin: 0 0 15px 0;
+        letter-spacing: -0.5px;
+    }
+
+    .cta-section p {
+        font-size: 18px;
+        color: rgba(255, 255, 255, 0.9);
+        margin: 0;
+    }
+
+    /* Footer */
+    .about-footer {
+        text-align: center;
+        padding: 40px 0;
+    }
+
+    .brand-footer {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .brand-text {
+        font-size: 24px;
+        font-weight: 700;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: 1px;
+    }
+
+    .brand-tagline {
+        font-size: 12px;
+        color: #718096;
+        font-weight: 500;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+    }
+
+    .about-footer strong {
+        color: #2d3748;
+        font-weight: 600;
+    }
+
+    /* Animations */
+    @@keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @@keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .hero-title {
+            font-size: 36px;
+        }
+
+        .hero-subtitle {
+            font-size: 16px;
+        }
+
+        .logo-circle {
+            width: 110px;
+            height: 110px;
+        }
+
+        .logo-circle-inner {
+            width: 95px;
+            height: 95px;
+        }
+
+        .logo-svg {
+            width: 80px;
+            height: 80px;
+        }
+
+        .logo-brand-main {
+            font-size: 26px;
+        }
+
+        .logo-brand-sub {
+            font-size: 9px;
+        }
+
+        .logo-modern {
+            padding: 15px 20px;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            font-size: 26px;
+        }
+
+        .logo-title {
+            font-size: 24px;
+        }
+
+        .logo-subtitle {
+            font-size: 14px;
+        }
+
+        .brand-text {
+            font-size: 20px;
+        }
+
+        .brand-tagline {
+            font-size: 10px;
+        }
+
+        .features-section {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .stats-section {
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .stat-divider {
+            width: 60px;
+            height: 1px;
+            background: linear-gradient(to right, transparent, #e2e8f0, transparent);
+        }
+
+        .cta-section h2 {
+            font-size: 28px;
+        }
+
+        .cta-section p {
+            font-size: 16px;
+        }
+    }
+</style>
+
+<script>
+    // Traduções
+    const translations = {
+        pt: {
+            'hero.title': 'TimeSheet System',
+            'hero.subtitle': 'Gestão de tempo com precisão e simplicidade',
+            'features.control.title': 'Controle Preciso',
+            'features.control.desc': 'Rastreamento automático de horas com relatórios detalhados',
+            'features.productivity.title': 'Produtividade',
+            'features.productivity.desc': 'Análises inteligentes para otimizar seu tempo',
+            'features.compliance.title': 'Conformidade',
+            'features.compliance.desc': 'Relatórios transparentes para auditorias',
+            'features.team.title': 'Gestão de Equipe',
+            'features.team.desc': 'Visão completa do desempenho da equipe',
+            'stats.precision': 'Precisão',
+            'stats.available': 'Disponível',
+            'stats.scalable': 'Escalável',
+            'cta.title': 'Transforme a gestão do seu tempo',
+            'cta.subtitle': 'Solução profissional para escritórios que valorizam eficiência',
+            'footer.text': 'Desenvolvido por <strong>Soluções em TI</strong>'
+        },
+        en: {
+            'hero.title': 'TimeSheet System',
+            'hero.subtitle': 'Time management with precision and simplicity',
+            'features.control.title': 'Precise Control',
+            'features.control.desc': 'Automatic time tracking with detailed reports',
+            'features.productivity.title': 'Productivity',
+            'features.productivity.desc': 'Smart analytics to optimize your time',
+            'features.compliance.title': 'Compliance',
+            'features.compliance.desc': 'Transparent reports for audits',
+            'features.team.title': 'Team Management',
+            'features.team.desc': 'Complete view of team performance',
+            'stats.precision': 'Precision',
+            'stats.available': 'Available',
+            'stats.scalable': 'Scalable',
+            'cta.title': 'Transform your time management',
+            'cta.subtitle': 'Professional solution for offices that value efficiency',
+            'footer.text': 'Developed by <strong>IT Solutions</strong>'
+        },
+        es: {
+            'hero.title': 'TimeSheet System',
+            'hero.subtitle': 'Gestión del tiempo con precisión y simplicidad',
+            'features.control.title': 'Control Preciso',
+            'features.control.desc': 'Seguimiento automático de horas con informes detallados',
+            'features.productivity.title': 'Productividad',
+            'features.productivity.desc': 'Análisis inteligentes para optimizar su tiempo',
+            'features.compliance.title': 'Cumplimiento',
+            'features.compliance.desc': 'Informes transparentes para auditorías',
+            'features.team.title': 'Gestión de Equipo',
+            'features.team.desc': 'Vista completa del rendimiento del equipo',
+            'stats.precision': 'Precisión',
+            'stats.available': 'Disponible',
+            'stats.scalable': 'Escalable',
+            'cta.title': 'Transforme la gestión de su tiempo',
+            'cta.subtitle': 'Solución profesional para oficinas que valoran la eficiencia',
+            'footer.text': 'Desarrollado por <strong>Soluciones en TI</strong>'
+        }
+    };
+
+    // Idioma atual
+    let currentLang = localStorage.getItem('aboutPageLang') || 'pt';
+
+    // Função para trocar idioma
+    function changeLanguage(lang) {
+        currentLang = lang;
+        localStorage.setItem('aboutPageLang', lang);
+
+        // Atualizar todos os elementos com data-i18n
+        document.querySelectorAll('[data-i18n]').forEach(element => {
+            const key = element.getAttribute('data-i18n');
+            if (translations[lang] && translations[lang][key]) {
+                element.innerHTML = translations[lang][key];
+            }
+        });
+
+        // Atualizar botões ativos
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.getAttribute('data-lang') === lang) {
+                btn.classList.add('active');
+            }
+        });
+    }
+
+    // Event listeners para os botões
+    document.addEventListener('DOMContentLoaded', function() {
+        // Aplicar idioma salvo
+        changeLanguage(currentLang);
+
+        // Adicionar listeners aos botões
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const lang = this.getAttribute('data-lang');
+                changeLanguage(lang);
+            });
+        });
+    });
+</script>

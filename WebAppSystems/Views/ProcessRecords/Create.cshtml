@@ -8,75 +8,165 @@
     var isAdmin = ViewBag.IsAdmin as bool?;
 }
 
-<div class="card">
-    <div class="card-body">
-        <h4 class="card-title">Registro de Atividades</h4>
-        <hr />
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="ProcessRecord.RecordType" class="control-label">Tipo de Registro</label>
-                <select asp-for="ProcessRecord.RecordType" class="form-control">
-                    <option value="">Selecionar</option>
-                    @foreach (var item in Html.GetEnumSelectList<RecordType>())
-                    {
-                        <option value="@item.Value">@item.Text</option>
-                    }
-                </select>
-                <span asp-validation-for="ProcessRecord.RecordType" class="text-danger"></span>
+<div class="activity-create-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-icon">
+                <i class="bi bi-plus-circle"></i>
             </div>
-            <div class="form-group">
-                <label asp-for="ProcessRecord.Date" class="control-label">Data</label>
-                <input asp-for="ProcessRecord.Date" class="form-control" />
-                <span asp-validation-for="ProcessRecord.Date" class="text-danger"></span>
+            <div class="header-text">
+                <h1 class="page-title" data-i18n="activity.create.title">Registro de Atividades</h1>
+                <p class="page-subtitle" data-i18n="activity.create.subtitle">Preencha os dados para registrar uma nova atividade</p>
             </div>
-            <div class="form-group">
-                <label asp-for="ProcessRecord.HoraInicial" class="control-label">Hora Inicial</label>
-                <input asp-for="ProcessRecord.HoraInicial" class="form-control" />
-                <span asp-validation-for="ProcessRecord.HoraInicial" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="ProcessRecord.HoraFinal" class="control-label">Hora Final</label>
-                <input asp-for="ProcessRecord.HoraFinal" class="form-control" />
-                <span asp-validation-for="ProcessRecord.HoraFinal" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="ProcessRecord.Description" class="control-label">Descrição da Atividade</label>
-                <textarea asp-for="ProcessRecord.Description" class="form-control" rows="5"></textarea>
-                <span asp-validation-for="ProcessRecord.Description" class="text-danger"></span>
+        </div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="form-card">
+        <form asp-action="Create" id="activityForm">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+            <!-- Seção: Informações Básicas -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="bi bi-info-circle"></i>
+                    <h3 data-i18n="activity.section.basic">Informações Básicas</h3>
+                </div>
+                
+                <!-- Usuário (campo discreto no topo) -->
+                <div class="user-field-compact">
+                    <input type="hidden" asp-for="ProcessRecord.AttorneyId" />
+                    <span class="user-label"><i class="bi bi-person-badge"></i> <span data-i18n="activity.field.user">Usuário:</span></span>
+                    <span class="user-value">@Model.Attorneys.FirstOrDefault(a => a.Id == Model.ProcessRecord.AttorneyId)?.Name</span>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label asp-for="ProcessRecord.RecordType" class="form-label">
+                            <i class="bi bi-tag"></i>
+                            <span data-i18n="activity.field.type">Tipo de Registro</span>
+                        </label>
+                        <select asp-for="ProcessRecord.RecordType" class="modern-select">
+                            <option value="" data-i18n="common.select">Selecionar</option>
+                            @foreach (var item in Html.GetEnumSelectList<RecordType>())
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        </select>
+                        <span asp-validation-for="ProcessRecord.RecordType" class="field-error"></span>
+                    </div>
+
+                    <div class="form-group col-md-2">
+                        <label asp-for="ProcessRecord.Date" class="form-label">
+                            <i class="bi bi-calendar-event"></i>
+                            <span data-i18n="activity.field.date">Data</span>
+                        </label>
+                        <input asp-for="ProcessRecord.Date" class="modern-input" type="date" />
+                        <span asp-validation-for="ProcessRecord.Date" class="field-error"></span>
+                    </div>
+
+                    <div class="form-group col-md-2">
+                        <label asp-for="ProcessRecord.HoraInicial" class="form-label">
+                            <i class="bi bi-clock"></i>
+                            <span data-i18n="activity.field.starttime">Hora Inicial</span>
+                        </label>
+                        <input asp-for="ProcessRecord.HoraInicial" class="modern-input time-input" type="text" placeholder="00:00" maxlength="5" />
+                        <span asp-validation-for="ProcessRecord.HoraInicial" class="field-error"></span>
+                    </div>
+
+                    <div class="form-group col-md-2">
+                        <label asp-for="ProcessRecord.HoraFinal" class="form-label">
+                            <i class="bi bi-clock-fill"></i>
+                            <span data-i18n="activity.field.endtime">Hora Final</span>
+                        </label>
+                        <input asp-for="ProcessRecord.HoraFinal" class="modern-input time-input" type="text" placeholder="00:00" maxlength="5" />
+                        <span asp-validation-for="ProcessRecord.HoraFinal" class="field-error"></span>
+                    </div>
+                </div>
+
+                <div class="time-duration" id="timeDuration" style="display: none;">
+                    <i class="bi bi-hourglass-split"></i>
+                    <span data-i18n="activity.duration">Duração:</span>
+                    <strong id="durationText">0h 0min</strong>
+                </div>
             </div>
 
-            <input type="hidden" asp-for="ProcessRecord.AttorneyId" />
-            <div class="form-group">
-                <label class="control-label">Usuário</label>
-                <input type="hidden" asp-for="ProcessRecord.AttorneyId" />
-                <input type="text" value="@Model.Attorneys.FirstOrDefault(a => a.Id == Model.ProcessRecord.AttorneyId)?.Name" class="form-control" readonly />
-            </div>
-            <div class="form-group">
-                <label asp-for="ProcessRecord.ClientId" class="control-label">Cliente</label>
-                <select asp-for="ProcessRecord.ClientId" class="form-control" asp-items="Model.ClientsOptions"></select>
-                <span asp-validation-for="ProcessRecord.ClientId" class="text-danger"></span>
-                @if (isAdmin == true)
-                {
-                    <button type="button" class="btn btn-link" data-toggle="modal" data-target="#createClientModal">
-                        + Cadastrar Novo Cliente
-                    </button>
-                }
+            <!-- Seção: Cliente e Solicitante -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="bi bi-people"></i>
+                    <h3 data-i18n="activity.section.client">Cliente, Solicitante e Área</h3>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label asp-for="ProcessRecord.ClientId" class="form-label">
+                            <i class="bi bi-briefcase"></i>
+                            <span data-i18n="activity.field.client">Cliente</span>
+                        </label>
+                        <div class="client-select-wrapper">
+                            <select asp-for="ProcessRecord.ClientId" class="modern-select" asp-items="Model.ClientsOptions"></select>
+                            @if (isAdmin == true)
+                            {
+                                <button type="button" class="btn-add-client" data-toggle="modal" data-target="#createClientModal">
+                                    <i class="bi bi-plus-circle"></i>
+                                    <span data-i18n="activity.btn.newclient">Novo</span>
+                                </button>
+                            }
+                        </div>
+                        <span asp-validation-for="ProcessRecord.ClientId" class="field-error"></span>
+                    </div>
+
+                    <div class="form-group col-md-3">
+                        <label asp-for="ProcessRecord.Solicitante" class="form-label">
+                            <i class="bi bi-person-check"></i>
+                            <span data-i18n="activity.field.requester">Solicitante</span>
+                        </label>
+                        <input asp-for="ProcessRecord.Solicitante" class="modern-input" />
+                        <span asp-validation-for="ProcessRecord.Solicitante" class="field-error"></span>
+                    </div>
+
+                    <div class="form-group col-md-3">
+                        <label asp-for="ProcessRecord.DepartmentId" class="form-label">
+                            <i class="bi bi-building"></i>
+                            <span data-i18n="activity.field.department">Área</span>
+                        </label>
+                        <select asp-for="ProcessRecord.DepartmentId" asp-items="@(new SelectList(Model.Departments, "Id", "Name"))" class="modern-select"></select>
+                    </div>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label asp-for="ProcessRecord.DepartmentId" class="control-label">Área</label>
-                <select asp-for="ProcessRecord.DepartmentId" asp-items="@(new SelectList(Model.Departments, "Id", "Name"))" class="form-control"></select>
-            </div>
-            <div class="form-group">
-                <label asp-for="ProcessRecord.Solicitante" class="control-label">Solicitante</label>
-                <input asp-for="ProcessRecord.Solicitante" class="form-control" />
-                <span asp-validation-for="ProcessRecord.Solicitante" class="text-danger"></span>
+            <!-- Seção: Descrição -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="bi bi-file-text"></i>
+                    <h3 data-i18n="activity.section.description">Descrição da Atividade</h3>
+                </div>
+                
+                <div class="form-group">
+                    <label asp-for="ProcessRecord.Description" class="form-label">
+                        <i class="bi bi-pencil-square"></i>
+                        <span data-i18n="activity.field.description">Descreva a atividade realizada</span>
+                    </label>
+                    <textarea asp-for="ProcessRecord.Description" class="modern-textarea" rows="5" placeholder="Digite aqui os detalhes da atividade..."></textarea>
+                    <span asp-validation-for="ProcessRecord.Description" class="field-error"></span>
+                    <div class="char-counter">
+                        <span id="charCount">0</span> caracteres
+                    </div>
+                </div>
             </div>
 
-            <div class="mt-3">
-                <button type="submit" class="btn btn-primary">Salvar</button>
-                <a asp-action="Index" class="btn btn-secondary">Voltar</a>
+            <!-- Action Buttons -->
+            <div class="form-actions">
+                <button type="submit" class="btn btn-save">
+                    <i class="bi bi-check-circle"></i>
+                    <span data-i18n="common.save">Salvar</span>
+                </button>
+                <a asp-action="Index" class="btn btn-cancel">
+                    <i class="bi bi-x-circle"></i>
+                    <span data-i18n="common.cancel">Cancelar</span>
+                </a>
             </div>
         </form>
     </div>
@@ -133,6 +223,587 @@
     </div>
 </div>
 
+<style>
+    .activity-create-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    /* Page Header */
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        padding: 24px 28px;
+        margin-bottom: 24px;
+        box-shadow: 0 6px 25px rgba(102, 126, 234, 0.25);
+        animation: slideDown 0.5s ease;
+    }
+
+    .header-content {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .header-icon {
+        width: 50px;
+        height: 50px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: white;
+        backdrop-filter: blur(10px);
+        flex-shrink: 0;
+    }
+
+    .header-text {
+        flex: 1;
+    }
+
+    .page-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: white;
+        margin: 0 0 6px 0;
+        letter-spacing: -0.5px;
+    }
+
+    .page-subtitle {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.9);
+        margin: 0;
+    }
+
+    /* Form Card */
+    .form-card {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+        animation: fadeInUp 0.6s ease;
+    }
+
+    /* Form Row */
+    .form-row {
+        display: flex;
+        gap: 12px;
+        margin: 0 -6px;
+    }
+
+    .form-row .form-group {
+        flex: 1;
+        padding: 0 6px;
+    }
+
+    .form-row .col-md-2 {
+        flex: 0 0 16.666%;
+        max-width: 16.666%;
+    }
+
+    .form-row .col-md-3 {
+        flex: 0 0 25%;
+        max-width: 25%;
+    }
+
+    .form-row .col-md-4 {
+        flex: 0 0 33.333%;
+        max-width: 33.333%;
+    }
+
+    .form-row .col-md-6 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+
+    .form-row .col-md-8 {
+        flex: 0 0 66.666%;
+        max-width: 66.666%;
+    }
+
+    .form-row .col-md-12 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    /* Form Sections */
+    .form-section {
+        margin-bottom: 20px;
+        padding-bottom: 18px;
+        border-bottom: 1px solid #e2e8f0;
+        animation: fadeIn 0.8s ease;
+    }
+
+    .form-section:last-of-type {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #f7fafc;
+    }
+
+    .section-header i {
+        font-size: 18px;
+        color: #667eea;
+    }
+
+    .section-header h3 {
+        font-size: 15px;
+        font-weight: 600;
+        color: #2d3748;
+        margin: 0;
+    }
+
+    /* User Field Compact */
+    .user-field-compact {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 14px;
+        background: #f7fafc;
+        border-radius: 6px;
+        margin-bottom: 15px;
+        font-size: 13px;
+        border-left: 3px solid #667eea;
+    }
+
+    .user-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #4a5568;
+        font-weight: 600;
+    }
+
+    .user-label i {
+        color: #667eea;
+        font-size: 14px;
+    }
+
+    .user-value {
+        color: #2d3748;
+        font-weight: 500;
+    }
+
+    /* Form Controls */
+    .form-group {
+        margin-bottom: 14px;
+    }
+
+    .form-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #4a5568;
+        margin-bottom: 5px;
+    }
+
+    .form-label i {
+        font-size: 13px;
+        color: #667eea;
+    }
+
+    .modern-input,
+    .modern-select,
+    .modern-textarea {
+        width: 100%;
+        padding: 9px 12px;
+        border: 2px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 13px;
+        color: #2d3748;
+        transition: all 0.3s ease;
+        background: white;
+        line-height: 1.4;
+        min-height: 38px;
+    }
+
+    .modern-select {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234a5568' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        padding-right: 32px;
+    }
+
+    .modern-input:focus,
+    .modern-select:focus,
+    .modern-textarea:focus {
+        outline: none;
+        border-color: #667eea;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .modern-textarea {
+        resize: vertical;
+        min-height: 90px;
+        font-family: inherit;
+        line-height: 1.5;
+    }
+
+    .time-input {
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 1px;
+    }
+
+    /* Time Duration Display */
+    .time-duration {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+        border-radius: 6px;
+        margin-top: 10px;
+        font-size: 12px;
+        color: #4a5568;
+        animation: slideIn 0.4s ease;
+        border-left: 3px solid #667eea;
+    }
+
+    .time-duration i {
+        font-size: 14px;
+        color: #667eea;
+    }
+
+    .time-duration strong {
+        color: #667eea;
+        font-size: 14px;
+    }
+
+    /* Client Select Wrapper */
+    .client-select-wrapper {
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+    }
+
+    .client-select-wrapper select {
+        flex: 1;
+    }
+
+    .btn-add-client {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 9px 16px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+        min-height: 38px;
+    }
+
+    .btn-add-client:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-add-client i {
+        font-size: 13px;
+    }
+
+    /* Character Counter */
+    .char-counter {
+        text-align: right;
+        font-size: 11px;
+        color: #718096;
+        margin-top: 4px;
+    }
+
+    /* Field Error */
+    .field-error {
+        display: block;
+        color: #f56565;
+        font-size: 11px;
+        margin-top: 3px;
+        font-weight: 500;
+    }
+
+    /* Form Actions */
+    .form-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 25px;
+        padding-top: 18px;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .btn-save,
+    .btn-cancel {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 24px;
+        border: none;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+
+    .btn-save {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+
+    .btn-cancel {
+        background: white;
+        color: #4a5568;
+        border: 2px solid #e2e8f0;
+    }
+
+    .btn-cancel:hover {
+        background: #f7fafc;
+        border-color: #cbd5e0;
+        transform: translateY(-2px);
+        color: #2d3748;
+    }
+
+    /* Modal Styles */
+    .modal-content {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px 12px 0 0;
+        padding: 16px 20px;
+        border: none;
+    }
+
+    .modal-title {
+        font-weight: 600;
+        font-size: 16px;
+    }
+
+    .modal-header .close {
+        color: white;
+        opacity: 0.9;
+        text-shadow: none;
+        font-size: 24px;
+    }
+
+    .modal-body {
+        padding: 20px;
+    }
+
+    .modal-body .form-group {
+        margin-bottom: 16px;
+    }
+
+    .modal-body .form-group label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #4a5568;
+        margin-bottom: 6px;
+    }
+
+    .modal-body .form-control {
+        padding: 10px 14px;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+
+    .modal-body .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .modal-body .btn {
+        padding: 10px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .modal-body .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+    }
+
+    .modal-body .btn-secondary {
+        background: white;
+        border: 2px solid #e2e8f0;
+        color: #4a5568;
+    }
+
+    /* Animations */
+    @@keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @@keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    @@keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .activity-create-container {
+            padding: 12px;
+        }
+
+        .page-header {
+            padding: 18px 20px;
+        }
+
+        .header-content {
+            gap: 12px;
+        }
+
+        .header-icon {
+            width: 42px;
+            height: 42px;
+            font-size: 20px;
+        }
+
+        .page-title {
+            font-size: 20px;
+        }
+
+        .page-subtitle {
+            font-size: 13px;
+        }
+
+        .form-card {
+            padding: 20px;
+        }
+
+        .form-row {
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .form-row .form-group {
+            padding: 0;
+        }
+
+        .form-row .col-md-2,
+        .form-row .col-md-3,
+        .form-row .col-md-4,
+        .form-row .col-md-6,
+        .form-row .col-md-8,
+        .form-row .col-md-12 {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+
+        .client-select-wrapper {
+            flex-direction: column;
+        }
+
+        .btn-add-client {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .form-actions {
+            flex-direction: column-reverse;
+            gap: 10px;
+        }
+
+        .btn-save,
+        .btn-cancel {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .section-header h3 {
+            font-size: 15px;
+        }
+    }
+
+    /* Alert Styles */
+    .alert {
+        border-radius: 8px;
+        border: none;
+        padding: 12px 16px;
+        margin-bottom: 16px;
+        font-size: 13px;
+    }
+
+    .alert-danger {
+        background: #fff5f5;
+        color: #c53030;
+        border-left: 3px solid #f56565;
+    }
+
+    .alert-success {
+        background: #f0fff4;
+        color: #22543d;
+        border-left: 3px solid #48bb78;
+    }
+</style>
+
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
@@ -146,6 +817,47 @@
 
             // Configura a opção padrão do combo box para "Selecionar"
             $recordTypeSelect.val(''); // Define a opção padrão para 'Selecionar' (valor vazio)
+
+            // Contador de caracteres para descrição
+            var $description = $("textarea[id$='ProcessRecord_Description']");
+            var $charCount = $("#charCount");
+            
+            $description.on('input', function() {
+                var count = $(this).val().length;
+                $charCount.text(count);
+            });
+
+            // Calcular duração entre horas
+            function calculateDuration() {
+                var startTime = $("input[id$='HoraInicial']").val();
+                var endTime = $("input[id$='HoraFinal']").val();
+                
+                if (startTime && endTime && startTime !== '00:00' && endTime !== '00:00') {
+                    var start = startTime.split(':');
+                    var end = endTime.split(':');
+                    
+                    var startMinutes = parseInt(start[0]) * 60 + parseInt(start[1]);
+                    var endMinutes = parseInt(end[0]) * 60 + parseInt(end[1]);
+                    
+                    var diff = endMinutes - startMinutes;
+                    
+                    if (diff > 0) {
+                        var hours = Math.floor(diff / 60);
+                        var minutes = diff % 60;
+                        
+                        $("#durationText").text(hours + "h " + minutes + "min");
+                        $("#timeDuration").slideDown(300);
+                    } else {
+                        $("#timeDuration").slideUp(300);
+                    }
+                } else {
+                    $("#timeDuration").slideUp(300);
+                }
+            }
+
+            $("input[id$='HoraInicial'], input[id$='HoraFinal']").on('blur', function() {
+                calculateDuration();
+            });
 
             $("select[id$='ProcessRecord_ClientId']").change(function () {
                 var clientId = $(this).val();
@@ -175,6 +887,13 @@
                 }
             });
 
+            // Animação nos campos ao focar
+            $(".modern-input, .modern-select, .modern-textarea").on('focus', function() {
+                $(this).closest('.form-group').addClass('focused');
+            }).on('blur', function() {
+                $(this).closest('.form-group').removeClass('focused');
+            });
+
             // Submissão do formulário de cadastro de cliente
             $("#createClientForm").on("submit", function (event) {
                 event.preventDefault();
@@ -193,6 +912,13 @@
                             var newOption = new Option(response.clienteNome, response.clienteId, false, true);
                             $("select[id$='ProcessRecord_ClientId']").append(newOption).trigger('change');
                             $("#createClientModal").modal('hide');
+                            
+                            // Mostrar mensagem de sucesso
+                            var successMsg = $('<div class="alert alert-success" style="position: fixed; top: 20px; right: 20px; z-index: 9999; animation: slideIn 0.4s ease;">Cliente cadastrado com sucesso!</div>');
+                            $('body').append(successMsg);
+                            setTimeout(function() {
+                                successMsg.fadeOut(300, function() { $(this).remove(); });
+                            }, 3000);
                         } else {
                             $("#clientCreationMessage").html('<div class="alert alert-danger">Apenas usuários com perfil admin podem cadastrar clientes</div>');
                         }

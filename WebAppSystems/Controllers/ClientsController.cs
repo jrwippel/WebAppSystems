@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using WebAppSystems.Data;
 using WebAppSystems.Filters;
+using WebAppSystems.Helper;
 using WebAppSystems.Models;
 using WebAppSystems.Services;
 using static WebAppSystems.Helper.Sessao;
@@ -20,10 +21,13 @@ namespace WebAppSystems.Controllers
     {
         private readonly WebAppSystemsContext _context;
         private readonly IWebHostEnvironment _webHostEnvironment;
-        public ClientsController(WebAppSystemsContext context, IWebHostEnvironment webHostEnvironment)
+        private readonly ISessao _isessao;
+
+        public ClientsController(WebAppSystemsContext context, IWebHostEnvironment webHostEnvironment, ISessao isessao)
         {
             _context = context;
             _webHostEnvironment = webHostEnvironment;
+            _isessao = isessao;
         }
 
         // GET: Clients
@@ -31,6 +35,10 @@ namespace WebAppSystems.Controllers
         {
             try
             {
+                Attorney usuario = _isessao.BuscarSessaoDoUsuario();
+                ViewBag.LoggedUserId = usuario.Id;
+                ViewBag.CurrentUserPerfil = usuario.Perfil;
+
                 return _context.Client != null ?
                             View(await _context.Client.ToListAsync()) :
                             Problem("Entity set 'WebAppSystemsContext.Client'  is null.");

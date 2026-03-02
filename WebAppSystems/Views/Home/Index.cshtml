@@ -1,74 +1,195 @@
 ﻿@model WebAppSystems.Models.ChartData
 
-<div class="tabs-container">
-    <div class="tab-buttons">
-        <button class="tab-btn active" data-tab="tab1">Horas por Cliente</button>
-        <button class="tab-btn" data-tab="tab2">Horas por Tipo</button>
-        <button class="tab-btn" data-tab="tab3">Horas por Área</button>
-    </div>
+<div class="dashboard-container">
+    <div class="tabs-container">
+        <div class="tab-buttons">
+            <button class="tab-btn active" data-tab="tab1">
+                <i class="bi bi-people"></i>
+                <span data-i18n="home.tab.client">By Client</span>
+            </button>
+            <button class="tab-btn" data-tab="tab2">
+                <i class="bi bi-tag"></i>
+                <span data-i18n="home.tab.type">By Type</span>
+            </button>
+            <button class="tab-btn" data-tab="tab3">
+                <i class="bi bi-grid"></i>
+                <span data-i18n="home.tab.area">By Area</span>
+            </button>
+            <button class="tab-btn" data-tab="tab4">
+                <i class="bi bi-graph-up"></i>
+                <span data-i18n="home.tab.timeline">Timeline</span>
+            </button>
+        </div>
 
-    <div class="tab-content active" id="tab1">
-        <canvas id="usoDoSistemaChart"></canvas>
-        <canvas id="usoDoSistemaChartHorizontal"></canvas> <!-- Gráfico horizontal grande -->
-    </div>
+        <div class="tab-content active" id="tab1">
+            <div class="chart-card">
+                <canvas id="clientChart"></canvas>
+            </div>
+        </div>
 
-    <div class="tab-content" id="tab2">
-        <canvas id="usoPorTipoChart"></canvas>
-    </div>
-    <div class="tab-content" id="tab3">
-        <canvas id="usoPorAreaChart"></canvas>
+        <div class="tab-content" id="tab2">
+            <div class="chart-card">
+                <canvas id="typeChart"></canvas>
+            </div>
+        </div>
+
+        <div class="tab-content" id="tab3">
+            <div class="chart-card">
+                <canvas id="areaChart"></canvas>
+            </div>
+        </div>
+
+        <div class="tab-content" id="tab4">
+            <div class="timeline-controls">
+                <button class="period-btn active" data-period="day">
+                    <i class="bi bi-calendar-day"></i>
+                    <span data-i18n="home.timeline.day">Daily</span>
+                </button>
+                <button class="period-btn" data-period="week">
+                    <i class="bi bi-calendar-week"></i>
+                    <span data-i18n="home.timeline.week">Weekly</span>
+                </button>
+                <button class="period-btn" data-period="month">
+                    <i class="bi bi-calendar-month"></i>
+                    <span data-i18n="home.timeline.month">Monthly</span>
+                </button>
+            </div>
+            <div class="chart-card">
+                <canvas id="timelineChart"></canvas>
+            </div>
+        </div>
     </div>
 </div>
 
 @section Styles {
     <style>
+        .dashboard-container {
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
         .tabs-container {
-            width: 100%;
-            margin-top: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
         }
 
         .tab-buttons {
             display: flex;
-            justify-content: center;
-            gap: 10px;
+            background: #f7fafc;
+            border-bottom: 2px solid #e2e8f0;
+            padding: 8px;
+            gap: 8px;
         }
 
         .tab-btn {
-            padding: 10px 20px;
+            flex: 1;
+            padding: 16px 24px;
             cursor: pointer;
             border: none;
-            background-color: #f0f0f0;
-            border-radius: 5px 5px 0 0;
-            font-weight: bold;
+            background: transparent;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 15px;
+            color: #718096;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
-            .tab-btn.active {
-                background-color: #ffffff;
-                border-bottom: 2px solid #007bff;
-                color: #007bff;
-            }
+        .tab-btn i {
+            font-size: 18px;
+        }
+
+        .tab-btn:hover {
+            background: white;
+            color: #667eea;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
 
         .tab-content {
             display: none;
-            padding: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            border-radius: 0 0 5px 5px;
-            background-color: #ffffff;
-            text-align: center;
-            height: 400px; /* altura padrão das abas */
+            padding: 32px;
         }
 
-            .tab-content.active {
-                display: block;
-            }
+        .tab-content.active {
+            display: block;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            height: 500px;
+        }
+
+        .timeline-controls {
+            display: flex;
+            gap: 12px;
+            padding: 20px 32px 0;
+            justify-content: center;
+        }
+
+        .period-btn {
+            padding: 10px 20px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            color: #718096;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .period-btn i {
+            font-size: 16px;
+        }
+
+        .period-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .period-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
 
         canvas {
-            width: 100% !important;
+            max-width: 100%;
         }
 
-        #usoDoSistemaChartHorizontal {
-            margin-top: 20px;
-            height: 1500px; /* Aumentando para um espaço ainda maior */
+        @@media (max-width: 768px) {
+            .tab-btn span {
+                display: none;
+            }
+
+            .tab-btn {
+                padding: 12px;
+            }
+
+            .chart-card {
+                padding: 16px;
+                height: 400px;
+            }
+
+            .dashboard-container {
+                padding: 12px;
+            }
         }
     </style>
 }
@@ -76,182 +197,279 @@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
+        Chart.defaults.font.family = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+        Chart.defaults.font.size = 13;
+        Chart.defaults.color = '#4a5568';
+
         document.addEventListener('DOMContentLoaded', function () {
-            // Lógica das abas
+            // Tab logic
             const buttons = document.querySelectorAll('.tab-btn');
             const contents = document.querySelectorAll('.tab-content');
 
             buttons.forEach(btn => {
                 btn.addEventListener('click', function () {
-                    // Remove classe ativa de todos
                     buttons.forEach(b => b.classList.remove('active'));
                     contents.forEach(c => c.classList.remove('active'));
 
-                    // Ativa o botão e o conteúdo correto
                     this.classList.add('active');
                     const tabId = this.getAttribute('data-tab');
                     document.getElementById(tabId).classList.add('active');
                 });
             });
 
-            // Gráfico de barras original
             var clientNames = @Html.Raw(Json.Serialize(Model.ClientNames));
             var clientValues = @Html.Raw(Json.Serialize(Model.ClientValues));
 
-            var dataCliente = {
-                labels: clientNames,
-                datasets: [{
-                    label: 'Clientes Horas',
-                    data: clientValues,
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1
-                }]
-            };
-
-            var ctxCliente = document.getElementById('usoDoSistemaChart').getContext('2d');
-            var myBarChart = new Chart(ctxCliente, {
-                type: 'bar',
-                data: dataCliente,
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function (value) {
-                                    return value.toFixed(2);
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-
-            // Gráfico de barras horizontal ordenado
+            // Sort data for client chart
             var combinedData = clientNames.map((name, index) => ({ name, value: clientValues[index] }));
             combinedData.sort((a, b) => b.value - a.value);
 
-            var sortedNames = combinedData.map(data => data.name);
-            var sortedValues = combinedData.map(data => data.value);
+            // Client Chart (Horizontal Bar)
+            var ctxClient = document.getElementById('clientChart').getContext('2d');
+            var gradient = ctxClient.createLinearGradient(0, 0, 500, 0);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
 
-            var dataHorizontal = {
-                labels: sortedNames,
-                datasets: [{
-                    label: 'Clientes Horas (Horizontal)',
-                    data: sortedValues,
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1
-                }]
-            };
-
-            var ctxHorizontal = document.getElementById('usoDoSistemaChartHorizontal').getContext('2d');
-            var myBarHorizontalChart = new Chart(ctxHorizontal, {
+            new Chart(ctxClient, {
                 type: 'bar',
-                data: dataHorizontal,
+                data: {
+                    labels: combinedData.map(d => d.name),
+                    datasets: [{
+                        label: 'Hours',
+                        data: combinedData.map(d => d.value),
+                        backgroundColor: gradient,
+                        borderRadius: 8,
+                        borderSkipped: false
+                    }]
+                },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    indexAxis: 'y', // Barras na horizontal
-                    scales: {
-                        x: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function (value) {
-                                    return value.toFixed(2);
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            titleFont: { size: 14, weight: 'bold' },
+                            bodyFont: { size: 13 },
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Hours: ' + context.parsed.x.toFixed(2);
                                 }
                             }
                         }
                     },
-                    plugins: {
-                        legend: {
-                            labels: {
-                                font: {
-                                    size: 16 // Melhor tamanho para legendas
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            grid: { color: '#e2e8f0', drawBorder: false },
+                            ticks: {
+                                callback: function (value) {
+                                    return value.toFixed(0) + 'h';
                                 }
                             }
+                        },
+                        y: {
+                            grid: { display: false }
                         }
                     }
                 }
             });
 
-            // Gráfico de pizza por tipo
+            // Type Chart (Doughnut)
             fetch(`/Home/GetChartData?type=tipo`)
                 .then(response => response.json())
                 .then(dataTipo => {
-                    var dataPizza = {
-                        labels: dataTipo.labels,
-                        datasets: [{
-                            label: 'Horas por Tipo',
-                            data: dataTipo.values,
-                            backgroundColor: [
-                                'rgba(255, 99, 132, 0.2)',
-                                'rgba(54, 162, 235, 0.2)',
-                                'rgba(255, 206, 86, 0.2)',
-                                'rgba(75, 192, 192, 0.2)',
-                                'rgba(153, 102, 255, 0.2)'
-                            ],
-                            borderColor: [
-                                'rgba(255, 99, 132, 1)',
-                                'rgba(54, 162, 235, 1)',
-                                'rgba(255, 206, 86, 1)',
-                                'rgba(75, 192, 192, 1)',
-                                'rgba(153, 102, 255, 1)'
-                            ],
-                            borderWidth: 1
-                        }]
-                    };
+                    var ctxType = document.getElementById('typeChart').getContext('2d');
+                    
+                    const colors = [
+                        { bg: 'rgba(102, 126, 234, 0.8)', border: '#667eea' },
+                        { bg: 'rgba(240, 147, 251, 0.8)', border: '#f093fb' },
+                        { bg: 'rgba(79, 172, 254, 0.8)', border: '#4facfe' },
+                        { bg: 'rgba(67, 233, 123, 0.8)', border: '#43e97b' },
+                        { bg: 'rgba(250, 112, 154, 0.8)', border: '#fa709a' }
+                    ];
 
-                    var ctxTipo = document.getElementById('usoPorTipoChart').getContext('2d');
-                    var myPieChart = new Chart(ctxTipo, {
-                        type: 'pie',
-                        data: dataPizza,
+                    new Chart(ctxType, {
+                        type: 'doughnut',
+                        data: {
+                            labels: dataTipo.labels,
+                            datasets: [{
+                                data: dataTipo.values,
+                                backgroundColor: colors.map(c => c.bg),
+                                borderColor: colors.map(c => c.border),
+                                borderWidth: 2
+                            }]
+                        },
                         options: {
                             responsive: true,
-                            maintainAspectRatio: false
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                    labels: {
+                                        padding: 20,
+                                        font: { size: 13 },
+                                        usePointStyle: true,
+                                        pointStyle: 'circle'
+                                    }
+                                },
+                                tooltip: {
+                                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                    padding: 12,
+                                    callbacks: {
+                                        label: function(context) {
+                                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                            const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                            return context.label + ': ' + context.parsed.toFixed(2) + 'h (' + percentage + '%)';
+                                        }
+                                    }
+                                }
+                            }
                         }
                     });
                 });
 
-            // Gráfico de pizza por área
+            // Area Chart (Doughnut)
             fetch(`/Home/GetChartData?type=area`)
                 .then(response => response.json())
                 .then(dataArea => {
-                    var dataPizza = {
-                        labels: dataArea.labels,
-                        datasets: [{
-                            label: 'Horas por Área',
-                            data: dataArea.values,
-                            backgroundColor: [
-                                'rgba(255, 99, 132, 0.2)',
-                                'rgba(54, 162, 235, 0.2)',
-                                'rgba(255, 206, 86, 0.2)',
-                                'rgba(75, 192, 192, 0.2)',
-                                'rgba(153, 102, 255, 0.2)'
-                            ],
-                            borderColor: [
-                                'rgba(255, 99, 132, 1)',
-                                'rgba(54, 162, 235, 1)',
-                                'rgba(255, 206, 86, 1)',
-                                'rgba(75, 192, 192, 1)',
-                                'rgba(153, 102, 255, 1)'
-                            ],
-                            borderWidth: 1
-                        }]
-                    };
+                    var ctxArea = document.getElementById('areaChart').getContext('2d');
+                    
+                    const colors = [
+                        { bg: 'rgba(118, 75, 162, 0.8)', border: '#764ba2' },
+                        { bg: 'rgba(245, 87, 108, 0.8)', border: '#f5576c' },
+                        { bg: 'rgba(0, 242, 254, 0.8)', border: '#00f2fe' },
+                        { bg: 'rgba(56, 249, 215, 0.8)', border: '#38f9d7' },
+                        { bg: 'rgba(254, 225, 64, 0.8)', border: '#fee140' }
+                    ];
 
-                    var ctxArea = document.getElementById('usoPorAreaChart').getContext('2d');
-                    var myPieChart = new Chart(ctxArea, {
-                        type: 'pie',
-                        data: dataPizza,
+                    new Chart(ctxArea, {
+                        type: 'doughnut',
+                        data: {
+                            labels: dataArea.labels,
+                            datasets: [{
+                                data: dataArea.values,
+                                backgroundColor: colors.map(c => c.bg),
+                                borderColor: colors.map(c => c.border),
+                                borderWidth: 2
+                            }]
+                        },
                         options: {
                             responsive: true,
-                            maintainAspectRatio: false
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                    labels: {
+                                        padding: 20,
+                                        font: { size: 13 },
+                                        usePointStyle: true,
+                                        pointStyle: 'circle'
+                                    }
+                                },
+                                tooltip: {
+                                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                    padding: 12,
+                                    callbacks: {
+                                        label: function(context) {
+                                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                            const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                            return context.label + ': ' + context.parsed.toFixed(2) + 'h (' + percentage + '%)';
+                                        }
+                                    }
+                                }
+                            }
                         }
                     });
                 });
+        });
+
+        // Timeline Chart
+        let timelineChartInstance = null;
+        
+        function loadTimelineChart(period = 'day') {
+            fetch(`/Home/GetChartData?type=timeline&period=${period}`)
+                .then(response => response.json())
+                .then(dataTimeline => {
+                    var ctxTimeline = document.getElementById('timelineChart').getContext('2d');
+                    
+                    // Destroy previous chart if exists
+                    if (timelineChartInstance) {
+                        timelineChartInstance.destroy();
+                    }
+
+                    var gradient = ctxTimeline.createLinearGradient(0, 0, 0, 400);
+                    gradient.addColorStop(0, 'rgba(102, 126, 234, 0.3)');
+                    gradient.addColorStop(1, 'rgba(102, 126, 234, 0.0)');
+
+                    timelineChartInstance = new Chart(ctxTimeline, {
+                        type: 'line',
+                        data: {
+                            labels: dataTimeline.labels,
+                            datasets: [{
+                                label: 'Hours',
+                                data: dataTimeline.values,
+                                borderColor: '#667eea',
+                                backgroundColor: gradient,
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.4,
+                                pointRadius: 4,
+                                pointHoverRadius: 6,
+                                pointBackgroundColor: '#667eea',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                    padding: 12,
+                                    titleFont: { size: 14, weight: 'bold' },
+                                    bodyFont: { size: 13 },
+                                    callbacks: {
+                                        label: function(context) {
+                                            return 'Hours: ' + context.parsed.y.toFixed(2);
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    grid: { color: '#e2e8f0', drawBorder: false },
+                                    ticks: {
+                                        callback: function (value) {
+                                            return value.toFixed(0) + 'h';
+                                        }
+                                    }
+                                },
+                                x: {
+                                    grid: { display: false }
+                                }
+                            }
+                        }
+                    });
+                });
+        }
+
+        // Load initial timeline chart
+        loadTimelineChart('day');
+
+        // Period buttons
+        document.querySelectorAll('.period-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                const period = this.getAttribute('data-period');
+                loadTimelineChart(period);
+            });
         });
     </script>
 }

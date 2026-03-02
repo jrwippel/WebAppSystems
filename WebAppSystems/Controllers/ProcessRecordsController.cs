@@ -43,13 +43,29 @@ namespace WebAppSystems.Controllers
 
 
         // GET: ProcessRecords
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
             try
             {
                 Attorney usuario = _isessao.BuscarSessaoDoUsuario();
                 ViewBag.LoggedUserId = usuario.Id;
-                return View(Enumerable.Empty<ProcessRecord>()); // Retorna um modelo vazio
+                ViewBag.CurrentUserPerfil = usuario.Perfil;
+                
+                // Buscar registros ordenados por ID (mais rápido)
+                var allRecords = await _context.ProcessRecord
+                    .Include(p => p.Attorney)
+                    .Include(p => p.Client)
+                    .Include(p => p.Department)
+                    .AsNoTracking()
+                    .OrderByDescending(p => p.Id)
+                    .ToListAsync();
+                
+                // Separar em execução e finalizados, depois juntar
+                var running = allRecords.Where(p => p.HoraFinal == null || p.HoraFinal == TimeSpan.Zero).ToList();
+                var completed = allRecords.Where(p => p.HoraFinal != null && p.HoraFinal != TimeSpan.Zero).ToList();
+                var processRecords = running.Concat(completed).ToList();
+                
+                return View(processRecords);
             }
             catch (SessionExpiredException)
             {
@@ -169,6 +185,7 @@ namespace WebAppSystems.Controllers
                 var attorneys = await _attorneyService.FindAllAsync();
                 var departments = await _departmentService.FindAllAsync();
                 var clientsOptions = clients
+                    .Where(c => !c.ClienteInativo) // Filtra apenas clientes ativos
                     .OrderBy(c => c.Name)
                     .Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name })
                     .Prepend(new SelectListItem { Value = "0", Text = "Selecionar" })
@@ -226,6 +243,7 @@ namespace WebAppSystems.Controllers
             List<Department> departments = await _departmentService.FindAllAsync();
 
             var clientsOptions = clients
+                 .Where(c => !c.ClienteInativo) // Filtra apenas clientes ativos
                  .OrderBy(c => c.Name)
                  .Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name })
                  .ToList();

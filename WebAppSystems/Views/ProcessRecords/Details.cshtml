@@ -1,88 +1,371 @@
 ﻿@model WebAppSystems.Models.ProcessRecord
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Detalhes da Atividade";
     var userId = ViewBag.LoggedUserId as int?;
     var isAdmin = ViewBag.IsAdmin as bool?;
 }
 
-<h1>Detalhes</h1>
-
-<hr />
-
-<div class="card">
-    <div class="card-body">
-        <h4 class="card-title">Atividades</h4>
-        <hr />
-        <form asp-action="Create">
-            <dl class="row">
-
-                <dt class="col-sm-2">
-                    Tipo de Registro
-                </dt>
-                <dd class="col-sm-10">
-                    @Html.DisplayFor(model => model.RecordType)
-                </dd>
-
-                <dt class="col-sm-2">
-                    Data
-                </dt>
-                <dd class="col-sm-10">
-                    @Html.DisplayFor(model => model.Date)
-                </dd>
-                <dt class="col-sm-2">
-                    Hora Inicial
-                </dt>
-                <dd class="col-sm-10">
-                    @Html.DisplayFor(model => model.HoraInicial)
-                </dd>
-                <dt class="col-sm-2">
-                    Hora Final
-                </dt>
-                <dd class="col-sm-10">
-                    @Html.DisplayFor(model => model.HoraFinal)
-                </dd>
-                <dt class="col-sm-2">
-                    Cliente
-                </dt>
-                <dd class="col-sm-10">
-                    @Html.DisplayFor(model => model.Client.Name)
-                </dd>
-                <dt class="col-sm-2">
-                    Usuário
-                </dt>
-                <dd class="col-sm-10">
-                    @Html.DisplayFor(model => model.Attorney.Name)
-                </dd>
-                <dt class="col-sm-2">
-                    Atividade
-                </dt>
-                <dd class="col-sm-10">
-                    @Html.DisplayFor(model => model.Description)
-                </dd>
-                <dt class="col-sm-2">
-                    Solicitante
-                </dt>
-                <dd class="col-sm-10">
-                    @Html.DisplayFor(model => model.Solicitante)
-                </dd>
-                <dt class="col-sm-2">
-                    Área
-                </dt>
-                <dd class="col-sm-10">
-                    @Html.DisplayFor(model => model.Department.Name)
-                </dd>
-            </dl>
-            <div>
-                @if (userId == Model.AttorneyId || isAdmin == true)
-                {
-                    <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-primary">Editar</a>
-                }
-                <a asp-action="Index" class="btn btn-secondary">Voltar</a>
+<div class="details-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-icon">
+                <i class="bi bi-eye"></i>
             </div>
-        </form>
+            <div class="header-text">
+                <h1 class="page-title" data-i18n="activity.details.title">Detalhes da Atividade</h1>
+                <p class="page-subtitle" data-i18n="activity.details.subtitle">Visualize todas as informações da atividade</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Details Card -->
+    <div class="details-card">
+        <!-- Info Grid -->
+        <div class="info-grid">
+            <!-- Tipo e Data -->
+            <div class="info-section">
+                <div class="section-title">
+                    <i class="bi bi-info-circle"></i>
+                    <span data-i18n="activity.section.basic">Informações Básicas</span>
+                </div>
+                <div class="info-row">
+                    <div class="info-item">
+                        <label><i class="bi bi-tag"></i> <span data-i18n="activity.field.type">Tipo de Registro</span></label>
+                        <div class="info-value">
+                            <span class="type-badge">@Model.RecordType</span>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <label><i class="bi bi-calendar3"></i> <span data-i18n="activity.field.date">Data</span></label>
+                        <div class="info-value">@Model.Date.ToString("dd/MM/yyyy")</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Horários -->
+            <div class="info-section">
+                <div class="section-title">
+                    <i class="bi bi-clock-history"></i>
+                    <span data-i18n="activity.section.time">Horários</span>
+                </div>
+                <div class="info-row">
+                    <div class="info-item">
+                        <label><i class="bi bi-clock"></i> <span data-i18n="activity.field.starttime">Hora Inicial</span></label>
+                        <div class="info-value time-value">@Model.HoraInicial</div>
+                    </div>
+                    <div class="info-item">
+                        <label><i class="bi bi-clock-fill"></i> <span data-i18n="activity.field.endtime">Hora Final</span></label>
+                        <div class="info-value time-value">@Model.HoraFinal</div>
+                    </div>
+                    <div class="info-item">
+                        <label><i class="bi bi-hourglass-split"></i> <span data-i18n="activity.duration">Duração</span></label>
+                        <div class="info-value">
+                            <span class="hours-badge">@Model.CalculoHoras()</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cliente e Usuário -->
+            <div class="info-section">
+                <div class="section-title">
+                    <i class="bi bi-people"></i>
+                    <span data-i18n="activity.section.client">Cliente e Responsáveis</span>
+                </div>
+                <div class="info-row">
+                    <div class="info-item">
+                        <label><i class="bi bi-briefcase"></i> <span data-i18n="activity.field.client">Cliente</span></label>
+                        <div class="info-value">@Model.Client.Name</div>
+                    </div>
+                    <div class="info-item">
+                        <label><i class="bi bi-person-badge"></i> <span data-i18n="activity.field.user">Usuário</span></label>
+                        <div class="info-value">@Model.Attorney.Name</div>
+                    </div>
+                </div>
+                <div class="info-row">
+                    <div class="info-item">
+                        <label><i class="bi bi-person-check"></i> <span data-i18n="activity.field.requester">Solicitante</span></label>
+                        <div class="info-value">@Model.Solicitante</div>
+                    </div>
+                    <div class="info-item">
+                        <label><i class="bi bi-building"></i> <span data-i18n="activity.field.department">Área</span></label>
+                        <div class="info-value">@Model.Department.Name</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Descrição -->
+            <div class="info-section">
+                <div class="section-title">
+                    <i class="bi bi-file-text"></i>
+                    <span data-i18n="activity.section.description">Descrição da Atividade</span>
+                </div>
+                <div class="description-box">
+                    @Model.Description
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="details-actions">
+            @if (userId == Model.AttorneyId || isAdmin == true)
+            {
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-edit">
+                    <i class="bi bi-pencil"></i>
+                    <span data-i18n="common.edit">Editar</span>
+                </a>
+            }
+            <a asp-action="Index" class="btn btn-back">
+                <i class="bi bi-arrow-left"></i>
+                <span data-i18n="common.back">Voltar</span>
+            </a>
+        </div>
     </div>
 </div>
 
+<style>
+    .details-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+    }
 
-        
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        padding: 24px 28px;
+        margin-bottom: 24px;
+        box-shadow: 0 6px 25px rgba(102, 126, 234, 0.25);
+    }
+
+    .header-content {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .header-icon {
+        width: 50px;
+        height: 50px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: white;
+        backdrop-filter: blur(10px);
+    }
+
+    .page-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: white;
+        margin: 0 0 6px 0;
+    }
+
+    .page-subtitle {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.9);
+        margin: 0;
+    }
+
+    .details-card {
+        background: white;
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .info-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 25px;
+    }
+
+    .info-section {
+        padding-bottom: 20px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .info-section:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .section-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 16px;
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 18px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #f7fafc;
+    }
+
+    .section-title i {
+        font-size: 18px;
+        color: #667eea;
+    }
+
+    .info-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 15px;
+    }
+
+    .info-row:last-child {
+        margin-bottom: 0;
+    }
+
+    .info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .info-item label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #718096;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .info-item label i {
+        font-size: 14px;
+        color: #667eea;
+    }
+
+    .info-value {
+        font-size: 15px;
+        color: #2d3748;
+        font-weight: 500;
+        padding: 10px 14px;
+        background: #f7fafc;
+        border-radius: 6px;
+        border-left: 3px solid #667eea;
+    }
+
+    .time-value {
+        font-family: 'Courier New', monospace;
+        font-weight: 600;
+        font-size: 16px;
+    }
+
+    .type-badge {
+        display: inline-block;
+        padding: 6px 14px;
+        background: #e2e8f0;
+        color: #4a5568;
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .hours-badge {
+        display: inline-block;
+        padding: 6px 14px;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+        color: #667eea;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .description-box {
+        padding: 16px;
+        background: #f7fafc;
+        border-radius: 8px;
+        border-left: 3px solid #667eea;
+        font-size: 14px;
+        line-height: 1.6;
+        color: #2d3748;
+        white-space: pre-wrap;
+        min-height: 80px;
+    }
+
+    .details-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+
+    .btn-edit {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-edit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+
+    .btn-back {
+        background: white;
+        color: #4a5568;
+        border: 2px solid #e2e8f0;
+    }
+
+    .btn-back:hover {
+        background: #f7fafc;
+        border-color: #cbd5e0;
+        transform: translateY(-2px);
+        color: #2d3748;
+    }
+
+    @@media (max-width: 768px) {
+        .details-container {
+            padding: 12px;
+        }
+
+        .page-header {
+            padding: 18px 20px;
+        }
+
+        .details-card {
+            padding: 20px;
+        }
+
+        .info-row {
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .details-actions {
+            flex-direction: column-reverse;
+        }
+
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>

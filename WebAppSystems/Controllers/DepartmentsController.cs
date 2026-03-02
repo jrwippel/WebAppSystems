@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using WebAppSystems.Data;
 using WebAppSystems.Filters;
+using WebAppSystems.Helper;
 using WebAppSystems.Models;
 using WebAppSystems.Services.Exceptions;
 using WebAppSystems.Services;
@@ -21,11 +22,13 @@ namespace WebAppSystems.Controllers
     {
         private readonly WebAppSystemsContext _context;
         private readonly DepartmentService _departmentService;
+        private readonly ISessao _isessao;
 
-        public DepartmentsController(WebAppSystemsContext context, DepartmentService departmentService)
+        public DepartmentsController(WebAppSystemsContext context, DepartmentService departmentService, ISessao isessao)
         {
             _context = context;
             _departmentService = departmentService;
+            _isessao = isessao;
         }
         /*
         public DepartmentsController(WebAppSystemsContext context)
@@ -39,6 +42,10 @@ namespace WebAppSystems.Controllers
         {
             try
             {
+                Attorney usuario = _isessao.BuscarSessaoDoUsuario();
+                ViewBag.LoggedUserId = usuario.Id;
+                ViewBag.CurrentUserPerfil = usuario.Perfil;
+
                 return _context.Department != null ?
                             View(await _context.Department.ToListAsync()) :
                             Problem("Entity set 'WebAppSystemsContext.Department'  is null.");
