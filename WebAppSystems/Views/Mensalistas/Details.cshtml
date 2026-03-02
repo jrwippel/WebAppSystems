@@ -1,49 +1,352 @@
 ﻿@model WebAppSystems.Models.Mensalista
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Detalhes do Mensalista";
 }
 
-<h1>Detalhes</h1>
-
-<hr />
-
-<div class="card">
-    <div class="card-body">
-        <h4 class="card-title">Mensalista</h4>
-        <hr />
-        <form asp-action="Create">
-            <dl class="row">
-                <dt class="col-sm-2">
-                    Cliente
-                </dt>
-                <dd class="col-sm-10">
-                    @Html.DisplayFor(model => model.Client.Name)
-                </dd>
-                <dt class="col-sm-2">
-                    Valor Mensal Bruto
-                </dt>
-                <dd class="col-sm-10">
-                    @String.Format(new System.Globalization.CultureInfo("pt-BR"), "{0:N2}", Model.ValorMensalBruto)
-                </dd>
-                <dt class="col-sm-2">
-                    Comissão Parceiro
-                </dt>
-                <dd class="col-sm-10">
-                    @String.Format(new System.Globalization.CultureInfo("pt-BR"), "{0:N2}", Model.ComissaoParceiro)
-                </dd>
-                <dt class="col-sm-2">
-                    Comissão Sócio
-                </dt>
-                <dd class="col-sm-10">
-                    @String.Format(new System.Globalization.CultureInfo("pt-BR"), "{0:N2}", Model.ComissaoSocio)
-                </dd>
-
-            </dl>
-            <div>
-                <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-primary">Editar</a>
-                <a asp-action="Index" class="btn btn-secondary">Voltar</a>
+<div class="details-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-left">
+                <div class="header-icon">
+                    <i class="bi bi-info-circle"></i>
+                </div>
+                <div class="header-text">
+                    <h1 class="page-title">Detalhes do Mensalista</h1>
+                    <p class="page-subtitle">Informações do contrato mensal</p>
+                </div>
             </div>
-        </form>
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn-edit-header">
+                <i class="bi bi-pencil"></i>
+                Editar
+            </a>
+        </div>
+    </div>
+
+    <!-- Client Card -->
+    <div class="client-card">
+        <div class="client-header">
+            <div class="client-icon-large">
+                <i class="bi bi-person-circle"></i>
+            </div>
+            <div class="client-info">
+                <h2>@Model.Client.Name</h2>
+                <p>Cliente Mensalista</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Values Grid -->
+    <div class="values-grid">
+        <!-- Valor Mensal Bruto -->
+        <div class="value-card primary">
+            <div class="value-icon">
+                <i class="bi bi-cash-stack"></i>
+            </div>
+            <div class="value-content">
+                <label>Valor Mensal Bruto</label>
+                <span class="value-amount">@String.Format(new System.Globalization.CultureInfo("pt-BR"), "{0:C2}", Model.ValorMensalBruto)</span>
+            </div>
+        </div>
+
+        <!-- Comissão Parceiro -->
+        <div class="value-card success">
+            <div class="value-icon">
+                <i class="bi bi-person-check"></i>
+            </div>
+            <div class="value-content">
+                <label>Comissão Parceiro</label>
+                <span class="value-amount">@String.Format(new System.Globalization.CultureInfo("pt-BR"), "{0:C2}", Model.ComissaoParceiro)</span>
+            </div>
+        </div>
+
+        <!-- Comissão Sócio -->
+        <div class="value-card info">
+            <div class="value-icon">
+                <i class="bi bi-briefcase"></i>
+            </div>
+            <div class="value-content">
+                <label>Comissão Sócio</label>
+                <span class="value-amount">@String.Format(new System.Globalization.CultureInfo("pt-BR"), "{0:C2}", Model.ComissaoSocio)</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions-card">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn-action btn-primary">
+            <i class="bi bi-pencil-square"></i>
+            Editar Mensalista
+        </a>
+        <a asp-action="Index" class="btn-action btn-secondary">
+            <i class="bi bi-arrow-left"></i>
+            Voltar para Lista
+        </a>
     </div>
 </div>
+
+<style>
+    .details-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        padding: 24px 28px;
+        margin-bottom: 24px;
+        box-shadow: 0 6px 25px rgba(102, 126, 234, 0.25);
+    }
+
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .header-icon {
+        width: 50px;
+        height: 50px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: white;
+        backdrop-filter: blur(10px);
+    }
+
+    .page-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: white;
+        margin: 0 0 6px 0;
+    }
+
+    .page-subtitle {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.9);
+        margin: 0;
+    }
+
+    .btn-edit-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        background: white;
+        color: #667eea;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+
+    .btn-edit-header:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 255, 255, 0.3);
+        color: #764ba2;
+    }
+
+    .client-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        margin-bottom: 24px;
+    }
+
+    .client-header {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        padding: 32px;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+    }
+
+    .client-icon-large {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .client-icon-large i {
+        font-size: 40px;
+        color: white;
+    }
+
+    .client-info h2 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #2d3748;
+        margin: 0 0 8px 0;
+    }
+
+    .client-info p {
+        font-size: 16px;
+        color: #718096;
+        margin: 0;
+    }
+
+    .values-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 24px;
+        margin-bottom: 24px;
+    }
+
+    .value-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+        padding: 24px;
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+        transition: all 0.3s ease;
+    }
+
+    .value-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .value-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .value-card.primary .value-icon {
+        background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%);
+    }
+
+    .value-card.success .value-icon {
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    }
+
+    .value-card.info .value-icon {
+        background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+    }
+
+    .value-content {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        flex: 1;
+    }
+
+    .value-content label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #718096;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .value-amount {
+        font-size: 24px;
+        font-weight: 700;
+        color: #2d3748;
+    }
+
+    .actions-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+        padding: 24px;
+        display: flex;
+        gap: 12px;
+    }
+
+    .btn-action {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 14px 24px;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        border: none;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+        background: #f7fafc;
+        color: #4a5568;
+        border: 2px solid #e2e8f0;
+    }
+
+    .btn-secondary:hover {
+        background: #e2e8f0;
+        color: #2d3748;
+    }
+
+    @@media (max-width: 768px) {
+        .details-container {
+            padding: 12px;
+        }
+
+        .header-content {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .btn-edit-header {
+            justify-content: center;
+        }
+
+        .client-header {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .values-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .actions-card {
+            flex-direction: column;
+        }
+    }
+</style>

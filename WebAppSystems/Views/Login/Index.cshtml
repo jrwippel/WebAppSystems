@@ -10,78 +10,163 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - JRWIT Solutions</title>
-
-    <!-- Bootstrap CSS -->
     <link href="/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Bootstrap Icons CSS -->
     <link href="/lib/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-
     <link href="/css/custom-styles.css" rel="stylesheet">
 </head>
 <body>
-    <div class="main-container">
-        <!-- Container da imagem (somente para telas maiores) -->
-        <div class="image-container">
-            <img src="/images/logoHome.png" alt="Bem-vindo ao JRWIT | Solution">
-
-        </div>
-
-        <!-- Container do login -->
-        <div class="login-container">
-            <div class="header-section">
-                <div class="title">
-                    <i class="bi bi-clock"></i> Time Tracker
+    <div class="login-page">
+        <div class="login-wrapper">
+            <!-- Left Side - Image/Branding -->
+            <div class="login-left">
+                <div class="brand-section">
+                    <div class="brand-logo-container">
+                        <div class="logo-text">
+                            <div class="logo-icon-large">
+                                <i class="bi bi-clock-history"></i>
+                            </div>
+                            <h1 class="logo-title">Time Tracker</h1>
+                            <p class="logo-subtitle">Professional Time Management System</p>
+                        </div>
+                    </div>
+                    
+                    <div class="features-list">
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="bi bi-clock-history"></i>
+                            </div>
+                            <div class="feature-text">
+                                <h3>Time Tracking</h3>
+                                <p>Track hours efficiently</p>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="bi bi-calendar-check"></i>
+                            </div>
+                            <div class="feature-text">
+                                <h3>Time Management</h3>
+                                <p>Organize and optimize your time</p>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="bi bi-graph-up"></i>
+                            </div>
+                            <div class="feature-text">
+                                <h3>Reports & Analytics</h3>
+                                <p>Detailed insights and reports</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="login-section">
-
-                <!-- Bloco para exibir mensagens de erro -->
-                @if (TempData["MensagemErro"] != null)
-                {
-                    <div class="alert alert-danger">
-                        @TempData["MensagemErro"]
+            <!-- Right Side - Login Form -->
+            <div class="login-right">
+                <div class="login-card">
+                    <div class="login-header">
+                        <div class="icon-wrapper">
+                            <i class="bi bi-clock-history"></i>
+                        </div>
+                        <h2>Time Tracker</h2>
+                        <p>Log in to your account</p>
                     </div>
-                }
 
-                <div class="subtitle">Log in</div>
+                    @if (TempData["MensagemErro"] != null)
+                    {
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-circle"></i>
+                            @TempData["MensagemErro"]
+                        </div>
+                    }
 
-                <form asp-controller="Login" asp-action="Entrar" method="post">
-                    <div class="mb-3 input-group">
-                        <span class="input-group-text"><i class="bi bi-person"></i></span>
-                        <input type="text" asp-for="Login" class="form-control" id="login" placeholder="Enter your login">
-                        @Html.ValidationMessageFor(x => x.Login)
-                    </div>
-                    <div class="mb-3 input-group">
-                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                        <input type="password" asp-for="Senha" class="form-control" id="senha" placeholder="Enter your password">
-                        @Html.ValidationMessageFor(x => x.Senha)
-                    </div>
-                    <button type="submit" class="btn btn-primary">Login</button>
-                </form>
+                    @if (TempData["MensagemSucesso"] != null)
+                    {
+                        <div class="alert alert-success">
+                            <i class="bi bi-check-circle"></i>
+                            @TempData["MensagemSucesso"]
+                        </div>
+                    }
 
-                <div class="forgot-password">
-                    <a asp-action="RedefinirSenha" asp-controller="Login">Forgot your password?</a>
-                    <div class="forgot-password-description">
-                        You will be redirected to the password recovery page.
+                    <form asp-controller="Login" asp-action="Entrar" method="post" class="login-form">
+                        <div class="form-group">
+                            <label for="login">Username</label>
+                            <div class="input-group">
+                                <span class="input-icon">
+                                    <i class="bi bi-person"></i>
+                                </span>
+                                <input type="text" 
+                                       asp-for="Login" 
+                                       class="form-control" 
+                                       id="login" 
+                                       placeholder="jackson.wippel"
+                                       autocomplete="username">
+                            </div>
+                            @Html.ValidationMessageFor(x => x.Login, "", new { @class = "text-danger" })
+                        </div>
+
+                        <div class="form-group">
+                            <label for="senha">Password</label>
+                            <div class="input-group">
+                                <span class="input-icon">
+                                    <i class="bi bi-lock"></i>
+                                </span>
+                                <input type="password" 
+                                       asp-for="Senha" 
+                                       class="form-control" 
+                                       id="senha" 
+                                       placeholder="••••••"
+                                       autocomplete="current-password">
+                                <button type="button" class="toggle-password" id="togglePassword">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            @Html.ValidationMessageFor(x => x.Senha, "", new { @class = "text-danger" })
+                        </div>
+
+                        <button type="submit" class="btn-login">
+                            Sign In
+                            <i class="bi bi-arrow-right"></i>
+                        </button>
+                    </form>
+
+                    <div class="login-footer">
+                        <a asp-action="RedefinirSenha" asp-controller="Login" class="forgot-link">
+                            <i class="bi bi-key"></i>
+                            Forgot your password?
+                        </a>
                     </div>
                 </div>
-            </div>
 
-            <div class="footer-section">
-                <p class="primary-text">
-                    <span class="jrwit-com">
-                        <span class="jrwit">JRWIT</span><span class="com">.COM</span>
-                    </span>
-                    <span class="secondary-text">SMART SOLUTIONS FOR YOUR BUSINESS</span>
-                </p>
+                <div class="brand-footer">
+                    <span class="brand-text">JRWIT.COM</span>
+                    <span class="brand-tagline">SMART SOLUTIONS FOR YOUR BUSINESS</span>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Bootstrap JS -->
     <script src="/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Toggle Password
+        document.getElementById('togglePassword')?.addEventListener('click', function() {
+            const passwordInput = document.getElementById('senha');
+            const icon = this.querySelector('i');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            }
+        });
+    </script>
 </body>
 </html>
 

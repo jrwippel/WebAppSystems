@@ -1,43 +1,316 @@
 ﻿@model WebAppSystems.Models.PercentualArea
 
 @{
-    ViewData["Title"] = "Delete";
+    ViewData["Title"] = "Excluir Percentual";
 }
 
-<h1>Exclusão</h1>
+<div class="delete-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-icon">
+                <i class="bi bi-exclamation-triangle"></i>
+            </div>
+            <div class="header-text">
+                <h1 class="page-title">Confirmar Exclusão</h1>
+                <p class="page-subtitle">Esta ação não pode ser desfeita</p>
+            </div>
+        </div>
+    </div>
 
-<h3>Você tem certeza?</h3>
-<div class="card">
-    <div class="card-body">
+    <!-- Warning Card -->
+    <div class="warning-card">
+        <div class="warning-icon">
+            <i class="bi bi-shield-exclamation"></i>
+        </div>
+        <div class="warning-content">
+            <h3>Você tem certeza que deseja excluir este percentual?</h3>
+            <p>O registro de percentual será permanentemente removido do sistema.</p>
+        </div>
+    </div>
+
+    <!-- Info Card -->
+    <div class="info-card">
+        <div class="info-grid">
+            <div class="info-item">
+                <i class="bi bi-person-circle"></i>
+                <div>
+                    <label>Cliente</label>
+                    <span>@Model.Client.Name</span>
+                </div>
+            </div>
+
+            <div class="info-item">
+                <i class="bi bi-building"></i>
+                <div>
+                    <label>Área</label>
+                    <span>@Model.Department.Name</span>
+                </div>
+            </div>
+
+            <div class="info-item highlight">
+                <i class="bi bi-percent"></i>
+                <div>
+                    <label>Percentual</label>
+                    <span class="percent-value">@Model.Percentual %</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions-card">
         <form asp-action="Delete">
-            <h4>Percentual Cliente/Area</h4>
-            <hr />
-            <dl class="row">
-                <dt class="col-sm-2">
-                    Cliente
-                </dt>
-                <dd class="col-sm-10">
-                    @Html.DisplayFor(model => model.Client.Name)
-                </dd>
-                <dt class="col-sm-2">
-                    Área
-                </dt>
-                <dd class="col-sm-10">
-                    @Html.DisplayFor(model => model.Department.Name)
-                </dd>
-                <dt class="col-sm-2">
-                    @Html.DisplayNameFor(model => model.Percentual)
-                </dt>
-                <dd class="col-sm-10">
-                    @Html.DisplayFor(model => model.Percentual)
-                </dd>
-            </dl>
-
-            <form asp-action="Delete">
-                <input type="hidden" asp-for="Id" />
-                <input type="submit" value="Delete" class="btn btn-danger" />
-                <a asp-action="Index" class="btn btn-secondary">Voltar</a>
-            </form>
+            <input type="hidden" asp-for="Id" />
+            <div class="action-buttons">
+                <button type="submit" class="btn-delete">
+                    <i class="bi bi-trash"></i>
+                    Confirmar Exclusão
+                </button>
+                <a asp-action="Index" class="btn-cancel">
+                    <i class="bi bi-arrow-left"></i>
+                    Cancelar e Voltar
+                </a>
+            </div>
         </form>
     </div>
 </div>
+
+<style>
+    .delete-container {
+        max-width: 700px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+        border-radius: 12px;
+        padding: 24px 28px;
+        margin-bottom: 24px;
+        box-shadow: 0 6px 25px rgba(229, 62, 62, 0.25);
+    }
+
+    .header-content {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .header-icon {
+        width: 50px;
+        height: 50px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: white;
+        backdrop-filter: blur(10px);
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    @@keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+    }
+
+    .page-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: white;
+        margin: 0 0 6px 0;
+    }
+
+    .page-subtitle {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.9);
+        margin: 0;
+    }
+
+    .warning-card {
+        background: #fff5f5;
+        border: 2px solid #feb2b2;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 24px;
+        display: flex;
+        gap: 20px;
+        align-items: flex-start;
+    }
+
+    .warning-icon {
+        width: 48px;
+        height: 48px;
+        background: #e53e3e;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .warning-content h3 {
+        font-size: 18px;
+        font-weight: 600;
+        color: #c53030;
+        margin: 0 0 8px 0;
+    }
+
+    .warning-content p {
+        font-size: 14px;
+        color: #742a2a;
+        margin: 0;
+        line-height: 1.6;
+    }
+
+    .info-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+        padding: 24px;
+        margin-bottom: 24px;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+    }
+
+    .info-item {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        padding: 16px;
+        background: #f7fafc;
+        border-radius: 8px;
+    }
+
+    .info-item.highlight {
+        background: linear-gradient(135deg, rgba(229, 62, 62, 0.1) 0%, rgba(197, 48, 48, 0.1) 100%);
+    }
+
+    .info-item i {
+        font-size: 24px;
+        color: #e53e3e;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+
+    .info-item div {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .info-item label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #718096;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .info-item span {
+        font-size: 16px;
+        font-weight: 600;
+        color: #2d3748;
+    }
+
+    .percent-value {
+        font-size: 28px !important;
+        font-weight: 700 !important;
+        color: #e53e3e !important;
+    }
+
+    .actions-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+        padding: 24px;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 12px;
+    }
+
+    .btn-delete {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 14px 24px;
+        background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-delete:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(229, 62, 62, 0.4);
+    }
+
+    .btn-delete i {
+        font-size: 18px;
+    }
+
+    .btn-cancel {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 14px 24px;
+        background: #f7fafc;
+        color: #4a5568;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+
+    .btn-cancel:hover {
+        background: #e2e8f0;
+        color: #2d3748;
+    }
+
+    .btn-cancel i {
+        font-size: 18px;
+    }
+
+    @@media (max-width: 768px) {
+        .delete-container {
+            padding: 12px;
+        }
+
+        .warning-card {
+            flex-direction: column;
+        }
+
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .action-buttons {
+            flex-direction: column-reverse;
+        }
+    }
+</style>

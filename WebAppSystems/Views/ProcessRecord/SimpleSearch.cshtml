@@ -3,220 +3,823 @@
 
 @{
     ViewData["Title"] = "Relatório de Horas";
-    var selectedClientId = ViewData["clientId"]?.ToString();
+    var selectedClientIds = ViewData["clientIds"]?.ToString();
     var selectedAttorneyId = ViewData["attorneyId"]?.ToString();
     var selectedRecordType = ViewData["selectedRecordType"]?.ToString();
     var userProfile = (WebAppSystems.Models.Enums.ProfileEnum)ViewBag.UserProfile;
+    
+    // Calcular total de horas
+    TimeSpan totalHours = TimeSpan.Zero;
+    foreach (var item in Model)
+    {
+        totalHours += item.CalculoHorasTotal();
+    }
+    int totalDays = (int)totalHours.TotalDays;
+    TimeSpan correctedTotalHours = totalHours - TimeSpan.FromDays(totalDays);
+    string totalFormatted = $"{totalDays * 24 + correctedTotalHours.Hours}:{correctedTotalHours.Minutes:00}";
 }
 
-<h2>@ViewData["Title"]</h2>
+<div class="report-container">
+    <div class="report-header">
+        <h2><i class="bi bi-clock-history"></i> <span data-i18n="reports.title">Relatório de Horas</span></h2>
+        @if (Model.Any())
+        {
+            <div class="total-hours-badge">
+                <span class="badge-label" data-i18n="reports.total">Total de Horas</span>
+                <span class="badge-value">@totalFormatted</span>
+            </div>
+        }
+    </div>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container-fluid">
-        <form class="navbar-form" role="search" asp-controller="ProcessRecord" asp-action="SimpleSearch" method="get">
-            <div class="form-row">
+    <!-- Filtros -->
+    <div class="filter-card">
+        <form asp-controller="ProcessRecord" asp-action="SimpleSearch" method="get">
+            <div class="filter-grid">
                 <!-- Data Inicial -->
-                <div class="form-group col-md-2">
-                    <label for="minDate">Data Inicial</label>
+                <div class="filter-item">
+                    <label for="minDate"><i class="bi bi-calendar-event"></i> <span data-i18n="reports.filter.startdate">Data Inicial</span></label>
                     <input type="date" class="form-control" name="minDate" id="minDate" value=@ViewData["minDate"] />
                 </div>
 
                 <!-- Data Final -->
-                <div class="form-group col-md-2">
-                    <label for="maxDate">Data Final</label>
+                <div class="filter-item">
+                    <label for="maxDate"><i class="bi bi-calendar-check"></i> <span data-i18n="reports.filter.enddate">Data Final</span></label>
                     <input type="date" class="form-control" name="maxDate" id="maxDate" value=@ViewData["maxDate"] />
                 </div>
 
                 <!-- Cliente -->
-                <div class="form-group col-md-3">
-                    <label for="clientId">Cliente</label>
-                    <select class="form-control" name="clientId" id="clientId">
-                        <option value="">Todos</option>
-                        @foreach (var client in ViewBag.Clients)
-                        {
-                            var isSelectedClient = client.Id.ToString() == selectedClientId ? "selected" : "";
-                            @if (client.Id.ToString() == selectedClientId)
+                <div class="filter-item filter-item-wide">
+                    <label for="clientId"><i class="bi bi-building"></i> <span data-i18n="reports.filter.client">Cliente(s)</span></label>
+                    <div class="client-selector">
+                        <div class="selected-clients" id="selectedClients"></div>
+                        <input type="text" 
+                               class="form-control" 
+                               list="clientList" 
+                               id="clientSearch" 
+                               data-i18n-placeholder="reports.filter.client.placeholder"
+                               placeholder="Digite para adicionar..."
+                               autocomplete="off">
+                        <datalist id="clientList">
+                            @foreach (var client in ViewBag.Clients)
                             {
-                                <option value="@client.Id" selected>@client.Name</option>
+                                <option value="@client.Name" data-id="@client.Id">@client.Name</option>
                             }
-                            else
-                            {
-                                <option value="@client.Id">@client.Name</option>
-                            }
-
-                        }
-                    </select>
+                        </datalist>
+                    </div>
+                    <input type="hidden" name="clientIds" id="clientIds" value="@selectedClientIds">
                 </div>
 
                 <!-- Usuário -->
-                <div class="form-group col-md-3">
-                    <label for="attorneyId">Usuário</label>
-                    <select class="form-control" name="attorneyId" id="attorneyId">
-                        <option value="">Todos</option>
+                <div class="filter-item">
+                    <label for="attorneyId"><i class="bi bi-person"></i> <span data-i18n="reports.filter.user">Usuário</span></label>
+                    <input type="text" 
+                           class="form-control" 
+                           list="attorneyList" 
+                           id="attorneySearch" 
+                           data-i18n-placeholder="reports.filter.user.all"
+                           placeholder="Todos"
+                           autocomplete="off">
+                    <datalist id="attorneyList">
+                        <option value="" data-i18n="reports.filter.user.all">Todos</option>
                         @foreach (var attorney in ViewBag.Attorneys)
                         {
-                            var isSelectedAttorney = attorney.Id.ToString() == selectedAttorneyId ? "selected" : "";
-                            @if (attorney.Id.ToString() == selectedAttorneyId)
-                            {
-                                <option value="@attorney.Id" selected>@attorney.Name</option>
-                            }
-                            else
-                            {
-                                <option value="@attorney.Id">@attorney.Name</option>
-                            }
-
+                            <option value="@attorney.Name" data-id="@attorney.Id">@attorney.Name</option>
                         }
-
-                    </select>
+                    </datalist>
+                    <input type="hidden" name="attorneyId" id="attorneyId" value="@selectedAttorneyId">
                 </div>
 
                 <!-- Tipo de Registro -->
-                <div class="form-group col-md-3">
-                    <label for="recordType">Tipo de Registro</label>
+                <div class="filter-item">
+                    <label for="recordType"><i class="bi bi-tag"></i> <span data-i18n="reports.filter.type">Tipo</span></label>
                     <select class="form-control" name="recordType" id="recordType">
-                        <option value="">Todos</option>
+                        <option value="" data-i18n="reports.filter.type.all">Todos</option>
                         @foreach (var recordType in Enum.GetValues(typeof(WebAppSystems.Models.Enums.RecordType)))
                         {
-                            if (recordType.ToString() == selectedRecordType)
-                            {
-                                <option value="@recordType" selected>@recordType</option>
-                            }
-                            else
-                            {
-                                <option value="@recordType">@recordType</option>
-                            }
+                            <option value="@recordType" selected="@(recordType.ToString() == selectedRecordType)">@recordType</option>
                         }
                     </select>
                 </div>
 
-                <!-- Área / Departamento -->
-                <div class="form-group col-md-3">
-                    <label for="departmentId">Área</label>
+                <!-- Área -->
+                <div class="filter-item">
+                    <label for="departmentId"><i class="bi bi-diagram-3"></i> <span data-i18n="reports.filter.area">Área</span></label>
                     <select class="form-control" name="departmentId" id="departmentId">
-                        <option value="">Todas</option>
+                        <option value="" data-i18n="reports.filter.area.all">Todas</option>
                         @foreach (var dept in ViewBag.Departments)
                         {
-                            if (dept.Id.ToString() == ViewData["departmentId"]?.ToString())
-                            {
-                                <option value="@dept.Id" selected>@dept.Name</option>
-                            }
-                            else
-                            {
-                                <option value="@dept.Id">@dept.Name</option>
-                            }
+                            <option value="@dept.Id" selected="@(dept.Id.ToString() == ViewData["departmentId"]?.ToString())">@dept.Name</option>
                         }
-
                     </select>
                 </div>
+            </div>
 
-                <!-- Botões -->
-                <div class="form-group col-md-2">
-                    <label>&nbsp;</label><br>
-                    <button type="submit" class="btn btn-primary mr-1">Visualizar</button>
-                    @if (userProfile == WebAppSystems.Models.Enums.ProfileEnum.Admin)                   
-                     {
-                        <button type="submit" formaction="@Url.Action("DownloadReport")" class="btn btn-secondary">Gerar CSV</button>
-                     }
-                </div>
+            <!-- Botões -->
+            <div class="filter-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i> <span data-i18n="reports.btn.view">Visualizar</span>
+                </button>
+                @if (userProfile == WebAppSystems.Models.Enums.ProfileEnum.Admin)
+                {
+                    <button type="submit" formaction="@Url.Action("DownloadReport")" class="btn btn-secondary">
+                        <i class="bi bi-file-earmark-spreadsheet"></i> <span data-i18n="reports.btn.excel">Gerar Excel</span>
+                    </button>
+                    <button type="submit" formaction="@Url.Action("DownloadPdfReport")" class="btn btn-pdf">
+                        <i class="bi bi-file-earmark-pdf"></i> <span data-i18n="reports.btn.pdf">Gerar PDF</span>
+                    </button>
+                }
             </div>
         </form>
     </div>
-</nav>
 
+    <!-- Tabela de Resultados -->
+    @if (Model.Any())
+    {
+        <div class="results-card">
+            <div class="table-responsive">
+                <table class="modern-table" id="resultsTable">
+                    <thead>
+                        <tr>
+                            <th data-i18n="reports.table.date">Data</th>
+                            <th data-i18n="reports.table.user">Usuário</th>
+                            <th data-i18n="reports.table.area">Área</th>
+                            <th data-i18n="reports.table.hours">Horas</th>
+                            <th data-i18n="reports.table.client">Cliente</th>
+                            <th data-i18n="reports.table.requester">Solicitante</th>
+                            <th data-i18n="reports.table.type">Tipo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td data-label="Data">@item.Date.ToString("dd/MM/yyyy")</td>
+                                <td data-label="Usuário">@item.Attorney.Name</td>
+                                <td data-label="Área">@item.Department.Name</td>
+                                <td data-label="Horas"><span class="hours-badge">@item.CalculoHoras()</span></td>
+                                <td data-label="Cliente">@item.Client.Name</td>
+                                <td data-label="Solicitante">@item.Solicitante</td>
+                                <td data-label="Tipo"><span class="type-badge type-@item.RecordType.ToString().ToLower()">@item.RecordType</span></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
 
-
-<div class="panel panel-primary">
-    <div class="panel-body">
-        <table class="table table-striped table-hover">
-            <thead>
-                <tr class="success">
-                    <th>
-                        Data
-                    </th>
-                    <th>
-                        Usuário
-                    </th>
-                    <th>
-                        Area
-                    </th>
-                    <th>
-                        Total Horas
-                    </th>
-                    <th>
-                        Cliente
-                    </th>
-                    <th>
-                        Solicitante
-                    </th>
-                    <th>
-                        Tipo
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model)
-                {
-                    <tr>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.Date)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.Attorney.Name)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.Department.Name)
-                        </td>
-                        <td>
-                            @item.CalculoHoras()
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.Client.Name)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.Solicitante)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.RecordType)
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-    <div class="panel-heading">
-        @{
-            TimeSpan totalHours = TimeSpan.Zero;
-            foreach (var item in Model)
-            {
-                totalHours += item.CalculoHorasTotal();
-            }
-            int totalDays = (int)totalHours.TotalDays;
-            TimeSpan correctedTotalHours = totalHours - TimeSpan.FromDays(totalDays);
-        }
-        <h3 class="panel-title">Total de Horas = @($"{totalDays * 24 + correctedTotalHours.Hours}:{correctedTotalHours.Minutes:00}")</h3>
-    </div>
+            <!-- Paginação -->
+            <div class="pagination-container">
+                <div class="pagination-info">
+                    <span data-i18n="reports.pagination.showing">Mostrando</span> <span id="currentStart">1</span>-<span id="currentEnd">10</span> <span data-i18n="reports.pagination.of">de</span> <span id="totalRecords">@Model.Count()</span> <span data-i18n="reports.pagination.records">registros</span>
+                </div>
+                <div class="pagination-controls">
+                    <button class="pagination-btn" id="firstPage" title="Primeira página">
+                        <i class="bi bi-chevron-double-left"></i>
+                    </button>
+                    <button class="pagination-btn" id="prevPage" title="Página anterior">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                    <span class="pagination-current"><span data-i18n="reports.pagination.page">Página</span> <span id="currentPage">1</span> <span data-i18n="reports.pagination.of">de</span> <span id="totalPages">1</span></span>
+                    <button class="pagination-btn" id="nextPage" title="Próxima página">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                    <button class="pagination-btn" id="lastPage" title="Última página">
+                        <i class="bi bi-chevron-double-right"></i>
+                    </button>
+                </div>
+                <div class="pagination-size">
+                    <label for="pageSize" data-i18n="reports.pagination.itemsperpage">Itens por página:</label>
+                    <select id="pageSize" class="form-control">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <h3 data-i18n="reports.empty.title">Nenhum registro encontrado</h3>
+            <p data-i18n="reports.empty.desc">Ajuste os filtros e tente novamente</p>
+        </div>
+    }
 </div>
 
-<script>
-    // Função para atualizar os valores do formulário oculto e enviar o formulário
-    function exportToCsv() {
-        var minDate = document.getElementById("minDate").value;
-        var maxDate = document.getElementById("maxDate").value;
-        var clientId = document.getElementById("clientId").value;
-        var attorneyId = document.getElementById("attorneyId").value;
-        var tipoReg = document.getElementById("selectedRecordType").value;
-
-        document.getElementById("exportMinDate").value = minDate;
-        document.getElementById("exportMaxDate").value = maxDate;
-        document.getElementById("exportClientId").value = clientId;
-        document.getElementById("exportAttorneyId").value = attorneyId;
-        document.getElementById("selectedRecordType").value = tipoReg;
-
-        document.getElementById("exportCsvForm").submit();
+<style>
+    /* Container principal */
+    .report-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
     }
 
-    // Vincular a função exportToCsv ao evento click do botão
-    document.getElementById("exportCsvBtn").addEventListener("click", exportToCsv);
+    /* Header com título e total */
+    .report-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
 
+    .report-header h2 {
+        margin: 0;
+        color: #2d3748;
+        font-size: 28px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
 
+    .total-hours-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .badge-label {
+        font-size: 12px;
+        opacity: 0.9;
+        font-weight: 500;
+    }
+
+    .badge-value {
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: 1px;
+    }
+
+    /* Card de filtros */
+    .filter-card {
+        background: white;
+        border-radius: 16px;
+        padding: 25px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        margin-bottom: 25px;
+    }
+
+    .filter-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .filter-item-wide {
+        grid-column: span 3;
+    }
+
+    .filter-item label {
+        display: block;
+        color: #4a5568;
+        font-weight: 500;
+        font-size: 14px;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .filter-item .form-control {
+        border-radius: 10px;
+        border: 2px solid #e2e8f0;
+        padding: 10px 14px;
+        font-size: 14px;
+        transition: all 0.3s;
+        width: 100%;
+        height: auto;
+        min-height: 42px;
+    }
+
+    .filter-item select.form-control {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234a5568' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        padding-right: 36px;
+    }
+
+    .filter-item .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        outline: none;
+    }
+
+    /* Client selector */
+    .client-selector {
+        position: relative;
+    }
+
+    .selected-clients {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 10px;
+        min-height: 36px;
+    }
+
+    .client-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 500;
+        animation: slideIn 0.2s ease;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    }
+
+    .client-tag .remove-client {
+        cursor: pointer;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        transition: all 0.2s;
+        font-weight: bold;
+    }
+
+    .client-tag .remove-client:hover {
+        background: rgba(255, 255, 255, 0.5);
+        transform: scale(1.1);
+    }
+
+    @@keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Botões de ação */
+    .filter-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+        padding-top: 10px;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .btn {
+        padding: 10px 24px;
+        border-radius: 10px;
+        font-weight: 500;
+        font-size: 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+        background: white;
+        color: #667eea;
+        border: 2px solid #667eea;
+    }
+
+    .btn-secondary:hover {
+        background: #667eea;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .btn-pdf {
+        background: white;
+        color: #e53e3e;
+        border: 2px solid #e53e3e;
+    }
+
+    .btn-pdf:hover {
+        background: #e53e3e;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    /* Card de resultados */
+    .results-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+    }
+
+    /* Tabela moderna */
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .modern-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .modern-table thead {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .modern-table thead th {
+        color: white;
+        font-weight: 500;
+        font-size: 14px;
+        padding: 16px;
+        text-align: left;
+        border: none;
+    }
+
+    .modern-table tbody tr {
+        border-bottom: 1px solid #e2e8f0;
+        transition: all 0.2s;
+    }
+
+    .modern-table tbody tr:hover {
+        background-color: rgba(102, 126, 234, 0.05);
+    }
+
+    .modern-table tbody td {
+        padding: 14px 16px;
+        font-size: 14px;
+        color: #4a5568;
+    }
+
+    .hours-badge {
+        background: #edf2f7;
+        color: #2d3748;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 13px;
+    }
+
+    .type-badge {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .type-consultivo {
+        background: #bee3f8;
+        color: #2c5282;
+    }
+
+    .type-contencioso {
+        background: #feebc8;
+        color: #7c2d12;
+    }
+
+    /* Paginação */
+    .pagination-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 25px;
+        border-top: 1px solid #e2e8f0;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .pagination-info {
+        color: #718096;
+        font-size: 14px;
+    }
+
+    .pagination-controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .pagination-btn {
+        background: white;
+        border: 2px solid #e2e8f0;
+        color: #4a5568;
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .pagination-btn:hover:not(:disabled) {
+        border-color: #667eea;
+        color: #667eea;
+        background: rgba(102, 126, 234, 0.05);
+    }
+
+    .pagination-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+    .pagination-current {
+        color: #4a5568;
+        font-size: 14px;
+        font-weight: 500;
+        padding: 0 10px;
+    }
+
+    .pagination-size {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .pagination-size label {
+        color: #718096;
+        font-size: 14px;
+        margin: 0;
+    }
+
+    .pagination-size select {
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-size: 14px;
+        cursor: pointer;
+    }
+
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .empty-state i {
+        font-size: 64px;
+        color: #cbd5e0;
+        margin-bottom: 20px;
+    }
+
+    .empty-state h3 {
+        color: #2d3748;
+        margin-bottom: 10px;
+    }
+
+    .empty-state p {
+        color: #718096;
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .filter-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .filter-item-wide {
+            grid-column: span 1;
+        }
+
+        .report-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .pagination-container {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .pagination-controls {
+            justify-content: center;
+        }
+
+        .modern-table {
+            font-size: 12px;
+        }
+
+        .modern-table thead {
+            display: none;
+        }
+
+        .modern-table tbody tr {
+            display: block;
+            margin-bottom: 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+        }
+
+        .modern-table tbody td {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 15px;
+            border-bottom: 1px solid #f7fafc;
+        }
+
+        .modern-table tbody td:before {
+            content: attr(data-label);
+            font-weight: 600;
+            color: #2d3748;
+        }
+    }
+</style>
+
+<script>
+    // Sistema de múltipla seleção de clientes
+    const clientSearch = document.getElementById('clientSearch');
+    const clientList = document.getElementById('clientList');
+    const selectedClientsDiv = document.getElementById('selectedClients');
+    const clientIdsInput = document.getElementById('clientIds');
+    let selectedClients = [];
+
+    // Carregar clientes já selecionados (se houver)
+    const preSelectedIds = clientIdsInput.value ? clientIdsInput.value.split(',') : [];
+    if (preSelectedIds.length > 0 && preSelectedIds[0] !== '') {
+        preSelectedIds.forEach(id => {
+            const option = Array.from(clientList.options).find(opt => opt.getAttribute('data-id') === id);
+            if (option) {
+                selectedClients.push({ id: id, name: option.value });
+            }
+        });
+        renderSelectedClients();
+    }
+
+    // Adicionar cliente
+    clientSearch.addEventListener('change', function() {
+        const selectedOption = Array.from(clientList.options).find(option => option.value === this.value);
+        
+        if (selectedOption) {
+            const clientId = selectedOption.getAttribute('data-id');
+            const clientName = selectedOption.value;
+            
+            if (!selectedClients.find(c => c.id === clientId)) {
+                selectedClients.push({ id: clientId, name: clientName });
+                renderSelectedClients();
+                updateHiddenInput();
+            }
+        }
+        
+        this.value = '';
+    });
+
+    // Renderizar tags de clientes selecionados
+    function renderSelectedClients() {
+        selectedClientsDiv.innerHTML = '';
+        
+        selectedClients.forEach(client => {
+            const tag = document.createElement('div');
+            tag.className = 'client-tag';
+            tag.innerHTML = `
+                <span>${client.name}</span>
+                <span class="remove-client" onclick="removeClient('${client.id}')">×</span>
+            `;
+            selectedClientsDiv.appendChild(tag);
+        });
+    }
+
+    // Remover cliente
+    window.removeClient = function(clientId) {
+        selectedClients = selectedClients.filter(c => c.id !== clientId);
+        renderSelectedClients();
+        updateHiddenInput();
+    };
+
+    // Atualizar campo hidden
+    function updateHiddenInput() {
+        clientIdsInput.value = selectedClients.map(c => c.id).join(',');
+    }
+
+    // Autocomplete para Usuário
+    const attorneySearch = document.getElementById('attorneySearch');
+    const attorneyIdInput = document.getElementById('attorneyId');
+    const attorneyList = document.getElementById('attorneyList');
+
+    if (attorneyIdInput.value) {
+        const selectedAttorneyOption = Array.from(attorneyList.options).find(option => option.getAttribute('data-id') === attorneyIdInput.value);
+        if (selectedAttorneyOption) {
+            attorneySearch.value = selectedAttorneyOption.value;
+        }
+    }
+
+    attorneySearch.addEventListener('input', function() {
+        const selectedOption = Array.from(attorneyList.options).find(option => option.value === this.value);
+        if (selectedOption) {
+            attorneyIdInput.value = selectedOption.getAttribute('data-id') || '';
+        } else {
+            attorneyIdInput.value = '';
+        }
+    });
+
+    // Sistema de Paginação
+    const table = document.getElementById('resultsTable');
+    if (table) {
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const pageSizeSelect = document.getElementById('pageSize');
+        const firstPageBtn = document.getElementById('firstPage');
+        const prevPageBtn = document.getElementById('prevPage');
+        const nextPageBtn = document.getElementById('nextPage');
+        const lastPageBtn = document.getElementById('lastPage');
+        const currentPageSpan = document.getElementById('currentPage');
+        const totalPagesSpan = document.getElementById('totalPages');
+        const currentStartSpan = document.getElementById('currentStart');
+        const currentEndSpan = document.getElementById('currentEnd');
+        const totalRecordsSpan = document.getElementById('totalRecords');
+
+        let currentPage = 1;
+        let pageSize = 10;
+        let totalPages = Math.ceil(rows.length / pageSize);
+
+        function renderPage() {
+            const start = (currentPage - 1) * pageSize;
+            const end = start + pageSize;
+
+            rows.forEach((row, index) => {
+                if (index >= start && index < end) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Atualizar informações
+            currentPageSpan.textContent = currentPage;
+            totalPagesSpan.textContent = totalPages;
+            currentStartSpan.textContent = start + 1;
+            currentEndSpan.textContent = Math.min(end, rows.length);
+            totalRecordsSpan.textContent = rows.length;
+
+            // Atualizar botões
+            firstPageBtn.disabled = currentPage === 1;
+            prevPageBtn.disabled = currentPage === 1;
+            nextPageBtn.disabled = currentPage === totalPages;
+            lastPageBtn.disabled = currentPage === totalPages;
+        }
+
+        function updatePagination() {
+            pageSize = parseInt(pageSizeSelect.value);
+            totalPages = Math.ceil(rows.length / pageSize);
+            currentPage = 1;
+            renderPage();
+        }
+
+        // Event listeners
+        pageSizeSelect.addEventListener('change', updatePagination);
+
+        firstPageBtn.addEventListener('click', () => {
+            currentPage = 1;
+            renderPage();
+        });
+
+        prevPageBtn.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                renderPage();
+            }
+        });
+
+        nextPageBtn.addEventListener('click', () => {
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderPage();
+            }
+        });
+
+        lastPageBtn.addEventListener('click', () => {
+            currentPage = totalPages;
+            renderPage();
+        });
+
+        // Inicializar
+        renderPage();
+    }
 </script>

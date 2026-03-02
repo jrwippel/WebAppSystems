@@ -22,7 +22,7 @@ namespace WebAppSystems.Services
         public async Task<List<ProcessRecord>> FindByDateAsync(
     DateTime? minDate,
     DateTime? maxDate,
-    int? clientId,
+    List<int> clientIds,
     int? attorneyId,
     int? departmentId,
     RecordType? recordType)
@@ -39,9 +39,9 @@ namespace WebAppSystems.Services
                 result = result.Where(x => x.Date <= maxDate.Value);
             }
 
-            if (clientId.HasValue)
+            if (clientIds != null && clientIds.Any())
             {
-                result = result.Where(x => x.ClientId == clientId.Value);
+                result = result.Where(x => clientIds.Contains(x.ClientId));
             }
 
             if (attorneyId.HasValue)

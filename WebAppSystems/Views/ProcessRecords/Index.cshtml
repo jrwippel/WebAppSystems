@@ -3,106 +3,787 @@
 @{
     ViewData["Title"] = "Registro de Atividades";
 }
+
+<div class="activities-list-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-left">
+                <div class="header-icon">
+                    <i class="bi bi-list-check"></i>
+                </div>
+                <div class="header-text">
+                    <h1 class="page-title" data-i18n="activities.title">Registro de Atividades</h1>
+                    <p class="page-subtitle" data-i18n="activities.subtitle">Gerencie e visualize todas as atividades registradas</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <a asp-action="Create" class="btn-new-activity">
+                    <i class="bi bi-plus-circle"></i>
+                    <span data-i18n="activities.btn.new">Novo Registro</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Card -->
+    <div class="table-card">
+        <div class="table-header">
+            <div class="table-controls">
+                <div class="show-entries">
+                    <label data-i18n="common.show">Mostrar</label>
+                    <select id="entriesSelect" class="entries-select">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                    <label data-i18n="common.entries">registros</label>
+                </div>
+                <div class="search-box">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="searchInput" class="search-input" placeholder="Pesquisar..." data-i18n-placeholder="common.search">
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="modern-table" id="activitiesTable">
+                <thead>
+                    <tr>
+                        <th data-i18n="activities.table.date">Data</th>
+                        <th data-i18n="activities.table.starttime">Hora Inicial</th>
+                        <th data-i18n="activities.table.endtime">Hora Final</th>
+                        <th data-i18n="activities.table.hours">Horas</th>
+                        <th data-i18n="activities.table.client">Cliente</th>
+                        <th data-i18n="activities.table.user">Usuário</th>
+                        <th data-i18n="activities.table.type">Tipo</th>
+                        <th class="actions-column" data-i18n="common.actions">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        @foreach (var item in Model)
+                        {
+                            var isRunning = item.HoraFinal == null || item.HoraFinal == TimeSpan.Zero;
+                            var rowClass = isRunning ? "running-timer" : "";
+                            
+                            <tr data-description="@item.Description" title="@item.Description" class="@rowClass">
+                                <td class="date-cell">
+                                    <i class="bi bi-calendar3"></i>
+                                    @item.Date.ToString("dd/MM/yyyy")
+                                </td>
+                                <td class="time-cell">@item.HoraInicial</td>
+                                <td class="time-cell">
+                                    @if (isRunning)
+                                    {
+                                        <span class="running-indicator">
+                                            <i class="bi bi-stopwatch"></i>
+                                            <span>Em execução</span>
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        @item.HoraFinal
+                                    }
+                                </td>
+                                <td class="hours-cell">
+                                    @if (isRunning)
+                                    {
+                                        <span class="hours-badge running-badge">
+                                            <i class="bi bi-play-circle-fill"></i>
+                                            Rodando
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="hours-badge">@item.CalculoHoras()</span>
+                                    }
+                                </td>
+                                <td class="client-cell">
+                                    <i class="bi bi-briefcase"></i>
+                                    @item.Client.Name
+                                </td>
+                                <td class="user-cell">@item.Attorney.Name</td>
+                                <td class="type-cell">
+                                    <span class="type-badge">@item.RecordType</span>
+                                </td>
+                                <td class="actions-cell">
+                                    <div class="action-buttons">
+                                        @if (item.Attorney.Id == ViewBag.LoggedUserId)
+                                        {
+                                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn-action btn-edit" title="Editar">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn-action btn-disabled" disabled title="Sem permissão">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                        }
+                                        
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn-action btn-info" title="Detalhes">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+
+                                        @if (item.Attorney.Id == ViewBag.LoggedUserId)
+                                        {
+                                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn-action btn-delete" title="Excluir">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn-action btn-disabled" disabled title="Sem permissão">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="8" style="text-align: center; padding: 40px; color: #718096;">
+                                <i class="bi bi-inbox" style="font-size: 48px; display: block; margin-bottom: 16px; opacity: 0.5;"></i>
+                                <strong>Nenhuma atividade encontrada</strong>
+                                <p style="margin: 8px 0 0 0; font-size: 13px;">Clique em "Novo Registro" para adicionar uma atividade</p>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="table-footer">
+            <div class="table-info">
+                <span data-i18n="common.showing">Mostrando</span>
+                <strong id="showingStart">1</strong>
+                -
+                <strong id="showingEnd">10</strong>
+                <span data-i18n="common.of">de</span>
+                <strong id="totalRecords">@Model.Count()</strong>
+                <span data-i18n="common.records">registros</span>
+            </div>
+            <div class="pagination" id="pagination"></div>
+        </div>
+    </div>
+</div>
+
 <style>
-    table thead {
-        background-color: #6c757d !important; /* Cor cinza escura para o cabeçalho */
-        color: white !important; /* Cor do texto branca para contraste */
+    .activities-list-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
     }
 
-    table tbody tr:nth-child(even) {
-        background-color: #f2f2f2 !important; /* Cinza claro para linhas pares */
+    /* Page Header */
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        padding: 24px 28px;
+        margin-bottom: 24px;
+        box-shadow: 0 6px 25px rgba(102, 126, 234, 0.25);
     }
 
-    table tbody tr:nth-child(odd) {
-        background-color: #e9e9e9 !important; /* Cinza um pouco mais escuro para linhas ímpares */
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .header-icon {
+        width: 50px;
+        height: 50px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: white;
+        backdrop-filter: blur(10px);
+    }
+
+    .page-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: white;
+        margin: 0 0 6px 0;
+    }
+
+    .page-subtitle {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.9);
+        margin: 0;
+    }
+
+    .btn-new-activity {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        background: white;
+        color: #667eea;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-new-activity:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        color: #667eea;
+    }
+
+    .btn-new-activity i {
+        font-size: 18px;
+    }
+
+    /* Table Card */
+    .table-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+    }
+
+    .table-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .table-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .show-entries {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: #4a5568;
+    }
+
+    .entries-select {
+        padding: 6px 12px;
+        border: 2px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .entries-select:focus {
+        outline: none;
+        border-color: #667eea;
+    }
+
+    .search-box {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 14px;
+        background: #f7fafc;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .search-box:focus-within {
+        border-color: #667eea;
+        background: white;
+    }
+
+    .search-box i {
+        color: #718096;
+        font-size: 16px;
+    }
+
+    .search-input {
+        border: none;
+        background: transparent;
+        font-size: 13px;
+        width: 250px;
+        outline: none;
+    }
+
+    /* Modern Table */
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .modern-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .modern-table thead {
+        background: #f7fafc;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .modern-table th {
+        padding: 14px 16px;
+        text-align: left;
+        font-size: 12px;
+        font-weight: 600;
+        color: #4a5568;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .modern-table tbody tr {
+        border-bottom: 1px solid #f7fafc;
+        transition: all 0.2s ease;
+    }
+
+    .modern-table tbody tr.running-timer {
+        background: linear-gradient(90deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+        border-left: 4px solid #667eea;
+        animation: pulse-row 2s ease-in-out infinite;
+    }
+
+    @@keyframes pulse-row {
+        0%, 100% {
+            background: linear-gradient(90deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+        }
+        50% {
+            background: linear-gradient(90deg, rgba(102, 126, 234, 0.12) 0%, rgba(118, 75, 162, 0.12) 100%);
+        }
+    }
+
+    .modern-table tbody tr:hover {
+        background: #f7fafc;
+    }
+
+    .modern-table tbody tr.running-timer:hover {
+        background: linear-gradient(90deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+    }
+
+    .running-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        animation: pulse-indicator 1.5s ease-in-out infinite;
+    }
+
+    @@keyframes pulse-indicator {
+        0%, 100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+        50% {
+            opacity: 0.85;
+            transform: scale(1.05);
+        }
+    }
+
+    .running-indicator i {
+        font-size: 14px;
+        animation: spin 2s linear infinite;
+    }
+
+    @@keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .running-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        animation: pulse-badge 2s ease-in-out infinite;
+    }
+
+    @@keyframes pulse-badge {
+        0%, 100% {
+            box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.4);
+        }
+        50% {
+            box-shadow: 0 0 0 6px rgba(102, 126, 234, 0);
+        }
+    }
+
+    .running-badge i {
+        font-size: 13px;
+    }
+
+    .modern-table td {
+        padding: 14px 16px;
+        font-size: 13px;
+        color: #2d3748;
+    }
+
+    .date-cell {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 500;
+    }
+
+    .date-cell i {
+        color: #667eea;
+        font-size: 14px;
+    }
+
+    .time-cell {
+        font-family: 'Courier New', monospace;
+        font-weight: 600;
+        color: #4a5568;
+    }
+
+    .hours-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        color: #667eea;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 12px;
+    }
+
+    .client-cell {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .client-cell i {
+        color: #667eea;
+        font-size: 14px;
+    }
+
+    .type-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        background: #e2e8f0;
+        color: #4a5568;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .actions-column {
+        text-align: center;
+        width: 140px;
+    }
+
+    .actions-cell {
+        text-align: center;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 6px;
+        justify-content: center;
+    }
+
+    .btn-action {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        font-size: 14px;
+    }
+
+    .btn-edit {
+        background: #e6f2ff;
+        color: #3182ce;
+    }
+
+    .btn-edit:hover {
+        background: #3182ce;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .btn-info {
+        background: #e6f7ed;
+        color: #38a169;
+    }
+
+    .btn-info:hover {
+        background: #38a169;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .btn-delete {
+        background: #fff5f5;
+        color: #e53e3e;
+    }
+
+    .btn-delete:hover {
+        background: #e53e3e;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .btn-disabled {
+        background: #f7fafc;
+        color: #cbd5e0;
+        cursor: not-allowed;
+    }
+
+    /* Table Footer */
+    .table-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 24px;
+        border-top: 1px solid #e2e8f0;
+        background: #f7fafc;
+    }
+
+    .table-info {
+        font-size: 13px;
+        color: #4a5568;
+    }
+
+    .table-info strong {
+        color: #2d3748;
+        font-weight: 600;
+        padding: 0 4px;
+    }
+
+    .pagination {
+        display: flex;
+        gap: 4px;
+    }
+
+    .page-btn {
+        padding: 6px 12px;
+        border: 1px solid #e2e8f0;
+        background: white;
+        color: #4a5568;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 13px;
+    }
+
+    .page-btn:hover {
+        border-color: #667eea;
+        color: #667eea;
+    }
+
+    .page-btn.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: transparent;
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .activities-list-container {
+            padding: 12px;
+        }
+
+        .page-header {
+            padding: 18px 20px;
+        }
+
+        .header-content {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .header-left {
+            width: 100%;
+        }
+
+        .header-actions {
+            width: 100%;
+        }
+
+        .btn-new-activity {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .table-controls {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .search-input {
+            width: 100%;
+        }
+
+        .table-footer {
+            flex-direction: column;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .modern-table {
+            font-size: 12px;
+        }
+
+        .modern-table th,
+        .modern-table td {
+            padding: 10px 8px;
+        }
     }
 </style>
 
-<div class="card">
-    <div class="card-body">
-        <h4 class="card-title">Registro de Atividades</h4>
-        <hr />
-        <p>
-            <a asp-action="Create" class="btn btn-secondary">Novo Registro</a>
-        </p>
-        <table class="table" id="table-SearchRecords" table-striped table-hover">
-            <thead>
-                <tr class="w-100">
-                    <th>
-                        Data
-                    </th>
-                    <th>
-                        Hora Inicial
-                    </th>
-                    <th>
-                        Hora Final
-                    </th>
-                    <th scope="col">Horas</th>
-                    <th scope="col">Cliente</th>
-                    <th scope="col">Usuário</th>
-                    <th scope="col">Tipo</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model)
-                {
-                    <tr title="@item.Description">
-                        <td>
-                            @Html.DisplayFor(modelItem => item.Date)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.HoraInicial)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.HoraFinal)
-                        </td>
-                        <td>
-                            @item.CalculoHoras() <!-- Chamada da função CalculoHoras() -->
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.Client.Name)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.Attorney.Name)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.RecordType)
-                        </td>
-                        <td>
-                            @if (item.Attorney.Id == ViewBag.LoggedUserId)
-                            {
-                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-secondary btn-sm">
-                                    <i class="fas fa-edit fa-xs"></i>
-                                </a>
-                            }
-                            else
-                            {
-                                <a class="btn btn-outline-secondary btn-sm disabled">
-                                    <i class="fas fa-edit fa-xs"></i>
-                                </a>
-                            }
-                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-secondary btn-sm">
-                                <i class="fas fa-info-circle fa-xs"></i>
-                            </a>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const table = document.getElementById('activitiesTable');
+        const tbody = table.querySelector('tbody');
+        const searchInput = document.getElementById('searchInput');
+        const entriesSelect = document.getElementById('entriesSelect');
+        const allRows = Array.from(tbody.querySelectorAll('tr')).filter(row => !row.querySelector('td[colspan]'));
+        
+        let currentPage = 1;
+        let rowsPerPage = 10;
+        let filteredRows = allRows;
 
-                            @if (item.Attorney.Id == ViewBag.LoggedUserId)
-                            {
-                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-outline-secondary btn-sm">
-                                    <i class="fas fa-trash-alt fa-xs"></i>
-                                </a>
-                            }
-                            else
-                            {
-                                <a class="btn btn-outline-secondary btn-sm disabled">
-                                    <i class="fas fa-trash-alt fa-xs"></i>
-                                </a>
-                            }
-                        </td>
-                    </tr>
+        // Se não há linhas, não inicializar paginação
+        if (allRows.length === 0) {
+            document.getElementById('showingStart').textContent = '0';
+            document.getElementById('showingEnd').textContent = '0';
+            document.getElementById('totalRecords').textContent = '0';
+            return;
+        }
+
+        // Pesquisa
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            
+            filteredRows = allRows.filter(row => {
+                const text = row.textContent.toLowerCase();
+                const description = row.getAttribute('data-description')?.toLowerCase() || '';
+                return text.includes(searchTerm) || description.includes(searchTerm);
+            });
+            
+            currentPage = 1;
+            updateTable();
+        });
+
+        // Mudar quantidade de registros
+        entriesSelect.addEventListener('change', function() {
+            rowsPerPage = parseInt(this.value);
+            currentPage = 1;
+            updateTable();
+        });
+
+        // Atualizar tabela
+        function updateTable() {
+            // Esconder todas as linhas
+            allRows.forEach(row => row.style.display = 'none');
+            
+            // Calcular índices
+            const start = (currentPage - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+            
+            // Mostrar linhas da página atual
+            const rowsToShow = filteredRows.slice(start, end);
+            rowsToShow.forEach(row => row.style.display = '');
+            
+            // Atualizar informações
+            document.getElementById('showingStart').textContent = filteredRows.length > 0 ? start + 1 : 0;
+            document.getElementById('showingEnd').textContent = Math.min(end, filteredRows.length);
+            document.getElementById('totalRecords').textContent = filteredRows.length;
+            
+            // Atualizar paginação
+            updatePagination();
+        }
+
+        // Atualizar paginação
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+            const paginationDiv = document.getElementById('pagination');
+            paginationDiv.innerHTML = '';
+            
+            if (totalPages <= 1) return;
+            
+            // Botão anterior
+            const prevBtn = document.createElement('button');
+            prevBtn.className = 'page-btn';
+            prevBtn.textContent = '‹';
+            prevBtn.disabled = currentPage === 1;
+            prevBtn.onclick = () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    updateTable();
                 }
+            };
+            paginationDiv.appendChild(prevBtn);
+            
+            // Botões de página
+            const maxButtons = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+            
+            if (endPage - startPage < maxButtons - 1) {
+                startPage = Math.max(1, endPage - maxButtons + 1);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.className = 'page-btn' + (i === currentPage ? ' active' : '');
+                pageBtn.textContent = i;
+                pageBtn.onclick = () => {
+                    currentPage = i;
+                    updateTable();
+                };
+                paginationDiv.appendChild(pageBtn);
+            }
+            
+            // Botão próximo
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'page-btn';
+            nextBtn.textContent = '›';
+            nextBtn.disabled = currentPage === totalPages;
+            nextBtn.onclick = () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    updateTable();
+                }
+            };
+            paginationDiv.appendChild(nextBtn);
+        }
 
-            </tbody>
-        </table>
-    </div>
-</div>
+        // Inicializar
+        updateTable();
+    });
+</script>
