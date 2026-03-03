@@ -43,28 +43,44 @@
     <!-- Records Card -->
     <div class="records-card">
         <div class="records-header">
-            <h3><i class="bi bi-clock-history"></i> <span data-i18n="timetracker.today">Today's Records</span></h3>
-            <input type="text" id="searchInput" data-i18n-placeholder="timetracker.search" placeholder="Search..." oninput="filterTable()" class="search-input" />
+            <h3><i class="bi bi-clock-history"></i> <span data-i18n="timetracker.records">All Records</span></h3>
+            <input type="text" id="searchInput" data-i18n-placeholder="timetracker.search" placeholder="Search..." class="search-input" />
         </div>
 
         <div class="table-container">
             <table class="table" id="recordsTable">
                 <thead>
                     <tr>
-                        <th data-i18n="timetracker.table.date">Date</th>
-                        <th data-i18n="timetracker.table.start">Start</th>
-                        <th data-i18n="timetracker.table.end">End</th>
-                        <th data-i18n="timetracker.table.duration">Duration</th>
-                        <th data-i18n="timetracker.table.description">Description</th>
-                        <th data-i18n="timetracker.table.client">Client</th>
-                        <th data-i18n="timetracker.table.requester">Requester</th>
-                        <th data-i18n="timetracker.table.type">Type</th>
-                        <th></th>
+                        <th style="width: 100px;" data-i18n="timetracker.table.date">Date</th>
+                        <th style="width: 70px;" data-i18n="timetracker.table.start">Start</th>
+                        <th style="width: 70px;" data-i18n="timetracker.table.end">End</th>
+                        <th style="width: 100px;" data-i18n="timetracker.table.duration">Duration</th>
+                        <th style="max-width: 250px;" data-i18n="timetracker.table.description">Description</th>
+                        <th style="width: 150px;" data-i18n="timetracker.table.client">Client</th>
+                        <th style="width: 120px;" data-i18n="timetracker.table.requester">Requester</th>
+                        <th style="width: 120px;" data-i18n="timetracker.table.type">Type</th>
+                        <th style="width: 60px;"></th>
                     </tr>
                 </thead>
                 <tbody>
                 </tbody>
             </table>
+        </div>
+
+        <!-- Paginação -->
+        <div class="pagination-container">
+            <div class="pagination-info">
+                <span id="paginationInfo"></span>
+            </div>
+            <div class="pagination-controls">
+                <button id="prevPage" class="btn-pagination" onclick="changePage(-1)">
+                    <i class="fa fa-chevron-left"></i> Previous
+                </button>
+                <span id="pageNumbers" class="page-numbers"></span>
+                <button id="nextPage" class="btn-pagination" onclick="changePage(1)">
+                    Next <i class="fa fa-chevron-right"></i>
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -231,6 +247,7 @@
         .table {
             width: 100%;
             margin: 0;
+            table-layout: fixed;
         }
 
         .table thead {
@@ -238,56 +255,148 @@
         }
 
         .table th {
-            padding: 16px;
-            font-size: 13px;
+            padding: 16px 12px;
+            font-size: 12px;
             font-weight: 600;
             color: #4a5568;
             text-align: left;
             border-bottom: 2px solid #e2e8f0;
-        }
-
-        .table td {
-            padding: 16px;
-            font-size: 14px;
-            color: #2d3748;
-            border-bottom: 1px solid #e2e8f0;
-            vertical-align: middle;
-        }
-
-        .table tbody tr:hover {
-            background: #f7fafc;
-        }
-
-        .description-cell {
-            max-width: 300px;
+            line-height: 1.4;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
-        .duration-badge {
-            display: inline-block;
-            padding: 4px 12px;
+        .table td {
+            padding: 18px 12px;
+            font-size: 14px;
+            color: #2d3748;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: middle;
+            line-height: 1.5;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .table tbody tr:hover {
+            background: #f7fafc;
+            transition: background 0.2s;
+        }
+
+        .table tbody tr {
+            min-height: 60px;
+        }
+
+        .description-cell {
+            max-width: 250px;
+            white-space: nowrap !important;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.5;
+        }
+
+        .pagination-container {
+            padding: 20px 24px;
+            border-top: 2px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .pagination-info {
+            font-size: 14px;
+            color: #4a5568;
+        }
+
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-pagination {
+            padding: 8px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            color: #4a5568;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-pagination:hover:not(:disabled) {
+            border-color: #667eea;
+            color: #667eea;
+            background: #f7fafc;
+        }
+
+        .btn-pagination:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .page-numbers {
+            display: flex;
+            gap: 6px;
+        }
+
+        .page-number {
+            width: 36px;
+            height: 36px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            color: #4a5568;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .page-number:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .page-number.active {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            border-radius: 12px;
+            border-color: transparent;
+        }
+
+        .duration-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 14px;
             font-size: 13px;
             font-weight: 600;
+            letter-spacing: 0.5px;
         }
 
         .type-badge {
             display: inline-block;
-            padding: 4px 12px;
+            padding: 6px 14px;
             background: #e2e8f0;
             color: #4a5568;
-            border-radius: 12px;
+            border-radius: 14px;
             font-size: 12px;
             font-weight: 600;
         }
 
         .btn-play {
-            width: 36px;
-            height: 36px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             border: none;
             background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
@@ -297,6 +406,7 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            font-size: 14px;
         }
 
         .btn-play:hover:not(:disabled) {
@@ -342,6 +452,16 @@
                 flex-direction: column;
                 align-items: flex-start;
             }
+
+            .pagination-container {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .pagination-controls {
+                width: 100%;
+                justify-content: center;
+            }
         }
     </style>
 }
@@ -354,6 +474,9 @@
         let isRunning = false;
         let processRecordId;
         let loggedUserId = '@ViewBag.LoggedUserId';
+        let currentPage = 1;
+        let totalPages = 1;
+        let searchTimeout;
 
         const recordTypeMap = {
             0: "Consultivo",
@@ -411,6 +534,16 @@
             solicitanteField.addEventListener('input', validateFields);
             recordTypeField.addEventListener('change', validateFields);
 
+            // Busca com debounce
+            const searchInput = document.getElementById("searchInput");
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    currentPage = 1;
+                    loadRecordsForToday(loggedUserId);
+                }, 500);
+            });
+
             checkDescription();
             loadRecordsForToday(loggedUserId);
             checkActiveTimer();
@@ -461,44 +594,136 @@
 
         async function loadRecordsForToday(attorneyId) {
             try {
-                const response = await fetch(`/TimeTracker/GetRecordsForToday?attorneyId=${attorneyId}`);
+                const searchValue = document.getElementById("searchInput").value;
+                const url = `/TimeTracker/GetRecordsForToday?attorneyId=${attorneyId}&page=${currentPage}&pageSize=10&search=${encodeURIComponent(searchValue)}`;
+                console.log('Fetching records from:', url);
+                
+                const response = await fetch(url);
+                console.log('Response status:', response.status);
+                
                 if (response.ok) {
-                    const records = await response.json();
+                    const data = await response.json();
+                    console.log('Data received:', data);
                     
-                    // Ordenar por ID (mais recente primeiro)
-                    records.sort((a, b) => b.id - a.id);
+                    // Suporta tanto array direto quanto objeto com propriedades
+                    let records, totalPagesValue, totalRecordsValue, currentPageValue;
+                    
+                    if (Array.isArray(data)) {
+                        // Formato antigo - array direto
+                        records = data;
+                        totalPagesValue = 1;
+                        totalRecordsValue = data.length;
+                        currentPageValue = 1;
+                    } else {
+                        // Formato novo - objeto com propriedades
+                        records = data.records || [];
+                        totalPagesValue = data.totalPages || 1;
+                        totalRecordsValue = data.totalRecords || 0;
+                        currentPageValue = data.currentPage || 1;
+                    }
+                    
+                    totalPages = totalPagesValue;
                     
                     const tableBody = document.querySelector("#recordsTable tbody");
                     tableBody.innerHTML = "";
 
-                    records.forEach(record => {
-                        const startTime = new Date(`1970-01-01T${record.horaInicial}Z`);
-                        const endTime = new Date(`1970-01-01T${record.horaFinal}Z`);
-                        const duration = calculateDuration(startTime, endTime);
-                        const formattedDate = new Date(record.date).toLocaleDateString("pt-BR");
+                    if (!records || records.length === 0) {
+                        tableBody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: #718096;">No records found</td></tr>';
+                    } else {
+                        records.forEach(record => {
+                            const startTime = new Date(`1970-01-01T${record.horaInicial}Z`);
+                            const endTime = new Date(`1970-01-01T${record.horaFinal}Z`);
+                            const duration = calculateDuration(startTime, endTime);
+                            const formattedDate = new Date(record.date).toLocaleDateString("pt-BR");
+                            
+                            // Formatar horas para HH:MM
+                            const startTimeFormatted = record.horaInicial.substring(0, 5);
+                            const endTimeFormatted = record.horaFinal.substring(0, 5);
 
-                        const row = document.createElement("tr");
-                        row.innerHTML = `
-                            <td>${formattedDate}</td>
-                            <td>${record.horaInicial}</td>
-                            <td>${record.horaFinal}</td>
-                            <td><span class="duration-badge">${duration}</span></td>
-                            <td class="description-cell" title="${record.description}">${record.description}</td>
-                            <td>${record.clienteNome}</td>
-                            <td>${record.solicitante}</td>
-                            <td><span class="type-badge">${recordTypeMap[record.recordType]}</span></td>
-                            <td>
-                                <button class="btn-play" onclick="startTimerFromRecord(${record.id})" ${isRunning ? 'disabled' : ''}>
-                                    <i class="fa fa-play"></i>
-                                </button>
-                            </td>
-                        `;
-                        tableBody.appendChild(row);
+                            const row = document.createElement("tr");
+                            row.innerHTML = `
+                                <td style="width: 100px;">${formattedDate}</td>
+                                <td style="width: 70px;">${startTimeFormatted}</td>
+                                <td style="width: 70px;">${endTimeFormatted}</td>
+                                <td style="width: 100px;"><span class="duration-badge">${duration}</span></td>
+                                <td class="description-cell" style="max-width: 250px;" title="${record.description}">${record.description}</td>
+                                <td style="width: 150px;" title="${record.clienteNome}">${record.clienteNome}</td>
+                                <td style="width: 120px;" title="${record.solicitante || ''}">${record.solicitante || ''}</td>
+                                <td style="width: 120px;"><span class="type-badge">${recordTypeMap[record.recordType]}</span></td>
+                                <td style="width: 60px; text-align: center; white-space: nowrap;">
+                                    <button class="btn-play" onclick="startTimerFromRecord(${record.id})" ${isRunning ? 'disabled' : ''}>
+                                        <i class="fa fa-play"></i>
+                                    </button>
+                                </td>
+                            `;
+                            tableBody.appendChild(row);
+                        });
+                    }
+
+                    updatePaginationControls({
+                        records,
+                        currentPage: currentPageValue,
+                        totalPages: totalPagesValue,
+                        totalRecords: totalRecordsValue,
+                        pageSize: 10
                     });
+                } else {
+                    console.error('Response not OK:', response.status, response.statusText);
+                    const tableBody = document.querySelector("#recordsTable tbody");
+                    tableBody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: #e53e3e;">Error loading records. Please refresh the page.</td></tr>';
                 }
             } catch (error) {
                 console.error('Erro ao carregar registros:', error);
+                const tableBody = document.querySelector("#recordsTable tbody");
+                tableBody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: #e53e3e;">Error loading records. Please refresh the page.</td></tr>';
             }
+        }
+
+        function updatePaginationControls(data) {
+            const paginationInfo = document.getElementById("paginationInfo");
+            const pageNumbers = document.getElementById("pageNumbers");
+            const prevButton = document.getElementById("prevPage");
+            const nextButton = document.getElementById("nextPage");
+
+            // Atualizar informações
+            const startRecord = data.totalRecords === 0 ? 0 : ((data.currentPage - 1) * data.pageSize) + 1;
+            const endRecord = Math.min(data.currentPage * data.pageSize, data.totalRecords);
+            paginationInfo.textContent = `Showing ${startRecord}-${endRecord} of ${data.totalRecords} records`;
+
+            // Atualizar botões
+            prevButton.disabled = data.currentPage === 1;
+            nextButton.disabled = data.currentPage === data.totalPages || data.totalPages === 0;
+
+            // Gerar números de página
+            pageNumbers.innerHTML = '';
+            const maxVisiblePages = 5;
+            let startPage = Math.max(1, data.currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(data.totalPages, startPage + maxVisiblePages - 1);
+
+            if (endPage - startPage < maxVisiblePages - 1) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const pageBtn = document.createElement('span');
+                pageBtn.className = 'page-number' + (i === data.currentPage ? ' active' : '');
+                pageBtn.textContent = i;
+                pageBtn.onclick = () => goToPage(i);
+                pageNumbers.appendChild(pageBtn);
+            }
+        }
+
+        function changePage(delta) {
+            const newPage = currentPage + delta;
+            if (newPage >= 1 && newPage <= totalPages) {
+                currentPage = newPage;
+                loadRecordsForToday(loggedUserId);
+            }
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            loadRecordsForToday(loggedUserId);
         }
 
         async function startTimerFromRecord(recordId) {
@@ -656,28 +881,6 @@
 
             document.getElementById("timeDisplay").textContent = `${hours}:${minutes}:${seconds}`;
             document.title = `${hours}:${minutes}:${seconds} - Time Tracker`;
-        }
-
-        function filterTable() {
-            const input = document.getElementById("searchInput").value.toLowerCase();
-            const table = document.getElementById("recordsTable");
-            const rows = table.getElementsByTagName("tr");
-
-            for (let i = 1; i < rows.length; i++) {
-                const row = rows[i];
-                const cells = row.getElementsByTagName("td");
-                let rowContainsTerm = false;
-
-                for (let j = 0; j < cells.length; j++) {
-                    const cellContent = cells[j].textContent || cells[j].innerText;
-                    if (cellContent.toLowerCase().includes(input)) {
-                        rowContainsTerm = true;
-                        break;
-                    }
-                }
-
-                row.style.display = rowContainsTerm ? "" : "none";
-            }
         }
 
         function startKeepAlive() {
