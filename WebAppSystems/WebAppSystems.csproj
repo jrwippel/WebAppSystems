@@ -2105,9 +2105,11 @@
   <ItemGroup>
     <PackageReference Include="Azure.Communication.Email" Version="1.1.0-beta.2" />
     <PackageReference Include="ClosedXML" Version="0.102.0" />
+    <PackageReference Include="DocumentFormat.OpenXml" Version="3.0.1" />
     <PackageReference Include="EPPlus" Version="7.0.5" />
     <PackageReference Include="FFMpegCore" Version="4.4.0" />
     <PackageReference Include="Google.Cloud.Speech.V1" Version="3.8.0" />
+    <PackageReference Include="itext7" Version="8.0.2" />
     <PackageReference Include="jQuery" Version="3.2.1" />
     <PackageReference Include="jQuery.Fullcalendar" Version="3.9.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.2.0" />

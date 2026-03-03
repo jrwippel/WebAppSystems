@@ -46,6 +46,11 @@ namespace WebAppSystems
             builder.Services.AddScoped<ISpeechToTextService, SpeechToTextService>();
             builder.Services.AddScoped<ISummaryService, SummaryService>();
 
+            // Assistente Jurídico IA
+            builder.Services.AddScoped<DocumentTextExtractorService>();
+            builder.Services.AddScoped<AIDocumentAnalysisService>();
+            builder.Services.AddScoped<AttorneyRecommendationService>();
+
             builder.Services.AddHttpClient();
 
             builder.Services.AddSession(o =>
