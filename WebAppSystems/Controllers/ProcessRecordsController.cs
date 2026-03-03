@@ -43,7 +43,7 @@ namespace WebAppSystems.Controllers
 
 
         // GET: ProcessRecords
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int page = 1, string search = "", string status = "all")
         {
             try
             {
@@ -51,19 +51,54 @@ namespace WebAppSystems.Controllers
                 ViewBag.LoggedUserId = usuario.Id;
                 ViewBag.CurrentUserPerfil = usuario.Perfil;
                 
-                // Buscar registros ordenados por ID (mais rápido)
-                var allRecords = await _context.ProcessRecord
+                const int pageSize = 20;
+                
+                // Query base
+                var query = _context.ProcessRecord
                     .Include(p => p.Attorney)
                     .Include(p => p.Client)
                     .Include(p => p.Department)
+                    .AsQueryable();
+
+                // Filtro por status
+                if (status == "running")
+                {
+                    query = query.Where(p => p.HoraFinal == null || p.HoraFinal == TimeSpan.Zero);
+                }
+                else if (status == "completed")
+                {
+                    query = query.Where(p => p.HoraFinal != null && p.HoraFinal != TimeSpan.Zero);
+                }
+
+                // Filtro de busca
+                if (!string.IsNullOrEmpty(search))
+                {
+                    query = query.Where(p => 
+                        p.Description.Contains(search) ||
+                        p.Attorney.Name.Contains(search) ||
+                        (p.Client != null && p.Client.Name.Contains(search)) ||
+                        p.Department.Name.Contains(search));
+                }
+
+                // Contar total
+                var totalItems = await query.CountAsync();
+                var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+                // Buscar página atual
+                var processRecords = await query
+                    .OrderByDescending(p => p.Date)
+                    .ThenByDescending(p => p.HoraInicial)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
                     .AsNoTracking()
-                    .OrderByDescending(p => p.Id)
                     .ToListAsync();
-                
-                // Separar em execução e finalizados, depois juntar
-                var running = allRecords.Where(p => p.HoraFinal == null || p.HoraFinal == TimeSpan.Zero).ToList();
-                var completed = allRecords.Where(p => p.HoraFinal != null && p.HoraFinal != TimeSpan.Zero).ToList();
-                var processRecords = running.Concat(completed).ToList();
+
+                // Passar dados de paginação
+                ViewBag.CurrentPage = page;
+                ViewBag.TotalPages = totalPages;
+                ViewBag.TotalItems = totalItems;
+                ViewBag.SearchTerm = search;
+                ViewBag.StatusFilter = status;
                 
                 return View(processRecords);
             }
@@ -317,7 +352,11 @@ namespace WebAppSystems.Controllers
             }
 
             var processRecord = await _context.ProcessRecord
+                .Include(p => p.Attorney)
+                .Include(p => p.Client)
+                .Include(p => p.Department)
                 .FirstOrDefaultAsync(m => m.Id == id);
+            
             if (processRecord == null)
             {
                 return NotFound();

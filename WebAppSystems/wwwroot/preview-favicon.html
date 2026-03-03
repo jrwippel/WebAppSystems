@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview do Novo Favicon - Time Tracker</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 800px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+
+        .subtitle {
+            color: #718096;
+            margin-bottom: 40px;
+            font-size: 16px;
+        }
+
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .preview-item {
+            text-align: center;
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .preview-item h3 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .icon-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .icon-display img {
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+        }
+
+        .size-label {
+            color: #a0aec0;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+
+        .instructions {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+        }
+
+        .instructions h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .instructions ol {
+            margin-left: 20px;
+            color: #4a5568;
+            line-height: 1.8;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+        }
+
+        .instructions code {
+            background: rgba(102, 126, 234, 0.1);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #667eea;
+        }
+
+        .color-info {
+            display: flex;
+            gap: 20px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .color-box {
+            flex: 1;
+            min-width: 150px;
+            padding: 15px;
+            border-radius: 8px;
+            color: white;
+            text-align: center;
+        }
+
+        .color-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .color-code {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin-top: 8px;
+            opacity: 0.9;
+        }
+
+        .tab-preview {
+            background: #2d3748;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tab-preview img {
+            width: 20px;
+            height: 20px;
+        }
+
+        .tab-preview span {
+            color: white;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Novo Favicon - Time Tracker</h1>
+        <p class="subtitle">Visualização do ícone do sistema em diferentes tamanhos</p>
+
+        <div class="preview-grid">
+            <div class="preview-item">
+                <h3>16x16 pixels</h3>
+                <div class="icon-display">
+                    <img src="/favicon.svg" width="16" height="16" alt="Favicon 16x16">
+                </div>
+                <div class="size-label">Tamanho da aba do navegador</div>
+            </div>
+
+            <div class="preview-item">
+                <h3>32x32 pixels</h3>
+                <div class="icon-display">
+                    <img src="/favicon.svg" width="32" height="32" alt="Favicon 32x32">
+                </div>
+                <div class="size-label">Favoritos e barra de tarefas</div>
+            </div>
+
+            <div class="preview-item">
+                <h3>64x64 pixels</h3>
+                <div class="icon-display">
+                    <img src="/favicon.svg" width="64" height="64" alt="Favicon 64x64">
+                </div>
+                <div class="size-label">Atalhos da área de trabalho</div>
+            </div>
+
+            <div class="preview-item">
+                <h3>128x128 pixels</h3>
+                <div class="icon-display">
+                    <img src="/favicon.svg" width="128" height="128" alt="Favicon 128x128">
+                </div>
+                <div class="size-label">PWA e dispositivos móveis</div>
+            </div>
+        </div>
+
+        <div class="tab-preview">
+            <img src="/favicon.svg" alt="Favicon">
+            <span>Time Tracker - Registro de Atividades</span>
+        </div>
+
+        <div class="color-info">
+            <div class="color-box color-primary">
+                <div><strong>Gradiente Principal</strong></div>
+                <div class="color-code">#667eea → #764ba2</div>
+            </div>
+        </div>
+
+        <div class="instructions">
+            <h3>✅ Como testar o novo favicon:</h3>
+            <ol>
+                <li>Limpe o cache do navegador: <code>Ctrl + Shift + Delete</code></li>
+                <li>Ou force o reload: <code>Ctrl + F5</code></li>
+                <li>Navegue para a página principal do sistema</li>
+                <li>Verifique o ícone na aba do navegador</li>
+                <li>Adicione aos favoritos para ver em tamanho maior</li>
+            </ol>
+        </div>
+
+        <div class="instructions" style="margin-top: 20px; border-left-color: #38a169;">
+            <h3>🎯 Características do novo ícone:</h3>
+            <ol>
+                <li><strong>Cronômetro estilizado</strong> - Remete ao timesheet do sistema</li>
+                <li><strong>Gradiente roxo/azul</strong> - Mesmas cores do design do sistema</li>
+                <li><strong>Formato SVG</strong> - Escalável e nítido em qualquer tamanho</li>
+                <li><strong>Ícone de play</strong> - Indica funcionalidade de timer</li>
+                <li><strong>Design moderno</strong> - Limpo e profissional</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>

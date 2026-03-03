@@ -31,7 +31,7 @@ namespace WebAppSystems.Controllers
         }
 
         // GET: Clients
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int page = 1, string search = "")
         {
             try
             {
@@ -39,13 +39,54 @@ namespace WebAppSystems.Controllers
                 ViewBag.LoggedUserId = usuario.Id;
                 ViewBag.CurrentUserPerfil = usuario.Perfil;
 
-                return _context.Client != null ?
-                            View(await _context.Client.ToListAsync()) :
-                            Problem("Entity set 'WebAppSystemsContext.Client'  is null.");
+                const int pageSize = 10;
+                
+                // Query base
+                var query = _context.Client.AsQueryable();
+
+                // Aplicar filtro de busca se houver
+                if (!string.IsNullOrEmpty(search))
+                {
+                    query = query.Where(c => 
+                        c.Name.Contains(search) || 
+                        c.Email.Contains(search) || 
+                        c.Document.Contains(search) ||
+                        c.Telephone.Contains(search));
+                }
+
+                // Contar total de registros
+                var totalItems = await query.CountAsync();
+                var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+                // Buscar apenas a página atual (10 registros)
+                var clients = await query
+                    .OrderBy(c => c.Name)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .Select(c => new Client
+                    {
+                        Id = c.Id,
+                        Name = c.Name,
+                        Email = c.Email,
+                        Document = c.Document,
+                        Telephone = c.Telephone,
+                        Solicitante = c.Solicitante,
+                        ClienteInterno = c.ClienteInterno,
+                        ClienteInativo = c.ClienteInativo,
+                    })
+                    .AsNoTracking()
+                    .ToListAsync();
+
+                // Passar dados de paginação para a view
+                ViewBag.CurrentPage = page;
+                ViewBag.TotalPages = totalPages;
+                ViewBag.TotalItems = totalItems;
+                ViewBag.SearchTerm = search;
+
+                return View(clients);
             }
             catch (SessionExpiredException)
             {
-                // Redirecione para a página de login se a sessão expirou
                 TempData["MensagemAviso"] = "A sessão expirou. Por favor, faça login novamente.";
                 return RedirectToAction("Index", "Login");
             }
