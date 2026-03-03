@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background Circle -->
+  <circle cx="50" cy="50" r="48" fill="url(#grad)"/>
+  
+  <!-- Clock Face -->
+  <circle cx="50" cy="50" r="35" fill="white" opacity="0.95"/>
+  
+  <!-- Hour Markers -->
+  <circle cx="50" cy="20" r="2" fill="#667eea"/>
+  <circle cx="80" cy="50" r="2" fill="#667eea"/>
+  <circle cx="50" cy="80" r="2" fill="#667eea"/>
+  <circle cx="20" cy="50" r="2" fill="#667eea"/>
+  
+  <!-- Clock Hands -->
+  <!-- Hour Hand -->
+  <line x1="50" y1="50" x2="50" y2="35" stroke="#764ba2" stroke-width="3" stroke-linecap="round"/>
+  
+  <!-- Minute Hand -->
+  <line x1="50" y1="50" x2="65" y2="50" stroke="#667eea" stroke-width="2.5" stroke-linecap="round"/>
+  
+  <!-- Center Dot -->
+  <circle cx="50" cy="50" r="4" fill="#764ba2"/>
+  
+  <!-- Play Icon (small) -->
+  <path d="M 72 72 L 82 77 L 72 82 Z" fill="#667eea" opacity="0.8"/>
+</svg>

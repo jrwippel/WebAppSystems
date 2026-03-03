@@ -26,26 +26,27 @@
         </div>
     </div>
 
+    <!-- Search Bar -->
+    <div class="search-card">
+        <div class="search-wrapper">
+            <i class="bi bi-search"></i>
+            <input type="text" id="searchInput" class="search-input" placeholder="Buscar por descrição, cliente, usuário ou departamento...">
+        </div>
+        <div class="filter-buttons">
+            <button class="filter-btn @(ViewBag.StatusFilter == "all" ? "active" : "")" onclick="filterStatus('all')">
+                <i class="bi bi-list-ul"></i> Todas
+            </button>
+            <button class="filter-btn @(ViewBag.StatusFilter == "running" ? "active" : "")" onclick="filterStatus('running')">
+                <i class="bi bi-play-circle"></i> Em Execução
+            </button>
+            <button class="filter-btn @(ViewBag.StatusFilter == "completed" ? "active" : "")" onclick="filterStatus('completed')">
+                <i class="bi bi-check-circle"></i> Finalizadas
+            </button>
+        </div>
+    </div>
+
     <!-- Table Card -->
     <div class="table-card">
-        <div class="table-header">
-            <div class="table-controls">
-                <div class="show-entries">
-                    <label data-i18n="common.show">Mostrar</label>
-                    <select id="entriesSelect" class="entries-select">
-                        <option value="10">10</option>
-                        <option value="25">25</option>
-                        <option value="50">50</option>
-                        <option value="100">100</option>
-                    </select>
-                    <label data-i18n="common.entries">registros</label>
-                </div>
-                <div class="search-box">
-                    <i class="bi bi-search"></i>
-                    <input type="text" id="searchInput" class="search-input" placeholder="Pesquisar..." data-i18n-placeholder="common.search">
-                </div>
-            </div>
-        </div>
 
         <div class="table-responsive">
             <table class="modern-table" id="activitiesTable">
@@ -161,15 +162,9 @@
 
         <div class="table-footer">
             <div class="table-info">
-                <span data-i18n="common.showing">Mostrando</span>
-                <strong id="showingStart">1</strong>
-                -
-                <strong id="showingEnd">10</strong>
-                <span data-i18n="common.of">de</span>
-                <strong id="totalRecords">@Model.Count()</strong>
-                <span data-i18n="common.records">registros</span>
+                Mostrando <span id="showing">@Model.Count()</span> de <span id="total">@ViewBag.TotalItems</span> registros
             </div>
-            <div class="pagination" id="pagination"></div>
+            <div class="pagination-controls" id="paginationControls"></div>
         </div>
     </div>
 </div>
@@ -256,75 +251,86 @@
         font-size: 18px;
     }
 
+    /* Search Card */
+    .search-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .search-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+
+    .search-wrapper i {
+        position: absolute;
+        left: 16px;
+        color: #a0aec0;
+        font-size: 18px;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 12px 16px 12px 48px;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .filter-buttons {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .filter-btn {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border: 2px solid #e2e8f0;
+        background: white;
+        color: #4a5568;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .filter-btn:hover {
+        border-color: #667eea;
+        color: #667eea;
+    }
+
+    .filter-btn.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: transparent;
+    }
+
+    .filter-btn i {
+        font-size: 14px;
+    }
+
     /* Table Card */
     .table-card {
         background: white;
         border-radius: 12px;
         box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
         overflow: hidden;
-    }
-
-    .table-header {
-        padding: 20px 24px;
-        border-bottom: 1px solid #e2e8f0;
-    }
-
-    .table-controls {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 20px;
-    }
-
-    .show-entries {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 13px;
-        color: #4a5568;
-    }
-
-    .entries-select {
-        padding: 6px 12px;
-        border: 2px solid #e2e8f0;
-        border-radius: 6px;
-        font-size: 13px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-    .entries-select:focus {
-        outline: none;
-        border-color: #667eea;
-    }
-
-    .search-box {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 8px 14px;
-        background: #f7fafc;
-        border: 2px solid #e2e8f0;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-    }
-
-    .search-box:focus-within {
-        border-color: #667eea;
-        background: white;
-    }
-
-    .search-box i {
-        color: #718096;
-        font-size: 16px;
-    }
-
-    .search-input {
-        border: none;
-        background: transparent;
-        font-size: 13px;
-        width: 250px;
-        outline: none;
     }
 
     /* Modern Table */
@@ -568,47 +574,60 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 16px 24px;
-        border-top: 1px solid #e2e8f0;
-        background: #f7fafc;
+        padding: 20px 24px;
+        border-top: 2px solid #f7fafc;
     }
 
     .table-info {
-        font-size: 13px;
-        color: #4a5568;
+        font-size: 14px;
+        color: #718096;
     }
 
-    .table-info strong {
-        color: #2d3748;
+    .table-info span {
         font-weight: 600;
-        padding: 0 4px;
+        color: #2d3748;
     }
 
-    .pagination {
+    .pagination-controls {
         display: flex;
-        gap: 4px;
+        gap: 6px;
     }
 
-    .page-btn {
-        padding: 6px 12px;
-        border: 1px solid #e2e8f0;
+    .pagination-btn {
+        min-width: 36px;
+        height: 36px;
+        padding: 0 12px;
+        border: 2px solid #e2e8f0;
         background: white;
         color: #4a5568;
-        border-radius: 6px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
         cursor: pointer;
-        transition: all 0.3s ease;
-        font-size: 13px;
+        transition: all 0.2s ease;
     }
 
-    .page-btn:hover {
+    .pagination-btn:hover:not(:disabled) {
         border-color: #667eea;
         color: #667eea;
     }
 
-    .page-btn.active {
+    .pagination-btn.active {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         border-color: transparent;
+    }
+
+    .pagination-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+    .pagination-dots {
+        display: flex;
+        align-items: center;
+        padding: 0 8px;
+        color: #a0aec0;
     }
 
     /* Responsive */
@@ -639,18 +658,22 @@
             justify-content: center;
         }
 
-        .table-controls {
-            flex-direction: column;
-            align-items: stretch;
+        .search-card {
+            padding: 16px;
         }
 
-        .search-input {
-            width: 100%;
+        .filter-buttons {
+            justify-content: stretch;
+        }
+
+        .filter-btn {
+            flex: 1;
+            justify-content: center;
         }
 
         .table-footer {
             flex-direction: column;
-            gap: 12px;
+            gap: 16px;
             align-items: flex-start;
         }
 
@@ -667,123 +690,76 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const table = document.getElementById('activitiesTable');
-        const tbody = table.querySelector('tbody');
         const searchInput = document.getElementById('searchInput');
-        const entriesSelect = document.getElementById('entriesSelect');
-        const allRows = Array.from(tbody.querySelectorAll('tr')).filter(row => !row.querySelector('td[colspan]'));
-        
-        let currentPage = 1;
-        let rowsPerPage = 10;
-        let filteredRows = allRows;
+        let searchTimeout;
 
-        // Se não há linhas, não inicializar paginação
-        if (allRows.length === 0) {
-            document.getElementById('showingStart').textContent = '0';
-            document.getElementById('showingEnd').textContent = '0';
-            document.getElementById('totalRecords').textContent = '0';
-            return;
-        }
-
-        // Pesquisa
+        // Busca com debounce (aguarda 500ms após parar de digitar)
         searchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            
-            filteredRows = allRows.filter(row => {
-                const text = row.textContent.toLowerCase();
-                const description = row.getAttribute('data-description')?.toLowerCase() || '';
-                return text.includes(searchTerm) || description.includes(searchTerm);
-            });
-            
-            currentPage = 1;
-            updateTable();
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                const searchTerm = searchInput.value;
+                const status = '@ViewBag.StatusFilter';
+                window.location.href = `@Url.Action("Index")?search=${encodeURIComponent(searchTerm)}&status=${status}`;
+            }, 500);
         });
 
-        // Mudar quantidade de registros
-        entriesSelect.addEventListener('change', function() {
-            rowsPerPage = parseInt(this.value);
-            currentPage = 1;
-            updateTable();
-        });
+        // Renderizar controles de paginação
+        const currentPage = @ViewBag.CurrentPage;
+        const totalPages = @ViewBag.TotalPages;
+        renderPagination(currentPage, totalPages);
 
-        // Atualizar tabela
-        function updateTable() {
-            // Esconder todas as linhas
-            allRows.forEach(row => row.style.display = 'none');
-            
-            // Calcular índices
-            const start = (currentPage - 1) * rowsPerPage;
-            const end = start + rowsPerPage;
-            
-            // Mostrar linhas da página atual
-            const rowsToShow = filteredRows.slice(start, end);
-            rowsToShow.forEach(row => row.style.display = '');
-            
-            // Atualizar informações
-            document.getElementById('showingStart').textContent = filteredRows.length > 0 ? start + 1 : 0;
-            document.getElementById('showingEnd').textContent = Math.min(end, filteredRows.length);
-            document.getElementById('totalRecords').textContent = filteredRows.length;
-            
-            // Atualizar paginação
-            updatePagination();
-        }
+        function renderPagination(current, total) {
+            const controls = document.getElementById('paginationControls');
+            controls.innerHTML = '';
 
-        // Atualizar paginação
-        function updatePagination() {
-            const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
-            const paginationDiv = document.getElementById('pagination');
-            paginationDiv.innerHTML = '';
-            
-            if (totalPages <= 1) return;
-            
+            if (total <= 1) return;
+
+            const searchTerm = '@ViewBag.SearchTerm';
+            const status = '@ViewBag.StatusFilter';
+            const searchParam = searchTerm ? `&search=${encodeURIComponent(searchTerm)}` : '';
+            const statusParam = `&status=${status}`;
+
             // Botão anterior
             const prevBtn = document.createElement('button');
-            prevBtn.className = 'page-btn';
-            prevBtn.textContent = '‹';
-            prevBtn.disabled = currentPage === 1;
-            prevBtn.onclick = () => {
-                if (currentPage > 1) {
-                    currentPage--;
-                    updateTable();
-                }
-            };
-            paginationDiv.appendChild(prevBtn);
-            
+            prevBtn.className = 'pagination-btn';
+            prevBtn.innerHTML = '<i class="bi bi-chevron-left"></i>';
+            prevBtn.disabled = current === 1;
+            if (current > 1) {
+                prevBtn.onclick = () => window.location.href = `@Url.Action("Index")?page=${current - 1}${searchParam}${statusParam}`;
+            }
+            controls.appendChild(prevBtn);
+
             // Botões de página
-            const maxButtons = 5;
-            let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
-            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
-            
-            if (endPage - startPage < maxButtons - 1) {
-                startPage = Math.max(1, endPage - maxButtons + 1);
+            for (let i = 1; i <= total; i++) {
+                if (i === 1 || i === total || (i >= current - 1 && i <= current + 1)) {
+                    const pageBtn = document.createElement('button');
+                    pageBtn.className = 'pagination-btn' + (i === current ? ' active' : '');
+                    pageBtn.textContent = i;
+                    pageBtn.onclick = () => window.location.href = `@Url.Action("Index")?page=${i}${searchParam}${statusParam}`;
+                    controls.appendChild(pageBtn);
+                } else if (i === current - 2 || i === current + 2) {
+                    const dots = document.createElement('span');
+                    dots.className = 'pagination-dots';
+                    dots.textContent = '...';
+                    controls.appendChild(dots);
+                }
             }
-            
-            for (let i = startPage; i <= endPage; i++) {
-                const pageBtn = document.createElement('button');
-                pageBtn.className = 'page-btn' + (i === currentPage ? ' active' : '');
-                pageBtn.textContent = i;
-                pageBtn.onclick = () => {
-                    currentPage = i;
-                    updateTable();
-                };
-                paginationDiv.appendChild(pageBtn);
-            }
-            
+
             // Botão próximo
             const nextBtn = document.createElement('button');
-            nextBtn.className = 'page-btn';
-            nextBtn.textContent = '›';
-            nextBtn.disabled = currentPage === totalPages;
-            nextBtn.onclick = () => {
-                if (currentPage < totalPages) {
-                    currentPage++;
-                    updateTable();
-                }
-            };
-            paginationDiv.appendChild(nextBtn);
+            nextBtn.className = 'pagination-btn';
+            nextBtn.innerHTML = '<i class="bi bi-chevron-right"></i>';
+            nextBtn.disabled = current === total;
+            if (current < total) {
+                nextBtn.onclick = () => window.location.href = `@Url.Action("Index")?page=${current + 1}${searchParam}${statusParam}`;
+            }
+            controls.appendChild(nextBtn);
         }
-
-        // Inicializar
-        updateTable();
     });
+
+    function filterStatus(status) {
+        const searchTerm = '@ViewBag.SearchTerm';
+        const searchParam = searchTerm ? `&search=${encodeURIComponent(searchTerm)}` : '';
+        window.location.href = `@Url.Action("Index")?status=${status}${searchParam}`;
+    }
 </script>
