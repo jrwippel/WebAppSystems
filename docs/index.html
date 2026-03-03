@@ -3,17 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="JRWIT - Productivity Suite. Simplifique o trabalho com nossa plataforma completa.">
-    <title>JRWIT - Productivity Suite</title>
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23667eea;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%23764ba2;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='48' fill='url(%23grad)'/%3E%3Ccircle cx='50' cy='50' r='35' fill='white' opacity='0.95'/%3E%3Ccircle cx='50' cy='20' r='2' fill='%23667eea'/%3E%3Ccircle cx='80' cy='50' r='2' fill='%23667eea'/%3E%3Ccircle cx='50' cy='80' r='2' fill='%23667eea'/%3E%3Ccircle cx='20' cy='50' r='2' fill='%23667eea'/%3E%3Cline x1='50' y1='50' x2='50' y2='35' stroke='%23764ba2' stroke-width='3' stroke-linecap='round'/%3E%3Cline x1='50' y1='50' x2='65' y2='50' stroke='%23667eea' stroke-width='2.5' stroke-linecap='round'/%3E%3Ccircle cx='50' cy='50' r='4' fill='%23764ba2'/%3E%3C/svg%3E">
-    
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
+    <title>JRWIT - Time Tracking & Productivity Suite</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -21,24 +12,10 @@
             box-sizing: border-box;
         }
 
-        :root {
-            --primary: #667eea;
-            --secondary: #764ba2;
-            --bg-dark: #0a0e27;
-            --bg-darker: #050816;
-            --text-primary: #ffffff;
-            --text-secondary: #a0aec0;
-            --accent: #667eea;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-dark);
-            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #000000;
+            color: #ffffff;
             line-height: 1.6;
             overflow-x: hidden;
         }
@@ -49,631 +26,524 @@
             top: 0;
             left: 0;
             right: 0;
-            background: rgba(10, 14, 39, 0.8);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             z-index: 1000;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         nav {
             max-width: 1400px;
             margin: 0 auto;
-            padding: 1.2rem 3rem;
+            padding: 20px 40px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
         .logo {
-            font-size: 1.6rem;
-            font-weight: 700;
-            color: var(--text-primary);
+            font-size: 28px;
+            font-weight: 800;
+            color: #ffffff;
+            text-decoration: none;
             letter-spacing: -0.5px;
         }
 
         .logo span {
-            color: var(--accent);
+            color: #2254E1;
         }
 
         .nav-links {
             display: flex;
-            gap: 3rem;
-            list-style: none;
+            gap: 40px;
             align-items: center;
         }
 
         .nav-links a {
-            color: var(--text-secondary);
+            color: #ffffff;
             text-decoration: none;
+            font-size: 15px;
             font-weight: 500;
-            font-size: 0.95rem;
             transition: color 0.3s;
         }
 
         .nav-links a:hover {
-            color: var(--text-primary);
+            color: #2254E1;
         }
 
-        .cta-button {
-            background: var(--accent);
-            color: white;
-            padding: 0.7rem 1.8rem;
+        .btn-primary {
+            background: #2254E1;
+            color: #ffffff;
+            padding: 12px 28px;
             border-radius: 8px;
             text-decoration: none;
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 15px;
             transition: all 0.3s;
+            border: none;
+            cursor: pointer;
         }
 
-        .cta-button:hover {
-            background: #7c8ff5;
-            transform: translateY(-1px);
+        .btn-primary:hover {
+            background: #1a42b8;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(34, 84, 225, 0.3);
         }
 
-        /* Hero */
+        /* Hero Section */
         .hero {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--bg-darker);
+            padding: 180px 40px 120px;
+            text-align: center;
             position: relative;
             overflow: hidden;
-            padding: 8rem 3rem 4rem;
         }
 
         .hero::before {
             content: '';
             position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
             width: 100%;
             height: 100%;
-            background: radial-gradient(circle at 50% 50%, rgba(102, 126, 234, 0.15) 0%, transparent 50%);
+            background: radial-gradient(circle at center, rgba(34, 84, 225, 0.15) 0%, transparent 70%);
             pointer-events: none;
         }
 
         .hero-content {
             max-width: 900px;
-            text-align: center;
+            margin: 0 auto;
             position: relative;
             z-index: 1;
         }
 
-        .hero-badge {
-            display: inline-block;
-            padding: 0.5rem 1.2rem;
-            background: rgba(102, 126, 234, 0.1);
-            border: 1px solid rgba(102, 126, 234, 0.2);
-            border-radius: 50px;
-            color: var(--accent);
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-bottom: 2rem;
-            animation: fadeInUp 0.6s ease;
-        }
-
         .hero h1 {
-            font-size: clamp(2.5rem, 6vw, 5rem);
-            font-weight: 700;
-            margin-bottom: 1.5rem;
+            font-size: 72px;
+            font-weight: 800;
             line-height: 1.1;
+            margin-bottom: 24px;
             letter-spacing: -2px;
-            animation: fadeInUp 0.6s ease 0.1s backwards;
         }
 
-        .hero h1 .gradient-text {
-            background: linear-gradient(135deg, #667eea 0%, #a78bfa 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+        .hero h1 .highlight {
+            color: #2254E1;
         }
 
         .hero p {
-            font-size: clamp(1.1rem, 2vw, 1.3rem);
-            color: var(--text-secondary);
-            margin-bottom: 3rem;
-            line-height: 1.6;
-            animation: fadeInUp 0.6s ease 0.2s backwards;
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 40px;
+            font-weight: 400;
         }
 
-        .hero-buttons {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            flex-wrap: wrap;
-            animation: fadeInUp 0.6s ease 0.3s backwards;
-        }
-
-        .btn-primary, .btn-secondary {
-            padding: 1rem 2rem;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 1rem;
-            transition: all 0.3s;
+        .hero-cta {
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 12px;
+            background: #ffffff;
+            color: #000000;
+            padding: 18px 36px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 17px;
+            transition: all 0.3s;
         }
 
-        .btn-primary {
-            background: var(--accent);
-            color: white;
+        .hero-cta:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(255, 255, 255, 0.2);
         }
 
-        .btn-primary:hover {
-            background: #7c8ff5;
-            transform: translateY(-2px);
+        .hero-cta::after {
+            content: '→';
+            font-size: 20px;
         }
 
-        .btn-secondary {
-            background: transparent;
-            color: var(--text-primary);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .btn-secondary:hover {
-            border-color: rgba(255, 255, 255, 0.4);
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Trusted By */
-        .trusted-by {
-            padding: 3rem 3rem 6rem;
+        /* Trusted By Section */
+        .trusted {
+            padding: 80px 40px;
             text-align: center;
-            background: var(--bg-darker);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .trusted-by p {
-            color: var(--text-secondary);
-            font-size: 0.85rem;
+        .trusted p {
+            font-size: 14px;
             text-transform: uppercase;
             letter-spacing: 2px;
-            margin-bottom: 2rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 40px;
+            font-weight: 600;
         }
 
-        .logos {
+        .trusted-logos {
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 3rem;
+            gap: 60px;
             flex-wrap: wrap;
-            opacity: 0.4;
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
-        .logos span {
-            font-size: 1.2rem;
+        .trusted-logos span {
+            font-size: 18px;
             font-weight: 600;
-            color: var(--text-secondary);
+            color: rgba(255, 255, 255, 0.4);
+            transition: color 0.3s;
         }
 
-        /* Services */
-        .services {
-            padding: 8rem 3rem;
-            background: var(--bg-dark);
+        .trusted-logos span:hover {
+            color: rgba(255, 255, 255, 0.8);
         }
 
-        .container {
+        /* Features Section */
+        .features {
+            padding: 120px 40px;
             max-width: 1400px;
             margin: 0 auto;
         }
 
-        .section-title {
+        .features-header {
             text-align: center;
-            margin-bottom: 5rem;
+            margin-bottom: 80px;
         }
 
-        .section-title h2 {
-            font-size: clamp(2rem, 4vw, 3.5rem);
-            font-weight: 700;
-            margin-bottom: 1rem;
+        .features-header h2 {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 20px;
             letter-spacing: -1px;
         }
 
-        .section-title p {
-            font-size: 1.1rem;
-            color: var(--text-secondary);
+        .features-header p {
+            font-size: 20px;
+            color: rgba(255, 255, 255, 0.6);
         }
 
-        .services-grid {
+        .features-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 2rem;
+            gap: 40px;
         }
 
-        .service-card {
-            background: rgba(255, 255, 255, 0.02);
-            padding: 3rem;
+        .feature-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 40px;
             transition: all 0.3s;
         }
 
-        .service-card:hover {
-            background: rgba(255, 255, 255, 0.04);
-            border-color: rgba(102, 126, 234, 0.3);
+        .feature-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(34, 84, 225, 0.5);
             transform: translateY(-5px);
         }
 
-        .service-icon {
-            font-size: 2.5rem;
-            margin-bottom: 1.5rem;
-            display: block;
-        }
-
-        .service-card h3 {
-            font-size: 1.4rem;
-            margin-bottom: 1rem;
-            color: var(--text-primary);
-            font-weight: 600;
-        }
-
-        .service-card p {
-            color: var(--text-secondary);
-            line-height: 1.7;
-            font-size: 0.95rem;
-        }
-
-        /* About */
-        .about {
-            padding: 8rem 3rem;
-            background: var(--bg-darker);
-        }
-
-        .about-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 6rem;
-            align-items: center;
-        }
-
-        .about-text h2 {
-            font-size: clamp(2rem, 4vw, 3.5rem);
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-            letter-spacing: -1px;
-        }
-
-        .about-text p {
-            font-size: 1.05rem;
-            color: var(--text-secondary);
-            margin-bottom: 1.5rem;
-            line-height: 1.8;
-        }
-
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 2rem;
-        }
-
-        .stat-item {
-            text-align: left;
-            padding: 2rem;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            background: #2254E1;
             border-radius: 12px;
-            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 24px;
         }
 
-        .stat-item:hover {
-            background: rgba(255, 255, 255, 0.04);
-            border-color: rgba(102, 126, 234, 0.3);
-        }
-
-        .stat-number {
-            font-size: 3rem;
+        .feature-card h3 {
+            font-size: 24px;
             font-weight: 700;
-            color: var(--accent);
-            line-height: 1;
+            margin-bottom: 12px;
         }
 
-        .stat-label {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            margin-top: 0.5rem;
+        .feature-card p {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 16px;
+            line-height: 1.7;
         }
 
-        /* Contact */
-        .contact {
-            padding: 8rem 3rem;
-            background: var(--bg-dark);
+        /* Stats Section */
+        .stats {
+            padding: 100px 40px;
+            background: rgba(34, 84, 225, 0.05);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stats-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 60px;
             text-align: center;
         }
 
-        .contact h2 {
-            font-size: clamp(2rem, 4vw, 3.5rem);
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-            letter-spacing: -1px;
+        .stat-item h3 {
+            font-size: 56px;
+            font-weight: 800;
+            color: #2254E1;
+            margin-bottom: 12px;
         }
 
-        .contact p {
-            font-size: 1.1rem;
-            color: var(--text-secondary);
-            margin-bottom: 3rem;
+        .stat-item p {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 500;
         }
 
-        .contact-info {
-            display: flex;
-            gap: 2rem;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-top: 4rem;
+        /* CTA Section */
+        .cta-section {
+            padding: 120px 40px;
+            text-align: center;
         }
 
-        .contact-item {
-            background: rgba(255, 255, 255, 0.02);
-            padding: 2rem 2.5rem;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            transition: all 0.3s;
+        .cta-section h2 {
+            font-size: 56px;
+            font-weight: 800;
+            margin-bottom: 24px;
+            letter-spacing: -1.5px;
         }
 
-        .contact-item:hover {
-            background: rgba(255, 255, 255, 0.04);
-            border-color: rgba(102, 126, 234, 0.3);
-            transform: translateY(-3px);
-        }
-
-        .contact-item strong {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: var(--text-primary);
-        }
-
-        .contact-item a {
-            color: var(--text-secondary);
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-
-        .contact-item a:hover {
-            color: var(--accent);
+        .cta-section p {
+            font-size: 22px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 40px;
         }
 
         /* Footer */
         footer {
-            background: var(--bg-darker);
-            color: var(--text-secondary);
-            padding: 3rem;
+            padding: 60px 40px 40px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 60px;
+            margin-bottom: 60px;
+        }
+
+        .footer-brand h3 {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+
+        .footer-brand p {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 15px;
+            line-height: 1.7;
+        }
+
+        .footer-links h4 {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .footer-links ul {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 12px;
+        }
+
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-size: 15px;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: #2254E1;
+        }
+
+        .footer-bottom {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding-top: 40px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
             text-align: center;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 14px;
         }
 
-        footer p {
-            font-size: 0.9rem;
-        }
-
-        /* Mobile Menu */
-        .mobile-menu-btn {
-            display: none;
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--text-primary);
-        }
-
+        /* Responsive */
         @media (max-width: 768px) {
-            nav {
-                padding: 1rem 1.5rem;
+            .hero h1 {
+                font-size: 42px;
+            }
+
+            .hero p {
+                font-size: 18px;
+            }
+
+            .features-header h2 {
+                font-size: 36px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 40px;
             }
 
             .nav-links {
                 display: none;
-                position: absolute;
-                top: 100%;
-                left: 0;
-                right: 0;
-                background: var(--bg-dark);
-                flex-direction: column;
-                padding: 2rem;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             }
 
-            .nav-links.active {
-                display: flex;
-            }
-
-            .mobile-menu-btn {
-                display: block;
-            }
-
-            .hero {
-                padding: 6rem 1.5rem 3rem;
-            }
-
-            .hero-buttons {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .about-content {
-                grid-template-columns: 1fr;
-                gap: 3rem;
-            }
-
-            .services-grid {
-                grid-template-columns: 1fr;
+            .cta-section h2 {
+                font-size: 36px;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Header -->
     <header>
         <nav>
-            <div class="logo">JRWIT<span>.com</span></div>
-            <ul class="nav-links" id="navLinks">
-                <li><a href="#home">Início</a></li>
-                <li><a href="#services">Recursos</a></li>
-                <li><a href="#about">Sobre</a></li>
-                <li><a href="#contact">Contato</a></li>
-            </ul>
-            <a href="https://jrwit.com" target="_blank" class="cta-button">Acessar Sistema</a>
-            <button class="mobile-menu-btn" onclick="toggleMenu()">☰</button>
+            <a href="#" class="logo">JR<span>WIT</span></a>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#about">About</a>
+                <a href="https://jrwit.com" class="btn-primary">Get started</a>
+            </div>
         </nav>
     </header>
 
-    <!-- Hero -->
-    <section class="hero" id="home">
+    <section class="hero">
         <div class="hero-content">
-            <div class="hero-badge">✨ Productivity Suite</div>
-            <h1>JRWIT <span class="gradient-text">productivity suite</span></h1>
-            <p>Simplifique o trabalho. Gerencie tempo, projetos e equipes em uma única plataforma.</p>
-            <div class="hero-buttons">
-                <a href="https://jrwit.com" target="_blank" class="btn-primary">
-                    Acessar Sistema →
-                </a>
-                <a href="#services" class="btn-secondary">Saiba Mais</a>
-            </div>
+            <h1>
+                <span class="highlight">JRWIT</span> productivity suite
+            </h1>
+            <p>Get work done, the simple way</p>
+            <a href="https://jrwit.com" class="hero-cta">Get started for free</a>
         </div>
     </section>
 
-    <!-- Trusted By -->
-    <section class="trusted-by">
-        <p>Confiado por empresas de todos os tamanhos</p>
-        <div class="logos">
-            <span>Enterprise</span>
-            <span>•</span>
+    <section class="trusted">
+        <p>Trusted by professionals worldwide</p>
+        <div class="trusted-logos">
+            <span>Legal Firms</span>
+            <span>Consultancies</span>
+            <span>Agencies</span>
+            <span>Enterprises</span>
             <span>Startups</span>
-            <span>•</span>
-            <span>Escritórios</span>
-            <span>•</span>
-            <span>Consultoria</span>
         </div>
     </section>
 
-    <!-- Services -->
-    <section class="services" id="services">
-        <div class="container">
-            <div class="section-title">
-                <h2>Recursos da Plataforma</h2>
-                <p>Tudo que você precisa para gerenciar seu negócio</p>
+    <section class="features" id="features">
+        <div class="features-header">
+            <h2>Everything you need to track time</h2>
+            <p>Powerful features for modern teams</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">⏱️</div>
+                <h3>Time Tracking</h3>
+                <p>Track time effortlessly with our intuitive timer. Start, stop, and manage your work hours with precision.</p>
             </div>
-            <div class="services-grid">
-                <div class="service-card">
-                    <div class="service-icon">⏱️</div>
-                    <h3>Time Tracking</h3>
-                    <p>Controle preciso de horas trabalhadas com cronômetro integrado e relatórios detalhados.</p>
-                </div>
-                <div class="service-card">
-                    <div class="service-icon">📊</div>
-                    <h3>Analytics Dashboard</h3>
-                    <p>Visualize dados em tempo real com gráficos interativos e KPIs personalizados.</p>
-                </div>
-                <div class="service-card">
-                    <div class="service-icon">👥</div>
-                    <h3>Team Management</h3>
-                    <p>Gerencie equipes, departamentos e permissões de forma centralizada.</p>
-                </div>
-                <div class="service-card">
-                    <div class="service-icon">📅</div>
-                    <h3>Calendar & Scheduling</h3>
-                    <p>Calendário integrado para agendamento de reuniões e compromissos.</p>
-                </div>
-                <div class="service-card">
-                    <div class="service-icon">💼</div>
-                    <h3>Client Portal</h3>
-                    <p>Portal dedicado para gestão de clientes e projetos em andamento.</p>
-                </div>
-                <div class="service-card">
-                    <div class="service-icon">📈</div>
-                    <h3>Reports & Export</h3>
-                    <p>Relatórios profissionais com exportação para Excel e PDF.</p>
-                </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>Detailed Reports</h3>
+                <p>Generate comprehensive reports to analyze productivity and make data-driven decisions for your business.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">👥</div>
+                <h3>Team Management</h3>
+                <p>Manage your team efficiently with role-based access control and collaborative features.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">💼</div>
+                <h3>Client Portal</h3>
+                <p>Organize clients and projects in one place. Keep track of billable hours and project progress.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📅</div>
+                <h3>Calendar Integration</h3>
+                <p>Sync your schedule and never miss a deadline. Plan your work with our integrated calendar system.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <h3>Secure & Reliable</h3>
+                <p>Your data is protected with enterprise-grade security. Enjoy reliable service with 99.9% uptime.</p>
             </div>
         </div>
     </section>
 
-    <!-- About -->
-    <section class="about" id="about">
-        <div class="container">
-            <div class="about-content">
-                <div class="about-text">
-                    <h2>Sobre a JRWIT</h2>
-                    <p>Desenvolvemos soluções empresariais que simplificam processos complexos. Nossa plataforma de produtividade integra gestão de tempo, projetos e equipes em um único lugar.</p>
-                    <p>Com anos de experiência em desenvolvimento de software, criamos ferramentas que realmente fazem a diferença no dia a dia das empresas.</p>
-                    <a href="https://jrwit.com" target="_blank" class="btn-primary" style="display: inline-block; margin-top: 1rem;">
-                        Experimente Agora →
-                    </a>
-                </div>
-                <div class="stats">
-                    <div class="stat-item">
-                        <div class="stat-number">10+</div>
-                        <div class="stat-label">Anos de Experiência</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-number">50+</div>
-                        <div class="stat-label">Projetos Entregues</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-number">100%</div>
-                        <div class="stat-label">Satisfação</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-number">24/7</div>
-                        <div class="stat-label">Suporte</div>
-                    </div>
-                </div>
+    <section class="stats">
+        <div class="stats-grid">
+            <div class="stat-item">
+                <h3>10K+</h3>
+                <p>Active users</p>
+            </div>
+            <div class="stat-item">
+                <h3>1M+</h3>
+                <p>Hours tracked</p>
+            </div>
+            <div class="stat-item">
+                <h3>99.9%</h3>
+                <p>Uptime</p>
+            </div>
+            <div class="stat-item">
+                <h3>24/7</h3>
+                <p>Support</p>
             </div>
         </div>
     </section>
 
-    <!-- Contact -->
-    <section class="contact" id="contact">
-        <div class="container">
-            <h2>Vamos Conversar?</h2>
-            <p>Entre em contato e descubra como podemos ajudar seu negócio</p>
-            <a href="mailto:contato@jrwit.com" class="btn-primary">Enviar Email</a>
-            <div class="contact-info">
-                <div class="contact-item">
-                    <strong>📧 Email</strong>
-                    <a href="mailto:contato@jrwit.com">contato@jrwit.com</a>
-                </div>
-                <div class="contact-item">
-                    <strong>🌐 Sistema</strong>
-                    <a href="https://jrwit.com" target="_blank">jrwit.com</a>
-                </div>
-                <div class="contact-item">
-                    <strong>💼 GitHub</strong>
-                    <a href="https://github.com/jrwippel" target="_blank">github.com/jrwippel</a>
-                </div>
-            </div>
-        </div>
+    <section class="cta-section" id="about">
+        <h2>Ready to boost your productivity?</h2>
+        <p>Join thousands of professionals who trust JRWIT</p>
+        <a href="https://jrwit.com" class="hero-cta">Start tracking time now</a>
     </section>
 
-    <!-- Footer -->
     <footer>
-        <div class="container">
-            <p>&copy; 2024 JRWIT - Todos os direitos reservados</p>
-            <p>Desenvolvido com ❤️ e tecnologia</p>
+        <div class="footer-content">
+            <div class="footer-brand">
+                <h3>JRWIT</h3>
+                <p>Professional time tracking and productivity suite designed for modern teams and businesses.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Product</h4>
+                <ul>
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="https://jrwit.com">Login</a></li>
+                    <li><a href="https://jrwit.com">Sign up</a></li>
+                </ul>
+            </div>
+            <div class="footer-links">
+                <h4>Company</h4>
+                <ul>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="https://jrwit.com">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-links">
+                <h4>Resources</h4>
+                <ul>
+                    <li><a href="https://jrwit.com">Documentation</a></li>
+                    <li><a href="https://jrwit.com">Support</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 JRWIT. All rights reserved.</p>
         </div>
     </footer>
-
-    <script>
-        function toggleMenu() {
-            const navLinks = document.getElementById('navLinks');
-            navLinks.classList.toggle('active');
-        }
-
-        // Close mobile menu when clicking on a link
-        document.querySelectorAll('.nav-links a').forEach(link => {
-            link.addEventListener('click', () => {
-                document.getElementById('navLinks').classList.remove('active');
-            });
-        });
-    </script>
 </body>
 </html>

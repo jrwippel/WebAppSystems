@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Win32;
@@ -31,7 +31,7 @@ namespace WebAppSystems.Controllers
         [HttpPost]
         public async Task<IActionResult> StartTimer([FromBody] StartTimerRequest request)
         {
-            // Verifica��o dos dados de entrada
+            // Verificação dos dados de entrada
             if (request == null || string.IsNullOrWhiteSpace(request.Description) || request.ClientId <= 0 || request.DepartmentId <= 0)
             {
                 return BadRequest("Todos os campos da tela devem ser preenchidos");
@@ -39,21 +39,21 @@ namespace WebAppSystems.Controllers
 
             if (!Enum.IsDefined(typeof(RecordType), request.RecordType))
             {
-                return BadRequest("Tipo de registro inv�lido");
+                return BadRequest("Tipo de registro inválido");
             }
 
-            // Verifica se a sess�o do usu�rio est� ativa
+            // Verifica se a sessão do usuário está ativa
             Attorney usuario = _isessao.BuscarSessaoDoUsuario();
             if (usuario == null)
             {
-                // Retorna uma mensagem informando que a sess�o expirou
-                return Unauthorized("Sess�o expirada. Por favor, fa�a login novamente.");
+                // Retorna uma mensagem informando que a sessão expirou
+                return Unauthorized("Sessão expirada. Por favor, faça login novamente.");
             }
 
-            // Obt�m o ID do usu�rio a partir da sess�o
+            // Obtém o ID do usuário a partir da sessão
             var attorneyId = usuario.Id;
 
-            // Verifica se j� existe um timer em execu��o para este usu�rio
+            // Verifica se já existe um timer em execução para este usuário
             var activeTimer = await _context.ProcessRecord
                 .Where(pr => pr.AttorneyId == attorneyId &&
                              (pr.HoraFinal == null || pr.HoraFinal == TimeSpan.Zero))
@@ -61,14 +61,14 @@ namespace WebAppSystems.Controllers
 
             if (activeTimer != null)
             {
-                return BadRequest("J� existe um timer em execu��o. Pare o timer atual antes de iniciar um novo.");
+                return BadRequest("Já existe um timer em execução. Pare o timer atual antes de iniciar um novo.");
             }
 
-            // Configura o hor�rio usando o fuso hor�rio de Bras�lia
+            // Configura o horário usando o fuso horário de Brasília
             var brasiliaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("E. South America Standard Time");
             var nowInBrasilia = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, brasiliaTimeZone);
 
-            // Cria o registro de processo com as informa��es fornecidas
+            // Cria o registro de processo com as informações fornecidas
             var processRecord = new ProcessRecord
             {
                 AttorneyId = attorneyId,
@@ -114,17 +114,17 @@ namespace WebAppSystems.Controllers
             var horaFinalAtual = new TimeSpan(nowInBrasilia.Hour, nowInBrasilia.Minute, nowInBrasilia.Second);
             var dataAtual = nowInBrasilia.Date;
 
-            // Verifica se o timer passou da meia-noite (data atual diferente da data de in�cio)
+            // Verifica se o timer passou da meia-noite (data atual diferente da data de início)
             if (dataAtual > processRecord.Date)
             {
                 // Calcula quantos dias se passaram
                 var diasPassados = (dataAtual - processRecord.Date).Days;
 
-                // Fecha o registro do primeiro dia at� 23:59:59
+                // Fecha o registro do primeiro dia até 23:59:59
                 processRecord.HoraFinal = new TimeSpan(23, 59, 59);
                 await _context.SaveChangesAsync();
 
-                // Cria registros para os dias intermedi�rios (se houver)
+                // Cria registros para os dias intermediários (se houver)
                 for (int i = 1; i < diasPassados; i++)
                 {
                     var diaIntermediario = processRecord.Date.AddDays(i);
@@ -136,14 +136,14 @@ namespace WebAppSystems.Controllers
                         Date = diaIntermediario,
                         HoraInicial = new TimeSpan(0, 0, 0),
                         HoraFinal = new TimeSpan(23, 59, 59),
-                        Description = processRecord.Description + " (continua��o)",
+                        Description = processRecord.Description + " (continuação)",
                         RecordType = processRecord.RecordType,
                         Solicitante = processRecord.Solicitante
                     };
                     _context.ProcessRecord.Add(registroIntermediario);
                 }
 
-                // Cria registro para o dia atual desde 00:00:00 at� a hora atual
+                // Cria registro para o dia atual desde 00:00:00 até a hora atual
                 var registroFinal = new ProcessRecord
                 {
                     AttorneyId = processRecord.AttorneyId,
@@ -152,7 +152,7 @@ namespace WebAppSystems.Controllers
                     Date = dataAtual,
                     HoraInicial = new TimeSpan(0, 0, 0),
                     HoraFinal = horaFinalAtual,
-                    Description = processRecord.Description + " (continua��o)",
+                    Description = processRecord.Description + " (continuação)",
                     RecordType = processRecord.RecordType,
                     Solicitante = processRecord.Solicitante
                 };
@@ -169,17 +169,17 @@ namespace WebAppSystems.Controllers
             return Ok();
         }
 
-        // M�TODO DE TESTE - Simula timer que passou da meia-noite
+        // MÉTODO DE TESTE - Simula timer que passou da meia-noite
         [HttpPost]
         public async Task<IActionResult> TestMidnightScenario([FromBody] TestMidnightRequest request)
         {
             Attorney usuario = _isessao.BuscarSessaoDoUsuario();
             if (usuario == null)
             {
-                return Unauthorized("Sess�o expirada.");
+                return Unauthorized("Sessão expirada.");
             }
 
-            // Cria um registro simulando que come�ou ontem �s 18:00
+            // Cria um registro simulando que começou ontem às 18:00
             var ontem = DateTime.Now.Date.AddDays(-1);
             var processRecord = new ProcessRecord
             {
@@ -189,7 +189,7 @@ namespace WebAppSystems.Controllers
                 Date = ontem,
                 HoraInicial = new TimeSpan(18, 0, 0), // 18:00
                 HoraFinal = new TimeSpan(0, 0, 0), // Ainda rodando
-                Description = request.Description + " (TESTE - Iniciado ontem �s 18:00)",
+                Description = request.Description + " (TESTE - Iniciado ontem às 18:00)",
                 RecordType = (RecordType)request.RecordType,
                 Solicitante = request.Solicitante
             };
@@ -197,17 +197,17 @@ namespace WebAppSystems.Controllers
             _context.ProcessRecord.Add(processRecord);
             await _context.SaveChangesAsync();
 
-            // Agora simula o stop hoje �s 08:00
+            // Agora simula o stop hoje às 08:00
             var brasiliaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("E. South America Standard Time");
             var nowInBrasilia = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, brasiliaTimeZone);
             var horaFinalSimulada = new TimeSpan(8, 0, 0); // Simula 08:00
             var dataAtual = DateTime.Now.Date;
 
-            // Fecha o registro de ontem at� 23:59:59
+            // Fecha o registro de ontem até 23:59:59
             processRecord.HoraFinal = new TimeSpan(23, 59, 59);
             await _context.SaveChangesAsync();
 
-            // Cria registro para hoje desde 00:00:00 at� 08:00:00
+            // Cria registro para hoje desde 00:00:00 até 08:00:00
             var registroHoje = new ProcessRecord
             {
                 AttorneyId = processRecord.AttorneyId,
@@ -216,7 +216,7 @@ namespace WebAppSystems.Controllers
                 Date = dataAtual,
                 HoraInicial = new TimeSpan(0, 0, 0),
                 HoraFinal = horaFinalSimulada,
-                Description = processRecord.Description + " (continua��o - parado hoje �s 08:00)",
+                Description = processRecord.Description + " (continuação - parado hoje às 08:00)",
                 RecordType = processRecord.RecordType,
                 Solicitante = processRecord.Solicitante
             };
@@ -255,16 +255,16 @@ namespace WebAppSystems.Controllers
                 .Prepend(new SelectListItem { Value = "0", Text = "Selecione o Cliente" })
                 .ToList();
 
-            // Carregar as op��es de departamentos e pr�-selecionar a �rea do usu�rio
+            // Carregar as opções de departamentos e pré-selecionar a área do usuário
             var departmentsOptions = departments
                 .OrderBy(d => d.Name)
                 .Select(d => new SelectListItem
                 {
                     Value = d.Id.ToString(),
                     Text = d.Name,
-                    Selected = d.Id == usuario.DepartmentId // Marcar a �rea do usu�rio como selecionada
+                    Selected = d.Id == usuario.DepartmentId // Marcar a área do usuário como selecionada
                 })
-                .Prepend(new SelectListItem { Value = "0", Text = "Selecione a �rea" })
+                .Prepend(new SelectListItem { Value = "0", Text = "Selecione a Área" })
                 .ToList();
 
             var recordTypeOptions = Enum.GetValues(typeof(RecordType))
@@ -340,7 +340,7 @@ namespace WebAppSystems.Controllers
             public string Solicitante { get; set; }
             public int RecordType { get; set; }
         }
-        /*
+
         [HttpGet]
         public async Task<IActionResult> GetRecordsForToday(int attorneyId)
         {
@@ -355,8 +355,9 @@ namespace WebAppSystems.Controllers
                 .Include(r => r.Client)
                 .ToListAsync();
 
-            // Filtrar por data de hoje ap�s carregar do banco
-            var todayRecords = records               
+            // Filtrar por data de hoje após carregar do banco
+            var todayRecords = records
+                .Where(r => r.Date.Date == today)
                 .OrderByDescending(r => r.Id) // Ordenar por ID (mais recente primeiro)
                 .ToList();
 
@@ -372,68 +373,13 @@ namespace WebAppSystems.Controllers
                 r.Date
             }));
         }
-        */
-
-
-        [HttpGet]
-        public async Task<IActionResult> GetRecordsForToday(int attorneyId, int page = 1, int pageSize = 10, string search = "")
-        {
-            var query = _context.ProcessRecord
-                .Where(r => r.AttorneyId == attorneyId && 
-                           r.HoraFinal != null && 
-                           r.HoraFinal != TimeSpan.Zero)
-                .Include(r => r.Client)
-                .AsQueryable();
-
-            // Aplicar filtro de busca
-            if (!string.IsNullOrWhiteSpace(search))
-            {
-                search = search.ToLower();
-                query = query.Where(r => 
-                    r.Description.ToLower().Contains(search) ||
-                    r.Client.Name.ToLower().Contains(search) ||
-                    (r.Solicitante != null && r.Solicitante.ToLower().Contains(search))
-                );
-            }
-
-            var totalRecords = await query.CountAsync();
-            var totalPages = (int)Math.Ceiling(totalRecords / (double)pageSize);
-
-            var records = await query
-                .OrderByDescending(r => r.Date)
-                .ThenByDescending(r => r.HoraInicial)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
-
-            return Json(new
-            {
-                records = records.Select(r => new
-                {
-                    r.Id,
-                    r.Description,
-                    ClienteNome = r.Client.Name,
-                    r.HoraInicial,
-                    r.HoraFinal,
-                    r.RecordType,
-                    r.Solicitante,
-                    r.Date
-                }),
-                currentPage = page,
-                totalPages = totalPages,
-                totalRecords = totalRecords,
-                pageSize = pageSize
-            });
-        }
-
-
 
         [HttpGet]
         public async Task<IActionResult> GetRecordById(int recordId)
         {
             var record = await _context.ProcessRecord
                 .Include(r => r.Client) // Inclui o cliente no retorno
-                .Include(r => r.Department) // Inclui o departamento, se necess�rio
+                .Include(r => r.Department) // Inclui o departamento, se necessário
                 .FirstOrDefaultAsync(r => r.Id == recordId);
 
             if (record == null)
@@ -487,7 +433,7 @@ namespace WebAppSystems.Controllers
                 HoraFinal = TimeSpan.Parse(request.EndTime.Split(' ')[1]),
                 Description = request.Description,
                 Solicitante = request.Solicitante,
-                RecordType = RecordType.Consultivo, // Ou ajuste de acordo com o que voc� precisar
+                RecordType = RecordType.Consultivo, // Ou ajuste de acordo com o que você precisar
             };
 
             _context.ProcessRecord.Add(processRecord);
@@ -528,7 +474,7 @@ namespace WebAppSystems.Controllers
         //[Route("keep-alive")]
         public IActionResult KeepAlive()
         {
-            // Resposta 200 OK para manter a aplica��o ativa no Azure
+            // Resposta 200 OK para manter a aplicação ativa no Azure
             return Ok();
         }
         */
