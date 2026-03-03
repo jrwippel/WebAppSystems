@@ -1,0 +1,306 @@
+@model IEnumerable<WebAppSystems.Models.DocumentAnalysis>
+
+@{
+    ViewData["Title"] = "Histórico de Análises";
+}
+
+<style>
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0 0 0.5rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .page-subtitle {
+        font-size: 1rem;
+        opacity: 0.95;
+        margin: 0;
+    }
+
+    .history-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    .table-container {
+        overflow-x: auto;
+    }
+
+    .table {
+        width: 100%;
+        margin: 0;
+    }
+
+    .table thead {
+        background: #f7fafc;
+    }
+
+    .table th {
+        padding: 1rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #4a5568;
+        text-align: left;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .table td {
+        padding: 1rem;
+        font-size: 0.95rem;
+        color: #2d3748;
+        border-bottom: 1px solid #e2e8f0;
+        vertical-align: middle;
+    }
+
+    .table tbody tr:hover {
+        background: #f7fafc;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 0.375rem 0.75rem;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.8125rem;
+    }
+
+    .badge-success {
+        background: #c6f6d5;
+        color: #22543d;
+    }
+
+    .badge-warning {
+        background: #feebc8;
+        color: #7c2d12;
+    }
+
+    .badge-danger {
+        background: #fed7d7;
+        color: #742a2a;
+    }
+
+    .badge-info {
+        background: #bee3f8;
+        color: #2c5282;
+    }
+
+    .btn-view {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        font-size: 0.875rem;
+        transition: all 0.3s;
+    }
+
+    .btn-view:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+
+    .btn-new {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.875rem 2rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s;
+        margin-bottom: 1.5rem;
+    }
+
+    .btn-new:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        color: #cbd5e0;
+        margin-bottom: 1rem;
+    }
+
+    .empty-text {
+        font-size: 1.25rem;
+        color: #718096;
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-hint {
+        color: #a0aec0;
+        margin-bottom: 2rem;
+    }
+</style>
+
+<div class="page-header">
+    <h1 class="page-title">
+        <i class="bi bi-clock-history"></i>
+        Histórico de Análises
+    </h1>
+    <p class="page-subtitle">Todos os documentos analisados pelo Assistente IA</p>
+</div>
+
+<a href="@Url.Action("Index", "DocumentAnalysis")" class="btn-new">
+    <i class="bi bi-plus-circle"></i>
+    Nova Análise
+</a>
+
+<div class="history-card">
+    @if (Model.Any())
+    {
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Arquivo</th>
+                        <th>Data</th>
+                        <th>Área</th>
+                        <th>Complexidade</th>
+                        <th>Status</th>
+                        <th>Atribuído</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var doc in Model)
+                    {
+                        <tr>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <i class="bi bi-file-earmark-text" style="font-size: 1.5rem; color: #667eea;"></i>
+                                    <div>
+                                        <div style="font-weight: 600;">@doc.FileName</div>
+                                        <div style="font-size: 0.8125rem; color: #718096;">
+                                            @((doc.FileSize / 1024.0).ToString("F2")) KB
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div>@doc.UploadDate.ToString("dd/MM/yyyy")</div>
+                                <div style="font-size: 0.8125rem; color: #718096;">
+                                    @doc.UploadDate.ToString("HH:mm")
+                                </div>
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(doc.LegalArea))
+                                {
+                                    <span class="badge badge-info">@doc.LegalArea</span>
+                                }
+                                else
+                                {
+                                    <span style="color: #a0aec0;">-</span>
+                                }
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(doc.Complexity))
+                                {
+                                    if (doc.Complexity.ToLower().Contains("alta"))
+                                    {
+                                        <span class="badge badge-danger">@doc.Complexity</span>
+                                    }
+                                    else if (doc.Complexity.ToLower().Contains("média"))
+                                    {
+                                        <span class="badge badge-warning">@doc.Complexity</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-success">@doc.Complexity</span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span style="color: #a0aec0;">-</span>
+                                }
+                            </td>
+                            <td>
+                                @if (doc.AnalysisStatus == "Completed")
+                                {
+                                    <span class="badge badge-success">
+                                        <i class="bi bi-check-circle"></i> Concluído
+                                    </span>
+                                }
+                                else if (doc.AnalysisStatus == "Pending")
+                                {
+                                    <span class="badge badge-warning">
+                                        <i class="bi bi-hourglass-split"></i> Processando
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-danger">
+                                        <i class="bi bi-x-circle"></i> Erro
+                                    </span>
+                                }
+                            </td>
+                            <td>
+                                @if (doc.AssignedTo != null)
+                                {
+                                    <div style="display: flex; align-items: center; gap: 0.375rem;">
+                                        <i class="bi bi-person-check" style="color: #48bb78;"></i>
+                                        @doc.AssignedTo.Name
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span style="color: #a0aec0;">Não atribuído</span>
+                                }
+                            </td>
+                            <td>
+                                <a href="@Url.Action("Details", "DocumentAnalysis", new { id = doc.Id })" class="btn-view">
+                                    <i class="bi bi-eye"></i>
+                                    Ver Análise
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="bi bi-inbox"></i>
+            </div>
+            <div class="empty-text">Nenhuma análise encontrada</div>
+            <div class="empty-hint">Faça upload de um documento para começar</div>
+            <a href="@Url.Action("Index", "DocumentAnalysis")" class="btn-new">
+                <i class="bi bi-plus-circle"></i>
+                Fazer Upload
+            </a>
+        </div>
+    }
+</div>

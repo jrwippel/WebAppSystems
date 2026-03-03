@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Gerar Favicon ICO</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #667eea;
+        }
+        canvas {
+            border: 2px solid #e2e8f0;
+            margin: 20px 0;
+            display: block;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        .instructions {
+            background: #f7fafc;
+            padding: 15px;
+            border-left: 4px solid #667eea;
+            margin: 20px 0;
+        }
+        .preview {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Gerador de Favicon ICO</h1>
+        
+        <div class="instructions">
+            <h3>Instruções:</h3>
+            <ol>
+                <li>Clique em "Gerar Favicon 32x32"</li>
+                <li>Clique em "Baixar favicon.ico"</li>
+                <li>Substitua o arquivo <code>WebAppSystems/wwwroot/favicon.ico</code></li>
+                <li>Reinicie a aplicação</li>
+                <li>Limpe o cache do navegador (Ctrl + Shift + R)</li>
+            </ol>
+        </div>
+
+        <div class="preview">
+            <div>
+                <h3>Preview 16x16:</h3>
+                <canvas id="canvas16" width="16" height="16"></canvas>
+                <button onclick="generateFavicon(16)">Gerar 16x16</button>
+                <button onclick="downloadFavicon(16)">Baixar 16x16</button>
+            </div>
+            
+            <div>
+                <h3>Preview 32x32:</h3>
+                <canvas id="canvas32" width="32" height="32"></canvas>
+                <button onclick="generateFavicon(32)">Gerar 32x32</button>
+                <button onclick="downloadFavicon(32)">Baixar favicon.ico</button>
+            </div>
+        </div>
+
+        <div class="instructions" style="border-left-color: #38a169;">
+            <h3>✅ Alternativa Rápida:</h3>
+            <p>Se preferir, você pode usar um conversor online:</p>
+            <ol>
+                <li>Acesse: <a href="https://favicon.io/favicon-converter/" target="_blank">https://favicon.io/favicon-converter/</a></li>
+                <li>Faça upload do arquivo <code>favicon.svg</code></li>
+                <li>Baixe o <code>favicon.ico</code> gerado</li>
+                <li>Substitua o arquivo antigo</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        function generateFavicon(size) {
+            const canvas = document.getElementById(`canvas${size}`);
+            const ctx = canvas.getContext('2d');
+            
+            // Limpar canvas
+            ctx.clearRect(0, 0, size, size);
+            
+            // Criar gradiente
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
+            
+            // Background circle
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(size/2, size/2, size/2 - 1, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Clock face
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+            ctx.beginPath();
+            ctx.arc(size/2, size/2, size * 0.35, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Hour markers
+            ctx.fillStyle = '#667eea';
+            const markerSize = size * 0.04;
+            
+            // Top
+            ctx.beginPath();
+            ctx.arc(size/2, size * 0.2, markerSize, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Right
+            ctx.beginPath();
+            ctx.arc(size * 0.8, size/2, markerSize, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Bottom
+            ctx.beginPath();
+            ctx.arc(size/2, size * 0.8, markerSize, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Left
+            ctx.beginPath();
+            ctx.arc(size * 0.2, size/2, markerSize, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Clock hands
+            const centerX = size/2;
+            const centerY = size/2;
+            
+            // Hour hand
+            ctx.strokeStyle = '#764ba2';
+            ctx.lineWidth = size * 0.06;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(centerX, centerY - size * 0.15);
+            ctx.stroke();
+            
+            // Minute hand
+            ctx.strokeStyle = '#667eea';
+            ctx.lineWidth = size * 0.05;
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(centerX + size * 0.15, centerY);
+            ctx.stroke();
+            
+            // Center dot
+            ctx.fillStyle = '#764ba2';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, size * 0.08, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Play icon (small)
+            if (size >= 32) {
+                ctx.fillStyle = '#667eea';
+                ctx.globalAlpha = 0.8;
+                ctx.beginPath();
+                ctx.moveTo(size * 0.72, size * 0.72);
+                ctx.lineTo(size * 0.82, size * 0.77);
+                ctx.lineTo(size * 0.72, size * 0.82);
+                ctx.closePath();
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+        
+        function downloadFavicon(size) {
+            const canvas = document.getElementById(`canvas${size}`);
+            const link = document.createElement('a');
+            link.download = size === 32 ? 'favicon.ico' : `favicon-${size}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+        
+        // Gerar automaticamente ao carregar
+        window.onload = function() {
+            generateFavicon(16);
+            generateFavicon(32);
+        };
+    </script>
+</body>
+</html>

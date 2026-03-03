@@ -1,0 +1,528 @@
+@{
+    ViewData["Title"] = "Assistente Jurídico IA";
+}
+
+<style>
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0 0 0.5rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .page-subtitle {
+        font-size: 1rem;
+        opacity: 0.95;
+        margin: 0;
+    }
+
+    .upload-card {
+        background: white;
+        border-radius: 15px;
+        padding: 3rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        text-align: center;
+    }
+
+    .upload-zone {
+        border: 3px dashed #cbd5e0;
+        border-radius: 12px;
+        padding: 4rem 2rem;
+        transition: all 0.3s;
+        cursor: pointer;
+        background: #f7fafc;
+    }
+
+    .upload-zone:hover {
+        border-color: #667eea;
+        background: #edf2f7;
+    }
+
+    .upload-zone.dragover {
+        border-color: #667eea;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    }
+
+    .upload-icon {
+        font-size: 4rem;
+        color: #667eea;
+        margin-bottom: 1rem;
+    }
+
+    .upload-text {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 0.5rem;
+    }
+
+    .upload-hint {
+        color: #718096;
+        font-size: 0.95rem;
+    }
+
+    .file-input {
+        display: none;
+    }
+
+    .btn-upload {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.875rem 2rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-top: 1.5rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-upload:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-upload:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .selected-file {
+        margin-top: 1.5rem;
+        padding: 1rem;
+        background: #edf2f7;
+        border-radius: 8px;
+        display: none;
+    }
+
+    .selected-file.show {
+        display: block;
+    }
+
+    .file-info {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    .file-icon {
+        font-size: 2rem;
+        color: #667eea;
+    }
+
+    .file-details {
+        text-align: left;
+    }
+
+    .file-name {
+        font-weight: 600;
+        color: #2d3748;
+    }
+
+    .file-size {
+        font-size: 0.875rem;
+        color: #718096;
+    }
+
+    .analysis-progress {
+        margin-top: 2rem;
+        display: none;
+    }
+
+    .analysis-progress.show {
+        display: block;
+    }
+
+    .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: #e2e8f0;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 1rem;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        width: 0%;
+        transition: width 0.3s;
+        animation: progress 2s infinite;
+    }
+
+    @@keyframes progress {
+        0% { width: 0%; }
+        50% { width: 70%; }
+        100% { width: 100%; }
+    }
+
+    .progress-text {
+        color: #667eea;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .spinner {
+        border: 3px solid #e2e8f0;
+        border-top: 3px solid #667eea;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        animation: spin 1s linear infinite;
+    }
+
+    @@keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .client-select {
+        margin-top: 1.5rem;
+        text-align: left;
+        max-width: 400px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .client-select label {
+        display: block;
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+    }
+
+    .client-select select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        transition: all 0.3s;
+        background: white;
+        color: #2d3748;
+        line-height: 1.5;
+        height: auto;
+        min-height: 45px;
+    }
+
+    .client-select select option {
+        padding: 0.5rem;
+        color: #2d3748;
+    }
+
+    .client-select select:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .quick-actions {
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 2px solid #e2e8f0;
+    }
+
+    .quick-actions h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 1rem;
+    }
+
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        color: #2d3748;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s;
+        margin: 0.5rem;
+    }
+
+    .action-btn:hover {
+        border-color: #667eea;
+        color: #667eea;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    }
+
+    @@media (max-width: 768px) {
+        .page-header {
+            padding: 1.5rem;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+        }
+
+        .upload-card {
+            padding: 2rem 1rem;
+        }
+
+        .upload-zone {
+            padding: 3rem 1rem;
+        }
+    }
+</style>
+
+<div class="page-header">
+    <h1 class="page-title">
+        <i class="bi bi-robot"></i>
+        Assistente Jurídico IA
+    </h1>
+    <p class="page-subtitle">Análise inteligente de petições e documentos jurídicos</p>
+</div>
+
+<div class="upload-card">
+    <div class="upload-zone" id="uploadZone">
+        <div class="upload-icon">
+            <i class="bi bi-cloud-upload"></i>
+        </div>
+        <div class="upload-text">Arraste um arquivo ou clique para selecionar</div>
+        <div class="upload-hint">PDF, DOCX ou TXT (máx. 10 MB)</div>
+        <input type="file" id="fileInput" class="file-input" accept=".pdf,.docx,.txt" />
+    </div>
+
+    <div class="selected-file" id="selectedFile">
+        <div class="file-info">
+            <div class="file-icon">
+                <i class="bi bi-file-earmark-text"></i>
+            </div>
+            <div class="file-details">
+                <div class="file-name" id="fileName"></div>
+                <div class="file-size" id="fileSize"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="client-select">
+        <label for="clientSelect">
+            <i class="bi bi-person"></i>
+            Cliente (opcional)
+        </label>
+        <select id="clientSelect" class="form-select">
+            <option value="">Selecione um cliente...</option>
+            @foreach (var client in ViewBag.Clients)
+            {
+                <option value="@client.Value">@client.Text</option>
+            }
+        </select>
+    </div>
+
+    <button class="btn-upload" id="btnUpload" disabled>
+        <i class="bi bi-magic"></i>
+        Analisar Documento
+    </button>
+
+    <div class="analysis-progress" id="analysisProgress">
+        <div class="progress-bar">
+            <div class="progress-fill"></div>
+        </div>
+        <div class="progress-text">
+            <div class="spinner"></div>
+            <span>Analisando documento com IA...</span>
+        </div>
+    </div>
+
+    <div class="quick-actions">
+        <h3><i class="bi bi-lightning"></i> Ações Rápidas</h3>
+        <a href="@Url.Action("History", "DocumentAnalysis")" class="action-btn">
+            <i class="bi bi-clock-history"></i>
+            Ver Histórico
+        </a>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        console.log('Script iniciado');
+        let selectedFile = null;
+
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        const selectedFileDiv = document.getElementById('selectedFile');
+        const btnUpload = document.getElementById('btnUpload');
+        const analysisProgress = document.getElementById('analysisProgress');
+        
+        console.log('Elementos carregados:', { uploadZone, fileInput, selectedFileDiv, btnUpload, analysisProgress });
+
+        // Click to select file
+        uploadZone.addEventListener('click', () => {
+            console.log('Upload zone clicado');
+            fileInput.click();
+        });
+
+        // File selected
+        fileInput.addEventListener('change', (e) => {
+            console.log('Arquivo selecionado via input', e.target.files);
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        // Drag and drop
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            console.log('Arquivo dropado');
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            
+            if (e.dataTransfer.files.length > 0) {
+                console.log('Processando arquivo dropado:', e.dataTransfer.files[0]);
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            console.log('handleFile chamado com:', file);
+            const validTypes = ['.pdf', '.docx', '.txt'];
+            const fileExt = '.' + file.name.split('.').pop().toLowerCase();
+            
+            console.log('Extensão do arquivo:', fileExt);
+            
+            if (!validTypes.includes(fileExt)) {
+                console.log('Tipo de arquivo inválido');
+                alert('Tipo de arquivo não suportado. Use PDF, DOCX ou TXT.');
+                return;
+            }
+
+            if (file.size > 10 * 1024 * 1024) {
+                console.log('Arquivo muito grande:', file.size);
+                alert('Arquivo muito grande. Tamanho máximo: 10 MB.');
+                return;
+            }
+
+            console.log('Arquivo válido, atualizando UI');
+            selectedFile = file;
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileSize').textContent = formatFileSize(file.size);
+            selectedFileDiv.classList.add('show');
+            btnUpload.disabled = false;
+            console.log('UI atualizada com sucesso');
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+        }
+
+        btnUpload.addEventListener('click', async () => {
+            console.log('Botão de upload clicado');
+            if (!selectedFile) {
+                console.log('Nenhum arquivo selecionado');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            
+            const clientId = document.getElementById('clientSelect').value;
+            if (clientId) {
+                formData.append('clientId', clientId);
+            }
+            
+            console.log('FormData preparado:', { file: selectedFile.name, clientId });
+
+            btnUpload.disabled = true;
+            analysisProgress.classList.add('show');
+
+            try {
+                console.log('Enviando requisição para:', '@Url.Action("Upload", "DocumentAnalysis")');
+                const response = await fetch('@Url.Action("Upload", "DocumentAnalysis")', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                console.log('Resposta recebida:', response.status);
+                const result = await response.json();
+                console.log('Resultado:', result);
+
+                if (result.success) {
+                    console.log('Upload bem-sucedido, iniciando polling para documento:', result.documentId);
+                    // Poll for analysis completion
+                    pollAnalysisStatus(result.documentId);
+                } else {
+                    console.log('Erro no upload:', result.message);
+                    alert('Erro: ' + result.message);
+                    resetUpload();
+                }
+            } catch (error) {
+                console.error('Erro ao enviar arquivo:', error);
+                alert('Erro ao enviar arquivo: ' + error.message);
+                resetUpload();
+            }
+        });
+
+        async function pollAnalysisStatus(documentId) {
+            const maxAttempts = 60; // 60 segundos
+            let attempts = 0;
+
+            const interval = setInterval(async () => {
+                attempts++;
+
+                try {
+                    const response = await fetch(`@Url.Action("GetAnalysisStatus", "DocumentAnalysis")?documentId=${documentId}`);
+                    const result = await response.json();
+
+                    if (result.success && result.data.analysisStatus === 'Completed') {
+                        clearInterval(interval);
+                        window.location.href = `@Url.Action("Details", "DocumentAnalysis")?id=${documentId}`;
+                    } else if (result.success && result.data.analysisStatus === 'Error') {
+                        clearInterval(interval);
+                        alert('Erro na análise: ' + result.data.errorMessage);
+                        resetUpload();
+                    } else if (attempts >= maxAttempts) {
+                        clearInterval(interval);
+                        alert('Tempo limite excedido. Verifique o histórico.');
+                        window.location.href = '@Url.Action("History", "DocumentAnalysis")';
+                    }
+                } catch (error) {
+                    console.error('Erro ao verificar status:', error);
+                }
+            }, 1000);
+        }
+
+        function resetUpload() {
+            selectedFile = null;
+            fileInput.value = '';
+            selectedFileDiv.classList.remove('show');
+            analysisProgress.classList.remove('show');
+            btnUpload.disabled = true;
+        }
+    </script>
+}

@@ -1,0 +1,40 @@
+EXCELENTÍSSIMO SENHOR DOUTOR JUIZ FEDERAL DA __ VARA CÍVEL DA SEÇÃO JUDICIÁRIA DE [CIDADE]/[ESTADO]
+Requerente: [Nome da Empresa ou Pessoa Física]
+Requerido: União Federal (Fazenda Nacional)
+
+[Sebsatiaão Dias], inscrito na OAB/[UF] sob o nº [Número], vem, perante Vossa Excelência, propor a presente:
+
+AÇÃO DE REPETIÇÃO DE INDÉBITO TRIBUTÁRIO
+com fundamento no artigo 165, inciso I, do Código Tributário Nacional (CTN), em face da União Federal, pelos motivos de fato e de direito abaixo delineados:
+
+1. DOS FATOS
+A Requerente atua no ramo de [especificar atividade] e, nos últimos 5 (cinco) anos, efetuou o pagamento do tributo [ex: PIS/COFINS] incluindo em sua base de cálculo o [ex: ICMS], conforme demonstram as notas fiscais e guias de recolhimento anexas.
+
+Ocorre que o Supremo Tribunal Federal (STF), no julgamento do Tema 69 (RE 574.706), fixou a tese de que "O ICMS não compõe a base de cálculo para a incidência do PIS e da COFINS". Portanto, a Requerente pagou valores superiores aos devidos constitucionalmente.
+
+2. DO DIREITO
+O direito à restituição baseia-se no princípio da estrita legalidade e na vedação ao enriquecimento sem causa do Ente Público.
+
+Art. 165, I, do CTN: Garante ao contribuinte o direito à restituição total ou parcial do tributo, seja qual for a modalidade do seu pagamento, quando houver cobrança ou pagamento indevido.
+
+Correção Monetária: Os valores devem ser restituídos acrescidos de correção monetária e juros de mora pela Taxa SELIC, incidente desde a data do pagamento indevido até a efetiva devolução.
+
+3. DOS PEDIDOS
+Ante o exposto, requer-se:
+
+A citação da União Federal (Fazenda Nacional), na pessoa de seu representante legal;
+
+A procedência total da ação para condenar a Ré a restituir os valores pagos indevidamente nos últimos 5 anos, estimados provisoriamente em R$ [Valor];
+
+A aplicação da Taxa SELIC como índice de atualização dos referidos valores;
+
+A condenação da Ré ao pagamento de honorários sucumbenciais.
+
+Dá-se à causa o valor de R$ [Valor total estimado].
+
+Nestes termos, pede deferimento.
+
+[Blumenau], [12/06/25].
+
+[Aécio Nunes]
+OAB/[UF] [Número]

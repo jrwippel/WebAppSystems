@@ -1,0 +1,542 @@
+@model WebAppSystems.Models.ViewModels.DocumentAnalysisViewModel
+
+@{
+    ViewData["Title"] = "Análise do Documento";
+}
+
+<style>
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0 0 0.5rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .page-subtitle {
+        font-size: 1rem;
+        opacity: 0.95;
+        margin: 0;
+    }
+
+    .analysis-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    .card-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .info-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #718096;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .info-value {
+        font-size: 1rem;
+        color: #2d3748;
+        font-weight: 500;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .badge-success {
+        background: #c6f6d5;
+        color: #22543d;
+    }
+
+    .badge-warning {
+        background: #feebc8;
+        color: #7c2d12;
+    }
+
+    .badge-danger {
+        background: #fed7d7;
+        color: #742a2a;
+    }
+
+    .badge-info {
+        background: #bee3f8;
+        color: #2c5282;
+    }
+
+    .summary-box {
+        background: #f7fafc;
+        border-left: 4px solid #667eea;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+    }
+
+    .list-items {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .list-items li {
+        padding: 0.75rem;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .list-items li:last-child {
+        border-bottom: none;
+    }
+
+    .list-items li i {
+        color: #667eea;
+    }
+
+    .recommendation-card {
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s;
+    }
+
+    .recommendation-card:hover {
+        border-color: #667eea;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    }
+
+    .recommendation-card.rank-1 {
+        border-color: #ffd700;
+        background: linear-gradient(to right, #fffbeb 0%, white 100%);
+    }
+
+    .recommendation-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .attorney-name {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #2d3748;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .score-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 1.125rem;
+    }
+
+    .recommendation-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 0.75rem;
+        background: #f7fafc;
+        border-radius: 8px;
+    }
+
+    .stat-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #667eea;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        color: #718096;
+        text-transform: uppercase;
+    }
+
+    .justification {
+        background: #edf2f7;
+        padding: 1rem;
+        border-radius: 8px;
+        white-space: pre-line;
+        line-height: 1.6;
+    }
+
+    .btn-assign {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.875rem 2rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        width: 100%;
+        margin-top: 1rem;
+    }
+
+    .btn-assign:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-back {
+        background: white;
+        color: #667eea;
+        border: 2px solid #667eea;
+        padding: 0.875rem 2rem;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s;
+    }
+
+    .btn-back:hover {
+        background: #667eea;
+        color: white;
+    }
+
+    .assigned-badge {
+        background: #c6f6d5;
+        color: #22543d;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    @@media (max-width: 768px) {
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .recommendation-stats {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+</style>
+
+<div class="page-header">
+    <h1 class="page-title">
+        <i class="bi bi-file-earmark-check"></i>
+        Análise do Documento
+    </h1>
+    <p class="page-subtitle">@Model.FileName</p>
+</div>
+
+@if (Model.AnalysisStatus == "Completed")
+{
+    <!-- Resumo Executivo -->
+    <div class="analysis-card">
+        <h2 class="card-title">
+            <i class="bi bi-file-text"></i>
+            Resumo Executivo
+        </h2>
+        <div class="summary-box">
+            @Model.Summary
+        </div>
+
+        <div class="info-grid">
+            <div class="info-item">
+                <span class="info-label">Área do Direito</span>
+                <span class="info-value">
+                    <span class="badge badge-info">@Model.LegalArea</span>
+                </span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Tipo de Ação</span>
+                <span class="info-value">@Model.ActionType</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Complexidade</span>
+                <span class="info-value">
+                    @if (Model.Complexity?.ToLower().Contains("alta") == true)
+                    {
+                        <span class="badge badge-danger">@Model.Complexity</span>
+                    }
+                    else if (Model.Complexity?.ToLower().Contains("média") == true)
+                    {
+                        <span class="badge badge-warning">@Model.Complexity</span>
+                    }
+                    else
+                    {
+                        <span class="badge badge-success">@Model.Complexity</span>
+                    }
+                </span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Estimativa de Horas</span>
+                <span class="info-value">@(Model.EstimatedHours ?? 0)h</span>
+            </div>
+            @if (Model.CauseValue.HasValue)
+            {
+                <div class="info-item">
+                    <span class="info-label">Valor da Causa</span>
+                    <span class="info-value">@Model.CauseValue.Value.ToString("C")</span>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Partes Envolvidas -->
+    @if (Model.Parties != null)
+    {
+        <div class="analysis-card">
+            <h2 class="card-title">
+                <i class="bi bi-people"></i>
+                Partes Envolvidas
+            </h2>
+            <div class="info-grid">
+                @if (!string.IsNullOrEmpty(Model.Parties.Plaintiff))
+                {
+                    <div class="info-item">
+                        <span class="info-label">Autor/Requerente</span>
+                        <span class="info-value">@Model.Parties.Plaintiff</span>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(Model.Parties.Defendant))
+                {
+                    <div class="info-item">
+                        <span class="info-label">Réu/Requerido</span>
+                        <span class="info-value">@Model.Parties.Defendant</span>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- Tópicos Principais -->
+    @if (Model.MainTopics?.Any() == true)
+    {
+        <div class="analysis-card">
+            <h2 class="card-title">
+                <i class="bi bi-list-check"></i>
+                Tópicos Principais
+            </h2>
+            <ul class="list-items">
+                @foreach (var topic in Model.MainTopics)
+                {
+                    <li>
+                        <i class="bi bi-check-circle-fill"></i>
+                        @topic
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+
+    <!-- Fundamentos Legais -->
+    @if (Model.LegalBasis?.Any() == true)
+    {
+        <div class="analysis-card">
+            <h2 class="card-title">
+                <i class="bi bi-book"></i>
+                Fundamentos Legais
+            </h2>
+            <ul class="list-items">
+                @foreach (var basis in Model.LegalBasis)
+                {
+                    <li>
+                        <i class="bi bi-journal-text"></i>
+                        @basis
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+
+    <!-- Prazos -->
+    @if (Model.Deadlines?.Any() == true)
+    {
+        <div class="analysis-card">
+            <h2 class="card-title">
+                <i class="bi bi-calendar-event"></i>
+                Prazos Identificados
+            </h2>
+            <ul class="list-items">
+                @foreach (var deadline in Model.Deadlines)
+                {
+                    <li>
+                        <i class="bi bi-clock"></i>
+                        @deadline.Description
+                        @if (deadline.Days.HasValue)
+                        {
+                            <span class="badge badge-warning">@deadline.Days dias</span>
+                        }
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+
+    <!-- Recomendações de Advogados -->
+    @if (Model.RecommendedAttorneys?.Any() == true)
+    {
+        <div class="analysis-card">
+            <h2 class="card-title">
+                <i class="bi bi-star-fill"></i>
+                Advogados Recomendados
+            </h2>
+
+            @if (Model.AssignedToAttorneyId.HasValue)
+            {
+                <div class="assigned-badge">
+                    <i class="bi bi-check-circle-fill"></i>
+                    Atribuído para: @Model.AssignedToName
+                </div>
+            }
+            else
+            {
+                @for (int i = 0; i < Model.RecommendedAttorneys.Count; i++)
+                {
+                    var attorney = Model.RecommendedAttorneys[i];
+                    var rank = i + 1;
+                    <div class="recommendation-card @(rank == 1 ? "rank-1" : "")">
+                        <div class="recommendation-header">
+                            <div class="attorney-name">
+                                @if (rank == 1) { <span>🥇</span> }
+                                else if (rank == 2) { <span>🥈</span> }
+                                else if (rank == 3) { <span>🥉</span> }
+                                @attorney.Name
+                            </div>
+                            <div class="score-badge">@attorney.Score%</div>
+                        </div>
+
+                        <div class="recommendation-stats">
+                            <div class="stat-item">
+                                <div class="stat-value">@attorney.SimilarCasesCount</div>
+                                <div class="stat-label">Casos Similares</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">@attorney.AverageHours.ToString("F1")h</div>
+                                <div class="stat-label">Tempo Médio</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">@attorney.AvailableHours h</div>
+                                <div class="stat-label">Disponível</div>
+                            </div>
+                        </div>
+
+                        <div class="justification">
+                            @attorney.Justification
+                        </div>
+
+                        <button class="btn-assign" onclick="assignAttorney(@Model.Id, @attorney.AttorneyId, '@attorney.Name')">
+                            <i class="bi bi-person-check"></i>
+                            Atribuir para @attorney.Name
+                        </button>
+                    </div>
+                }
+            }
+        </div>
+    }
+}
+else if (Model.AnalysisStatus == "Error")
+{
+    <div class="analysis-card">
+        <div class="alert alert-danger">
+            <h4><i class="bi bi-exclamation-triangle"></i> Erro na Análise</h4>
+            <p>@Model.ErrorMessage</p>
+        </div>
+    </div>
+}
+else
+{
+    <div class="analysis-card">
+        <div class="alert alert-info">
+            <h4><i class="bi bi-hourglass-split"></i> Análise em Andamento</h4>
+            <p>Aguarde enquanto processamos o documento...</p>
+        </div>
+    </div>
+}
+
+<div style="margin-top: 2rem;">
+    <a href="@Url.Action("History", "DocumentAnalysis")" class="btn-back">
+        <i class="bi bi-arrow-left"></i>
+        Voltar para Histórico
+    </a>
+</div>
+
+@section Scripts {
+    <script>
+        async function assignAttorney(documentId, attorneyId, attorneyName) {
+            if (!confirm(`Confirma atribuição para ${attorneyName}?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch('@Url.Action("AssignToAttorney", "DocumentAnalysis")', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ documentId, attorneyId })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('Documento atribuído com sucesso!');
+                    location.reload();
+                } else {
+                    alert('Erro: ' + result.message);
+                }
+            } catch (error) {
+                alert('Erro ao atribuir: ' + error.message);
+            }
+        }
+    </script>
+}
