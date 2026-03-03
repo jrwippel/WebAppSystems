@@ -102,8 +102,8 @@
                                        asp-for="Login" 
                                        class="form-control" 
                                        id="login" 
-                                       placeholder="jackson.wippel"
-                                       autocomplete="username">
+                                       placeholder="Enter your username"
+                                       autocomplete="off">
                             </div>
                             @Html.ValidationMessageFor(x => x.Login, "", new { @class = "text-danger" })
                         </div>
@@ -119,7 +119,7 @@
                                        class="form-control" 
                                        id="senha" 
                                        placeholder="••••••"
-                                       autocomplete="current-password">
+                                       autocomplete="off">
                                 <button type="button" class="toggle-password" id="togglePassword">
                                     <i class="bi bi-eye"></i>
                                 </button>
