@@ -315,8 +315,102 @@
             margin-bottom: 40px;
         }
 
-        /* Footer */
-        footer {
+        /* Contact Cards */
+        .contact-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            max-width: 800px;
+            margin: 60px auto 0;
+        }
+
+        .contact-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 30px 20px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .contact-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(34, 84, 225, 0.3);
+            transform: translateY(-3px);
+        }
+
+        .contact-icon {
+            font-size: 32px;
+            margin-bottom: 16px;
+        }
+
+        .contact-card h4 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #ffffff;
+        }
+
+        .contact-card p {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            margin: 0;
+        }
+
+        /* Social Links */
+        .social-links {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .social-links a {
+            width: 36px;
+            height: 36px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .social-links a:hover {
+            background: #2254E1;
+            color: #ffffff;
+            transform: translateY(-2px);
+        }
+
+        /* Footer Bottom */
+        .footer-bottom-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 40px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer-legal {
+            display: flex;
+            gap: 24px;
+        }
+
+        .footer-legal a {
+            color: rgba(255, 255, 255, 0.4);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+
+        .footer-legal a:hover {
+            color: #2254E1;
+        }
             padding: 60px 40px 40px;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
@@ -401,6 +495,16 @@
             .footer-content {
                 grid-template-columns: 1fr;
                 gap: 40px;
+            }
+
+            .footer-bottom-content {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+
+            .contact-cards {
+                grid-template-columns: 1fr;
             }
 
             .nav-links {
@@ -506,43 +610,85 @@
         </div>
     </section>
 
-    <section class="cta-section" id="about">
-        <h2>Ready to boost your productivity?</h2>
-        <p>Join thousands of professionals who trust JRWIT</p>
-        <a href="https://jrwit.com" class="hero-cta">Start tracking time now</a>
+    <section class="cta-section" id="contact">
+        <h2>Vamos Conversar?</h2>
+        <p>Entre em contato e descubra como podemos ajudar seu negócio</p>
+        <a href="contact.html" class="hero-cta">Enviar Email</a>
+        
+        <div class="contact-cards">
+            <div class="contact-card">
+                <div class="contact-icon">📧</div>
+                <h4>Email</h4>
+                <p>contato@jrwit.com</p>
+            </div>
+            <div class="contact-card">
+                <div class="contact-icon">🌐</div>
+                <h4>Website</h4>
+                <p>www.jrwit.com</p>
+            </div>
+            <div class="contact-card">
+                <div class="contact-icon">📱</div>
+                <h4>GitHub</h4>
+                <p>github.com/jrwippel</p>
+            </div>
+        </div>
     </section>
 
     <footer>
         <div class="footer-content">
             <div class="footer-brand">
                 <h3>JRWIT</h3>
-                <p>Professional time tracking and productivity suite designed for modern teams and businesses.</p>
+                <p>Rua Exemplo, 123, Sala 45<br>
+                São Paulo, SP 01234-567, Brasil<br>
+                +55 11 9999-9999<br>
+                contato@jrwit.com</p>
+                <div class="social-links">
+                    <a href="#" aria-label="LinkedIn"><span>in</span></a>
+                    <a href="https://github.com/jrwippel" aria-label="GitHub"><span>gh</span></a>
+                    <a href="#" aria-label="Email"><span>@</span></a>
+                </div>
             </div>
             <div class="footer-links">
-                <h4>Product</h4>
+                <h4>Products</h4>
                 <ul>
-                    <li><a href="#features">Features</a></li>
-                    <li><a href="https://jrwit.com">Login</a></li>
-                    <li><a href="https://jrwit.com">Sign up</a></li>
+                    <li><a href="https://jrwit.com">Time Tracker</a></li>
+                    <li><a href="https://jrwit.com">Reports</a></li>
+                    <li><a href="https://jrwit.com">Analytics</a></li>
+                    <li><a href="https://jrwit.com">Try for free</a></li>
+                    <li><a href="https://jrwit.com">Log in</a></li>
                 </ul>
             </div>
             <div class="footer-links">
                 <h4>Company</h4>
                 <ul>
                     <li><a href="#about">About</a></li>
-                    <li><a href="https://jrwit.com">Contact</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="https://jrwit.com">Careers</a></li>
+                    <li><a href="https://jrwit.com">Press</a></li>
                 </ul>
             </div>
             <div class="footer-links">
                 <h4>Resources</h4>
                 <ul>
-                    <li><a href="https://jrwit.com">Documentation</a></li>
-                    <li><a href="https://jrwit.com">Support</a></li>
+                    <li><a href="https://jrwit.com">Help Center</a></li>
+                    <li><a href="https://jrwit.com">Updates</a></li>
+                    <li><a href="https://jrwit.com">Tutorials</a></li>
+                    <li><a href="https://jrwit.com">Request demo</a></li>
+                    <li><a href="https://jrwit.com">Events</a></li>
                 </ul>
             </div>
         </div>
         <div class="footer-bottom">
-            <p>&copy; 2024 JRWIT. All rights reserved.</p>
+            <div class="footer-bottom-content">
+                <p>&copy; 2024 JRWIT Inc. All rights reserved.</p>
+                <div class="footer-legal">
+                    <a href="#">Cookies</a>
+                    <a href="#">Terms</a>
+                    <a href="#">Privacy</a>
+                    <a href="#">Security</a>
+                </div>
+            </div>
         </div>
     </footer>
 </body>
