@@ -425,6 +425,13 @@ body {
     color: #2d3748;
     letter-spacing: 0.5px;
     margin-bottom: 4px;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.brand-text:hover {
+    color: #667eea;
+    text-decoration: none;
 }
 
 .brand-tagline {
