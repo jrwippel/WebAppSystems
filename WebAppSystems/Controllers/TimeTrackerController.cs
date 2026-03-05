@@ -400,8 +400,7 @@ namespace WebAppSystems.Controllers
             var totalPages = (int)Math.Ceiling(totalRecords / (double)pageSize);
 
             var records = await query
-                .OrderByDescending(r => r.Date)
-                .ThenByDescending(r => r.HoraInicial)
+                .OrderByDescending(r => r.Id)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
