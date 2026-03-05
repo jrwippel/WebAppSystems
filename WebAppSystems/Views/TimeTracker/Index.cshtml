@@ -274,8 +274,6 @@
             border-bottom: 1px solid #e2e8f0;
             vertical-align: middle;
             line-height: 1.5;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
 
         .table tbody tr:hover {
@@ -291,7 +289,6 @@
             max-width: 250px;
             white-space: nowrap !important;
             overflow: hidden;
-            text-overflow: ellipsis;
             line-height: 1.5;
         }
 
@@ -481,7 +478,8 @@
         const recordTypeMap = {
             0: "Consultivo",
             1: "Contencioso",
-            2: "Proposta Específica"
+            2: "Proposta Específica",
+            3: "Deslocamento"
         };
 
         document.addEventListener("DOMContentLoaded", function () {

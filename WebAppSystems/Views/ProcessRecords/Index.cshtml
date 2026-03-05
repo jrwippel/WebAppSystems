@@ -92,9 +92,9 @@
                                 <td class="hours-cell">
                                     @if (isRunning)
                                     {
-                                        <span class="hours-badge running-badge">
-                                            <i class="bi bi-play-circle-fill"></i>
-                                            Rodando
+                                        <span class="hours-badge running-badge" data-start-time="@item.HoraInicial" data-timer="true">
+                                            <i class="bi bi-clock-history"></i>
+                                            <span class="timer-display">00:00:00</span>
                                         </span>
                                     }
                                     else
@@ -431,6 +431,28 @@
         align-items: center;
         gap: 6px;
         animation: pulse-badge 2s ease-in-out infinite;
+        font-weight: 600;
+        position: relative;
+    }
+
+    .running-badge::before {
+        content: '';
+        position: absolute;
+        left: 8px;
+        width: 6px;
+        height: 6px;
+        background: white;
+        border-radius: 50%;
+        animation: blink 1.5s ease-in-out infinite;
+    }
+
+    @@keyframes blink {
+        0%, 100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.3;
+        }
     }
 
     @@keyframes pulse-badge {
@@ -444,6 +466,7 @@
 
     .running-badge i {
         font-size: 13px;
+        margin-left: 6px;
     }
 
     .modern-table td {
@@ -690,6 +713,42 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Função para atualizar timers em tempo real
+        function updateRunningTimers() {
+            const timers = document.querySelectorAll('[data-timer="true"]');
+            
+            timers.forEach(timer => {
+                const startTimeStr = timer.getAttribute('data-start-time');
+                const display = timer.querySelector('.timer-display');
+                
+                if (startTimeStr && display) {
+                    // Parse do horário de início (formato HH:mm:ss)
+                    const [hours, minutes, seconds] = startTimeStr.split(':').map(Number);
+                    
+                    // Criar data de hoje com o horário de início
+                    const now = new Date();
+                    const startTime = new Date(now);
+                    startTime.setHours(hours, minutes, seconds || 0, 0);
+                    
+                    // Calcular diferença em segundos
+                    const diffMs = now - startTime;
+                    const diffSeconds = Math.floor(diffMs / 1000);
+                    
+                    // Converter para HH:MM:SS
+                    const h = Math.floor(diffSeconds / 3600);
+                    const m = Math.floor((diffSeconds % 3600) / 60);
+                    const s = diffSeconds % 60;
+                    
+                    const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+                    display.textContent = timeStr;
+                }
+            });
+        }
+        
+        // Atualizar timers a cada segundo
+        updateRunningTimers();
+        setInterval(updateRunningTimers, 1000);
+
         const searchInput = document.getElementById('searchInput');
         let searchTimeout;
 
