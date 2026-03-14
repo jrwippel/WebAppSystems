@@ -107,8 +107,8 @@
                     <button type="submit" formaction="@Url.Action("DownloadReport")" class="btn btn-secondary">
                         <i class="bi bi-file-earmark-spreadsheet"></i> <span data-i18n="reports.btn.excel">Gerar Excel</span>
                     </button>
-                    <button type="submit" formaction="@Url.Action("DownloadPdfReport")" class="btn btn-pdf">
-                        <i class="bi bi-file-earmark-pdf"></i> <span data-i18n="reports.btn.pdf">Gerar PDF</span>
+                    <button type="submit" formaction="@Url.Action("PreFatura")" class="btn btn-prefatura">
+                        <i class="bi bi-receipt"></i> Pré-Fatura
                     </button>
                 }
             </div>
@@ -313,6 +313,18 @@
 
     .btn-pdf:hover {
         background: #e53e3e;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .btn-prefatura {
+        background: white;
+        color: #38a169;
+        border: 2px solid #38a169;
+    }
+
+    .btn-prefatura:hover {
+        background: #38a169;
         color: white;
         transform: translateY(-2px);
     }

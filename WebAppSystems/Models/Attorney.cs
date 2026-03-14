@@ -87,19 +87,33 @@ namespace WebAppSystems.Models
 
         public bool ValidaSenha(string password)
         {
-            return Password == password.GerarHash();
+            return Criptografia.VerificarSenha(password, Password);
+        }
+
+        // Retorna true se a senha está em hash legado SHA1 (precisa de upgrade)
+        public bool NeedsPasswordUpgrade()
+        {
+            return Password != null && !Password.StartsWith("$2");
+        }
+
+        // Faz upgrade do hash para BCrypt após login bem-sucedido
+        public void UpgradePasswordHash(string plainPassword)
+        {
+            Password = plainPassword.GerarHash();
         }
 
         public void SetSenhaHash()
         {
             Password = Password.GerarHash();
         }
+
         public string GerarNovaSenha()
         {
             string novaSenha = Guid.NewGuid().ToString().Substring(0, 8);
             Password = novaSenha.GerarHash();
             return novaSenha;
         }
+
         public void SetNovaSenha(string novaSenha)
         {
             Password = novaSenha.GerarHash();

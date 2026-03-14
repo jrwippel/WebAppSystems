@@ -35,6 +35,10 @@ namespace WebAppSystems.ViewComponents
             
             ViewBag.HorasHoje = horasHoje;
             
+            // Buscar parâmetros (logo do escritório)
+            var parametros = await _context.Parametros.FirstOrDefaultAsync();
+            ViewBag.Parametros = parametros;
+            
             return View(attorney);
         }
     }

@@ -98,7 +98,7 @@ namespace WebAppSystems.Controllers
         }
 
         [HttpPost]
-        public IActionResult Entrar(LoginModel loginModel)
+        public async Task<IActionResult> Entrar(LoginModel loginModel)
         {
             try
             {
@@ -117,6 +117,12 @@ namespace WebAppSystems.Controllers
 
                         if (usuario.ValidaSenha(loginModel.Senha))
                         {
+                            // Upgrade automático de SHA1 → BCrypt na primeira vez que o usuário logar
+                            if (usuario.NeedsPasswordUpgrade())
+                            {
+                                usuario.UpgradePasswordHash(loginModel.Senha);
+                                await _attorneyService.AtualizarSenhaHashAsync(usuario);
+                            }
                             _sessao.CriarSessaoDoUsuario(usuario);
                             return RedirectToAction("Index", "Home");
                         }

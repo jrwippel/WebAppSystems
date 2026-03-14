@@ -806,6 +806,200 @@ namespace WebAppSystems.Controllers
         }
 
 
+        // Ação para gerar Pré-Fatura em PDF
+        public async Task<IActionResult> PreFatura(DateTime? minDate, DateTime? maxDate, string clientIds, int? attorneyId, int? departmentId, string recordType = null)
+        {
+            SetDefaultDateValues(ref minDate, ref maxDate);
+
+            RecordType? recordTypeEnum = null;
+            if (!string.IsNullOrEmpty(recordType))
+                recordTypeEnum = Enum.Parse<RecordType>(recordType, true);
+
+            List<int> clientIdList = null;
+            if (!string.IsNullOrEmpty(clientIds))
+            {
+                clientIdList = clientIds.Split(',')
+                    .Where(id => !string.IsNullOrWhiteSpace(id))
+                    .Select(id => int.Parse(id.Trim()))
+                    .ToList();
+            }
+
+            var filteredRecords = await _processRecordService.FindByDateAsync(minDate, maxDate, clientIdList, attorneyId, departmentId, recordTypeEnum);
+
+            // Buscar logo da empresa
+            byte[] logoData = null;
+            string logoMimeType = null;
+            try
+            {
+                var (imgData, mimeType, _, _) = await _parametroService.GetLogoAsync();
+                logoData = imgData;
+                logoMimeType = mimeType;
+            }
+            catch { /* sem logo configurado */ }
+
+            // Agrupar por cliente
+            var groupedByClient = filteredRecords
+                .GroupBy(r => r.Client)
+                .OrderBy(g => g.Key.Name)
+                .ToList();
+
+            // Calcular total geral de horas e valor
+            TimeSpan totalGeralHoras = TimeSpan.Zero;
+            double totalGeralValor = 0;
+
+            // Pré-calcular horas e valores por grupo
+            var clientData = new List<(Client client, List<ProcessRecord> records, TimeSpan totalHoras, double totalValor)>();
+            foreach (var group in groupedByClient)
+            {
+                TimeSpan horasCliente = TimeSpan.Zero;
+                double valorCliente = 0;
+                foreach (var rec in group)
+                {
+                    var duracao = rec.CalculoHorasTotal();
+                    horasCliente += duracao;
+                    var valorReg = await _valorClienteService.GetValorForClienteAndUserAsync(rec.ClientId, rec.AttorneyId);
+                    if (valorReg != null)
+                        valorCliente += valorReg.Valor * duracao.TotalHours;
+                }
+                totalGeralHoras += horasCliente;
+                totalGeralValor += valorCliente;
+                clientData.Add((group.Key, group.ToList(), horasCliente, valorCliente));
+            }
+
+            string totalHorasFormatted = $"{(int)totalGeralHoras.TotalHours}:{totalGeralHoras.Minutes:00}h";
+
+            var document = Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Size(PageSizes.A4);
+                    page.Margin(30);
+                    page.PageColor(Colors.White);
+                    page.DefaultTextStyle(x => x.FontSize(9).FontFamily("Arial"));
+
+                    // Header
+                    page.Header().PaddingBottom(10).Row(headerRow =>
+                    {
+                        // Logo da empresa (esquerda)
+                        headerRow.RelativeItem().Column(col =>
+                        {
+                            if (logoData != null)
+                            {
+                                col.Item().MaxHeight(50).MaxWidth(120)
+                                    .Image(logoData);
+                            }
+                        });
+
+                        // Total geral (direita)
+                        headerRow.ConstantItem(130).Background("#764ba2").Padding(10).Column(col =>
+                        {
+                            col.Item().Text("TOTAL GERAL").FontColor(Colors.White).FontSize(8).Bold().AlignCenter();
+                            col.Item().Text($"R$ {totalGeralValor:N2}").FontColor(Colors.White).FontSize(16).Bold().AlignCenter();
+                            col.Item().Text(totalHorasFormatted).FontColor(Colors.White).FontSize(9).AlignCenter();
+                        });
+                    });
+
+                    page.Content().Column(content =>
+                    {
+                        // Título
+                        content.Item().PaddingBottom(4).Text("Pré-Fatura de Honorários")
+                            .FontSize(16).Bold().FontColor("#667eea");
+
+                        content.Item().Text($"Período: {minDate?.ToString("dd/MM/yyyy")} a {maxDate?.ToString("dd/MM/yyyy")}")
+                            .FontSize(9).FontColor(Colors.Grey.Medium);
+
+                        content.Item().PaddingBottom(8).Text($"Emissão: {DateTime.Now:dd/MM/yyyy}")
+                            .FontSize(9).FontColor(Colors.Grey.Medium);
+
+                        content.Item().PaddingBottom(12).LineHorizontal(1).LineColor("#667eea");
+
+                        // Blocos por cliente
+                        foreach (var (client, records, horasCliente, valorCliente) in clientData)
+                        {
+                            string horasClienteFormatted = $"{(int)horasCliente.TotalHours}:{horasCliente.Minutes:00}h";
+
+                            content.Item().PaddingBottom(12).Border(1).BorderColor(Colors.Grey.Lighten2).Column(clientBlock =>
+                            {
+                                // Cabeçalho do cliente
+                                clientBlock.Item().Background(Colors.Grey.Lighten4).Padding(8).Row(r =>
+                                {
+                                    r.RelativeItem().Column(c =>
+                                    {
+                                        c.Item().Text(client.Name).FontSize(11).Bold();
+                                        if (!string.IsNullOrEmpty(client.Document))
+                                            c.Item().Text($"Doc: {client.Document}").FontSize(8).FontColor(Colors.Grey.Medium);
+                                    });
+                                    r.ConstantItem(160).AlignRight().Column(c =>
+                                    {
+                                        c.Item().Text($"Total horas: {horasClienteFormatted}").FontSize(9).AlignRight();
+                                        c.Item().Text($"Valor: R$ {valorCliente:N2}").FontSize(10).Bold().FontColor("#667eea").AlignRight();
+                                    });
+                                });
+
+                                // Tabela de registros
+                                clientBlock.Item().Table(table =>
+                                {
+                                    table.ColumnsDefinition(cols =>
+                                    {
+                                        cols.ConstantColumn(55);   // Data
+                                        cols.RelativeColumn(1.5f); // Responsável
+                                        cols.RelativeColumn(3);    // Descrição
+                                        cols.ConstantColumn(40);   // Horas
+                                        cols.ConstantColumn(60);   // Valor
+                                    });
+
+                                    table.Header(h =>
+                                    {
+                                        h.Cell().Background("#764ba2").Padding(4).Text("Data").FontColor(Colors.White).Bold().FontSize(8);
+                                        h.Cell().Background("#764ba2").Padding(4).Text("Responsável").FontColor(Colors.White).Bold().FontSize(8);
+                                        h.Cell().Background("#764ba2").Padding(4).Text("Descrição").FontColor(Colors.White).Bold().FontSize(8);
+                                        h.Cell().Background("#764ba2").Padding(4).Text("Horas").FontColor(Colors.White).Bold().FontSize(8);
+                                        h.Cell().Background("#764ba2").Padding(4).Text("Valor").FontColor(Colors.White).Bold().FontSize(8);
+                                    });
+
+                                    int idx = 0;
+                                    foreach (var rec in records)
+                                    {
+                                        var bg = idx % 2 == 0 ? Colors.White : Colors.Grey.Lighten5;
+                                        var duracao = rec.CalculoHorasTotal();
+                                        string horasRec = $"{(int)duracao.TotalHours}:{duracao.Minutes:00}";
+
+                                        table.Cell().Background(bg).Padding(4).Text(rec.Date.ToString("dd/MM/yy")).FontSize(8);
+                                        table.Cell().Background(bg).Padding(4).Text(rec.Attorney.Name).FontSize(8);
+                                        table.Cell().Background(bg).Padding(4).Text(rec.Description).FontSize(8);
+                                        table.Cell().Background(bg).Padding(4).Text(horasRec).FontSize(8);
+                                        table.Cell().Background(bg).Padding(4).Text("—").FontSize(8).AlignCenter();
+                                        idx++;
+                                    }
+                                });
+                            });
+                        }
+
+                        // Rodapé do documento
+                        content.Item().PaddingTop(8).Row(r =>
+                        {
+                            r.RelativeItem().Text("* Documento sem valor fiscal. Sujeito a revisão.")
+                                .FontSize(8).Italic().FontColor(Colors.Grey.Medium);
+                            r.ConstantItem(200).AlignRight().Text($"Total Geral: R$ {totalGeralValor:N2}")
+                                .FontSize(11).Bold().FontColor("#667eea");
+                        });
+                    });
+
+                    page.Footer().AlignCenter().Text(text =>
+                    {
+                        text.Span("Página ").FontSize(8).FontColor(Colors.Grey.Medium);
+                        text.CurrentPageNumber().FontSize(8).FontColor(Colors.Grey.Medium);
+                        text.Span(" de ").FontSize(8).FontColor(Colors.Grey.Medium);
+                        text.TotalPages().FontSize(8).FontColor(Colors.Grey.Medium);
+                    });
+                });
+            });
+
+            var pdfBytes = document.GeneratePdf();
+            string fileName = $"PreFatura_{minDate:yyyyMMdd}_{maxDate:yyyyMMdd}.pdf";
+            return File(pdfBytes, "application/pdf", fileName);
+        }
+
         #region Private Helpers
 
         private void SetDefaultDateValues(ref DateTime? minDate, ref DateTime? maxDate)

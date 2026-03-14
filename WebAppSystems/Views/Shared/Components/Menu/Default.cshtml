@@ -8,80 +8,54 @@
 }
 
 <style>
-    /* Modern Navigation Styles */
     .navbar {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        padding: 0 !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        padding: 0 12px !important;
+        min-height: 44px;
     }
 
-    .navbar-brand-container {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 6px;
-        padding: 12px 20px;
-        position: relative;
-    }
-
-    /* User Dropdown */
-    .user-dropdown {
-        position: relative;
-    }
+    /* Brand / User dropdown */
+    .user-dropdown { position: relative; }
 
     .user-dropdown-toggle {
         background: none;
         border: none;
         color: white;
+        font-size: 13px;
         font-weight: 600;
-        font-size: 16px;
-        padding: 8px 12px;
+        padding: 6px 10px;
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
         cursor: pointer;
-        border-radius: 8px;
-        transition: all 0.2s ease;
+        border-radius: 6px;
+        transition: background 0.2s;
+        white-space: nowrap;
     }
 
-    .user-dropdown-toggle:hover {
-        background: rgba(255, 255, 255, 0.1);
-    }
-
-    .user-icon {
-        font-size: 18px;
-    }
+    .user-dropdown-toggle:hover { background: rgba(255,255,255,0.12); }
 
     .dropdown-arrow {
-        font-size: 12px;
-        transition: transform 0.3s ease;
+        font-size: 10px;
+        transition: transform 0.25s;
     }
 
-    .user-dropdown.active .dropdown-arrow {
-        transform: rotate(180deg);
-    }
+    .user-dropdown.active .dropdown-arrow { transform: rotate(180deg); }
 
-    .workspace-name {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    /* Dropdown Menu */
     .user-dropdown-menu {
         position: absolute;
-        top: 100%;
+        top: calc(100% + 6px);
         left: 0;
-        margin-top: 8px;
         background: white;
-        border-radius: 12px;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-        min-width: 280px;
+        border-radius: 10px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        min-width: 220px;
         opacity: 0;
         visibility: hidden;
-        transform: translateY(-10px);
-        transition: all 0.3s ease;
-        z-index: 1000;
+        transform: translateY(-8px);
+        transition: all 0.25s ease;
+        z-index: 2000;
     }
 
     .user-dropdown.active .user-dropdown-menu {
@@ -91,494 +65,417 @@
     }
 
     .dropdown-header {
-        padding: 16px;
+        padding: 12px 14px;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 12px 12px 0 0;
+        border-radius: 10px 10px 0 0;
     }
 
-    .user-info {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
+    .user-info { display: flex; align-items: center; gap: 10px; }
 
     .user-icon-large {
-        font-size: 40px;
-        width: 50px;
-        height: 50px;
+        font-size: 28px;
+        width: 38px;
+        height: 38px;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: rgba(255, 255, 255, 0.2);
+        background: rgba(255,255,255,0.2);
         border-radius: 50%;
     }
 
-    .user-details {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-        color: white;
-    }
+    .user-details { display: flex; flex-direction: column; color: white; }
+    .user-details strong { font-size: 13px; }
+    .user-email { font-size: 11px; opacity: 0.85; }
 
-    .user-details strong {
-        font-size: 15px;
-        font-weight: 600;
-    }
+    .dd-divider { height: 1px; background: #e2e8f0; margin: 4px 0; }
 
-    .user-email {
-        font-size: 12px;
-        opacity: 0.9;
-    }
-
-    .dropdown-divider {
-        height: 1px;
-        background: #e2e8f0;
-        margin: 8px 0;
-    }
-
-    .dropdown-item {
+    .dd-item {
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding: 12px 16px;
+        gap: 10px;
+        padding: 9px 14px;
         color: #2d3748;
         text-decoration: none;
-        transition: all 0.2s ease;
-        font-size: 14px;
+        font-size: 13px;
+        transition: background 0.15s;
     }
 
-    .dropdown-item:hover {
-        background: #f7fafc;
-        color: #667eea;
-    }
+    .dd-item:hover { background: #f7fafc; color: #667eea; }
+    .dd-item i { font-size: 14px; width: 16px; text-align: center; }
+    .dd-item.logout { color: #e53e3e; }
+    .dd-item.logout:hover { background: #fff5f5; color: #c53030; }
 
-    .dropdown-item i {
-        font-size: 16px;
-        width: 20px;
-        text-align: center;
-    }
-
-    .logout-item {
-        color: #e53e3e;
-    }
-
-    .logout-item:hover {
-        background: #fff5f5;
-        color: #c53030;
-    }
-
+    /* Hours badge */
     .hours-today {
         display: flex;
         align-items: center;
-        gap: 6px;
-        padding: 6px 14px;
-        background: rgba(255, 255, 255, 0.15);
+        gap: 5px;
+        padding: 4px 10px;
+        background: rgba(255,255,255,0.15);
         border-radius: 20px;
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 500;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .hours-today i {
-        font-size: 14px;
-    }
-
-    .hours-today strong {
-        font-weight: 700;
-        color: #ffeb3b;
-        font-size: 14px;
-    }
-
-    .navbar-brand:hover {
-        color: rgba(255, 255, 255, 0.9) !important;
-        text-decoration: none;
-    }
-
-    .navbar-brand::before {
-        content: '👤';
-        font-size: 18px;
-    }
-
-    .navbar-toggler {
-        border-color: rgba(255, 255, 255, 0.3) !important;
-        margin: 8px 16px;
-    }
-
-    .navbar-toggler-icon {
-        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255, 255, 255, 0.9)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
-    }
-
-    .navbar-nav {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 4px;
-        padding: 8px 12px;
-    }
-
-    /* Language Selector - Right Side */
-    .language-selector-right {
-        margin-left: auto;
-        align-self: flex-end;
-    }
-
-    .language-flags-group {
-        display: flex;
-        gap: 6px;
-        padding: 4px;
-        background: rgba(0, 0, 0, 0.1);
-        border-radius: 6px;
-        margin-bottom: 4px;
-    }
-
-    .language-flags-group .flag-btn {
-        background: rgba(255, 255, 255, 0.15);
-        border: 1px solid rgba(255, 255, 255, 0.25);
-        cursor: pointer;
-        padding: 3px 5px;
-        border-radius: 4px;
-        transition: all 0.2s ease;
-        opacity: 0.7;
-        width: 32px;
-        height: 22px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .language-flags-group .flag-icon {
-        width: 22px;
-        height: 14px;
-        border-radius: 2px;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-    }
-
-    .language-flags-group .flag-btn:hover {
-        background: rgba(255, 255, 255, 0.25);
-        opacity: 1;
-        transform: scale(1.05);
-        border-color: rgba(255, 255, 255, 0.4);
-    }
-
-    .language-flags-group .flag-btn.active {
-        opacity: 1;
-        background: rgba(255, 255, 255, 0.35);
-        border-color: rgba(255, 255, 255, 0.6);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    }
-
-    .language-flags-group .flag-btn[data-lang="pt"].active {
-        border-color: #009c3b;
-        box-shadow: 0 0 0 1px rgba(0, 156, 59, 0.4);
-    }
-
-    .language-flags-group .flag-btn[data-lang="en"].active {
-        border-color: #012169;
-        box-shadow: 0 0 0 1px rgba(1, 33, 105, 0.4);
-    }
-
-    .language-flags-group .flag-btn[data-lang="es"].active {
-        border-color: #c60b1e;
-        box-shadow: 0 0 0 1px rgba(198, 11, 30, 0.4);
-    }
-
-    .nav-item {
-        list-style: none;
-    }
-
-    .nav-link {
-        color: white !important;
-        padding: 8px 12px !important;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 4px;
-        transition: all 0.2s ease;
-        border-radius: 8px;
-        min-width: 70px;
-        text-align: center;
-    }
-
-    .nav-link:hover {
-        background: rgba(255, 255, 255, 0.15) !important;
-        transform: translateY(-1px);
-    }
-
-    .nav-link.active {
-        background: rgba(255, 255, 255, 0.2) !important;
-    }
-
-    .nav-icon {
-        font-size: 20px;
-        width: 36px;
-        height: 36px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(255, 255, 255, 0.15);
-        border-radius: 8px;
-        transition: all 0.2s ease;
-    }
-
-    .nav-link:hover .nav-icon {
-        background: rgba(255, 255, 255, 0.25);
-        transform: scale(1.05);
-    }
-
-    .nav-text {
-        font-size: 11px;
-        font-weight: 500;
+        color: white;
+        border: 1px solid rgba(255,255,255,0.2);
         white-space: nowrap;
     }
 
+    .hours-today strong { color: #ffeb3b; font-size: 12px; }
+
+    /* Nav links */
+    .navbar-nav { display: flex; align-items: center; gap: 2px; padding: 0; margin: 0; }
+    .nav-item { list-style: none; }
+
+    .nav-link {
+        color: rgba(255,255,255,0.92) !important;
+        padding: 6px 10px !important;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 13px;
+        font-weight: 500;
+        border-radius: 6px;
+        transition: background 0.2s;
+        white-space: nowrap;
+    }
+
+    .nav-link i { font-size: 14px; }
+    .nav-link:hover { background: rgba(255,255,255,0.15) !important; color: white !important; }
+    .nav-link.active-page { background: rgba(255,255,255,0.2) !important; }
+
+    /* Gerenciar dropdown */
+    .gerenciar-dropdown { position: relative; }
+
+    .gerenciar-toggle {
+        color: rgba(255,255,255,0.92) !important;
+        padding: 6px 10px !important;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 13px;
+        font-weight: 500;
+        border-radius: 6px;
+        transition: background 0.2s;
+        cursor: pointer;
+        background: none;
+        border: none;
+        white-space: nowrap;
+    }
+
+    .gerenciar-toggle:hover { background: rgba(255,255,255,0.15) !important; }
+    .gerenciar-dropdown.active .gerenciar-toggle { background: rgba(255,255,255,0.2) !important; }
+
+    .gerenciar-menu {
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        min-width: 200px;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-8px);
+        transition: all 0.25s ease;
+        z-index: 2000;
+        padding: 6px 0;
+    }
+
+    .gerenciar-dropdown.active .gerenciar-menu {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+
+    .gerenciar-section-label {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        color: #a0aec0;
+        padding: 8px 14px 4px;
+        text-transform: uppercase;
+    }
+
+    .gerenciar-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 14px;
+        color: #2d3748;
+        text-decoration: none;
+        font-size: 13px;
+        transition: background 0.15s;
+    }
+
+    .gerenciar-item:hover { background: #f7fafc; color: #667eea; }
+    .gerenciar-item i { font-size: 14px; width: 16px; text-align: center; color: #667eea; }
+
+    /* Logo */
+    .office-logo-small {
+        max-height: 28px;
+        max-width: 90px;
+        object-fit: contain;
+        border-radius: 3px;
+    }
+
+    /* Language flags */
+    .language-flags-group {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+    }
+
+    .flag-btn {
+        background: rgba(255,255,255,0.12);
+        border: 1px solid rgba(255,255,255,0.2);
+        cursor: pointer;
+        padding: 2px 4px;
+        border-radius: 3px;
+        transition: all 0.2s;
+        opacity: 0.65;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .flag-btn:hover { opacity: 1; background: rgba(255,255,255,0.22); }
+    .flag-btn.active { opacity: 1; background: rgba(255,255,255,0.28); border-color: rgba(255,255,255,0.5); }
+
+    .flag-icon { width: 20px; height: 13px; border-radius: 2px; display: block; }
+
+    /* Navbar right section */
+    .navbar-right {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 4px;
+        margin-left: auto;
+    }
+
+    .office-logo-block {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+    }
+
+    .office-name-small {
+        font-size: 9px;
+        color: rgba(255,255,255,0.85);
+        text-align: center;
+        max-width: 140px;
+        line-height: 1.2;
+        white-space: normal;
+    }
+
+    .navbar-toggler {
+        border-color: rgba(255,255,255,0.3) !important;
+    }
+
+    .navbar-toggler-icon {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255,255,255,0.9)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+    }
+
     @@media (max-width: 768px) {
-        .navbar-nav {
-            padding: 16px;
-        }
-
-        .nav-link {
-            width: 100%;
-            flex-direction: row;
-            justify-content: flex-start;
-            gap: 12px;
-            padding: 12px 16px !important;
-            min-width: auto;
-        }
-
-        .nav-text {
-            font-size: 14px;
-        }
-
-        .nav-icon {
-            width: 40px;
-            height: 40px;
-            font-size: 22px;
-        }
-
-        .language-selector-top {
-            margin-right: 8px;
-        }
-
-        .navbar-brand-wrapper {
-            padding: 12px 16px;
-            flex-wrap: wrap;
-        }
+        .navbar-nav { flex-direction: column; align-items: flex-start; padding: 8px 0; gap: 0; }
+        .nav-link { width: 100%; }
+        .gerenciar-menu, .user-dropdown-menu { position: static; opacity: 1; visibility: visible; transform: none; box-shadow: none; border-radius: 0; }
+        .navbar-right { margin-left: 0; padding: 8px 0; }
     }
 </style>
 
-<div class="navbar-brand-container">
-    <div class="user-dropdown">
-        <button class="user-dropdown-toggle" id="userDropdownToggle">
-            <span class="workspace-name">
-                <span class="user-icon">👤</span>
-                @Model.Name's <span data-i18n="menu.workspace">workspace</span>
-            </span>
-            <i class="bi bi-chevron-down dropdown-arrow"></i>
-        </button>
-        
-        <div class="user-dropdown-menu" id="userDropdownMenu">
-            <div class="dropdown-header">
-                <div class="user-info">
-                    <span class="user-icon-large">👤</span>
-                    <div class="user-details">
-                        <strong>@Model.Name</strong>
-                        <span class="user-email">@Model.Login</span>
-                    </div>
+<!-- Left: user dropdown + hours -->
+<div class="user-dropdown" id="userDropdown">
+    <button class="user-dropdown-toggle" id="userDropdownToggle">
+        <span>👤 @Model.Name's <span data-i18n="menu.workspace">workspace</span></span>
+        <i class="bi bi-chevron-down dropdown-arrow"></i>
+    </button>
+
+    <div class="user-dropdown-menu" id="userDropdownMenu">
+        <div class="dropdown-header">
+            <div class="user-info">
+                <span class="user-icon-large">👤</span>
+                <div class="user-details">
+                    <strong>@Model.Name</strong>
+                    <span class="user-email">@Model.Login</span>
                 </div>
             </div>
-            
-            <div class="dropdown-divider"></div>
-            
-            <a class="dropdown-item" asp-area="" asp-controller="AlterarSenha" asp-action="Index">
-                <i class="bi bi-shield-lock"></i>
-                <span data-i18n="menu.senha">Senha</span>
-            </a>
-            
-            <a class="dropdown-item" asp-area="" asp-controller="Parametros" asp-action="Index">
-                <i class="bi bi-gear"></i>
-                <span data-i18n="menu.configuracoes">Configurações</span>
-            </a>
-            
-            <a class="dropdown-item" asp-area="" asp-controller="Home" asp-action="About">
-                <i class="bi bi-info-circle"></i>
-                <span data-i18n="menu.about">Sobre</span>
-            </a>
-            
-            <div class="dropdown-divider"></div>
-            
-            <a class="dropdown-item logout-item" asp-area="" asp-controller="Login" asp-action="Sair">
-                <i class="bi bi-box-arrow-right"></i>
-                <span data-i18n="menu.sair">Sair</span>
-            </a>
         </div>
-    </div>
-    
-    <div class="hours-today">
-        <i class="bi bi-clock-history"></i>
-        <span data-i18n="menu.hourstoday">Hoje:</span>
-        <strong>@ViewBag.HorasHoje.ToString("F1")h</strong>
+        <div class="dd-divider"></div>
+        <a class="dd-item" asp-controller="AlterarSenha" asp-action="Index">
+            <i class="bi bi-shield-lock"></i><span data-i18n="menu.senha">Senha</span>
+        </a>
+        <a class="dd-item" asp-controller="Parametros" asp-action="Index">
+            <i class="bi bi-gear"></i><span data-i18n="menu.configuracoes">Configurações</span>
+        </a>
+        <a class="dd-item" asp-controller="Home" asp-action="About">
+            <i class="bi bi-info-circle"></i><span data-i18n="menu.about">Sobre</span>
+        </a>
+        <div class="dd-divider"></div>
+        <a class="dd-item logout" asp-controller="Login" asp-action="Sair">
+            <i class="bi bi-box-arrow-right"></i><span data-i18n="menu.sair">Sair</span>
+        </a>
     </div>
 </div>
-<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+
+<div class="hours-today">
+    <i class="bi bi-clock-history"></i>
+    <span data-i18n="menu.hourstoday">Hoje:</span>
+    <strong>@ViewBag.HorasHoje.ToString("F1")h</strong>
+</div>
+
+<!-- Collapse toggle (mobile) -->
+<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
         aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
 </button>
-<div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-    <ul class="navbar-nav flex-grow-1">
+
+<!-- Nav items -->
+<div class="navbar-collapse collapse d-sm-inline-flex">
+    <ul class="navbar-nav">
         <li class="nav-item">
-            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index" title="Home">
-                <span class="nav-icon"><i class="bi bi-house-door"></i></span>
-                <span class="nav-text" data-i18n="menu.home">Home</span>
+            <a class="nav-link" asp-controller="Home" asp-action="Index">
+                <i class="bi bi-house-door"></i>
+                <span data-i18n="menu.home">Home</span>
             </a>
         </li>
-
         <li class="nav-item">
-            <a class="nav-link" asp-area="" asp-controller="TimeTracker" asp-action="Index" title="Time Tracker">
-                <span class="nav-icon"><i class="bi bi-stopwatch"></i></span>
-                <span class="nav-text" data-i18n="menu.timetracker">Time Tracker</span>
+            <a class="nav-link" asp-controller="TimeTracker" asp-action="Index">
+                <i class="bi bi-stopwatch"></i>
+                <span data-i18n="menu.timetracker">Time Tracker</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" asp-controller="ProcessRecord" asp-action="Index">
+                <i class="bi bi-file-earmark-text"></i>
+                <span data-i18n="menu.relatorios">Relatórios</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" asp-controller="ProcessRecords" asp-action="Index">
+                <i class="bi bi-list-check"></i>
+                <span data-i18n="menu.atividades">Atividades</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" asp-controller="Calendar" asp-action="Index">
+                <i class="bi bi-calendar3"></i>
+                <span data-i18n="menu.calendario">Calendário</span>
             </a>
         </li>
 
         @if (showAdminItems)
         {
-            @if (isAdmin)
+            <li class="nav-item gerenciar-dropdown" id="gerenciarDropdown">
+                <button class="gerenciar-toggle" id="gerenciarToggle">
+                    <i class="bi bi-grid"></i>
+                    <span>Gerenciar</span>
+                    <i class="bi bi-chevron-down dropdown-arrow" style="font-size:10px;"></i>
+                </button>
+                <div class="gerenciar-menu" id="gerenciarMenu">
+                    <div class="gerenciar-section-label">Cadastros</div>
+                    <a class="gerenciar-item" asp-controller="Attorneys" asp-action="Index">
+                        <i class="bi bi-people"></i><span data-i18n="menu.usuarios">Usuários</span>
+                    </a>
+                    <a class="gerenciar-item" asp-controller="Clients" asp-action="Index">
+                        <i class="bi bi-person-badge"></i><span data-i18n="menu.clientes">Clientes</span>
+                    </a>
+                    <a class="gerenciar-item" asp-controller="Departments" asp-action="Index">
+                        <i class="bi bi-building"></i><span data-i18n="menu.area">Área</span>
+                    </a>
+                    @if (isAdmin)
+                    {
+                        <div class="dd-divider"></div>
+                        <div class="gerenciar-section-label">Financeiro</div>
+                        <a class="gerenciar-item" asp-controller="ValorClientes" asp-action="Index">
+                            <i class="bi bi-cash-coin"></i><span data-i18n="menu.valores">Valores</span>
+                        </a>
+                        <a class="gerenciar-item" asp-controller="Mensalistas" asp-action="Index">
+                            <i class="bi bi-calendar-check"></i><span data-i18n="menu.mensalistas">Mensalistas</span>
+                        </a>
+                        <a class="gerenciar-item" asp-controller="Mensalista" asp-action="Index">
+                            <i class="bi bi-graph-up-arrow"></i><span data-i18n="menu.resultados">Resultados</span>
+                        </a>
+                        <a class="gerenciar-item" asp-controller="PercentualAreas" asp-action="Index">
+                            <i class="bi bi-percent"></i><span data-i18n="menu.percentuais">Percentuais</span>
+                        </a>
+                    }
+                </div>
+            </li>
+        }
+    </ul>
+
+    <!-- Right side: logo acima das bandeiras -->
+    <div class="navbar-right">
+        @{
+            var parametros = ViewBag.Parametros as WebAppSystems.Models.Parametros;
+            if (parametros != null && parametros.LogoData != null)
             {
-                <li class="nav-item">
-                    <a class="nav-link" asp-area="" asp-controller="ValorClientes" asp-action="Index" title="Valores">
-                        <span class="nav-icon"><i class="bi bi-cash-coin"></i></span>
-                        <span class="nav-text" data-i18n="menu.valores">Valores</span>
-                    </a>
-                </li>
-            }
-
-            <li class="nav-item">
-                <a class="nav-link" asp-area="" asp-controller="Attorneys" asp-action="Index" title="Usuários">
-                    <span class="nav-icon"><i class="bi bi-people"></i></span>
-                    <span class="nav-text" data-i18n="menu.usuarios">Usuários</span>
-                </a>
-            </li>
-
-            <li class="nav-item">
-                <a class="nav-link" asp-area="" asp-controller="Clients" asp-action="Index" title="Clientes">
-                    <span class="nav-icon"><i class="bi bi-person-badge"></i></span>
-                    <span class="nav-text" data-i18n="menu.clientes">Clientes</span>
-                </a>
-            </li>
-
-            <li class="nav-item">
-                <a class="nav-link" asp-area="" asp-controller="Departments" asp-action="Index" title="Área">
-                    <span class="nav-icon"><i class="bi bi-building"></i></span>
-                    <span class="nav-text" data-i18n="menu.area">Área</span>
-                </a>
-            </li>
-
-            @if (isAdmin)
-            {
-                <li class="nav-item">
-                    <a class="nav-link" asp-area="" asp-controller="Mensalistas" asp-action="Index" title="Mensalistas">
-                        <span class="nav-icon"><i class="bi bi-calendar-check"></i></span>
-                        <span class="nav-text" data-i18n="menu.mensalistas">Mensalistas</span>
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link" asp-area="" asp-controller="Mensalista" asp-action="Index" title="Resultados">
-                        <span class="nav-icon"><i class="bi bi-graph-up-arrow"></i></span>
-                        <span class="nav-text" data-i18n="menu.resultados">Resultados</span>
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link" asp-area="" asp-controller="PercentualAreas" asp-action="Index" title="Percentuais">
-                        <span class="nav-icon"><i class="bi bi-percent"></i></span>
-                        <span class="nav-text" data-i18n="menu.percentuais">Percentuais</span>
-                    </a>
-                </li>
+                var base64Logo = Convert.ToBase64String(parametros.LogoData);
+                var logoSrc = $"data:{parametros.LogoMimeType};base64,{base64Logo}";
+                <div class="office-logo-block">
+                    <img src="@logoSrc" alt="Logo" class="office-logo-small" />
+                    <span class="office-name-small">Eberhardt, Carrascoza, Bossi, Silva, Matteussi &amp; Costa Beber Advogados</span>
+                </div>
             }
         }
 
-        <li class="nav-item">
-            <a class="nav-link" asp-area="" asp-controller="ProcessRecord" asp-action="Index" title="Relatórios">
-                <span class="nav-icon"><i class="bi bi-file-earmark-text"></i></span>
-                <span class="nav-text" data-i18n="menu.relatorios">Relatórios</span>
-            </a>
-        </li>
-
-        <li class="nav-item">
-            <a class="nav-link" asp-area="" asp-controller="ProcessRecords" asp-action="Index" title="Atividades">
-                <span class="nav-icon"><i class="bi bi-list-check"></i></span>
-                <span class="nav-text" data-i18n="menu.atividades">Atividades</span>
-            </a>
-        </li>
-
-        <li class="nav-item">
-            <a class="nav-link" asp-area="" asp-controller="Calendar" asp-action="Index" title="Calendário">
-                <span class="nav-icon"><i class="bi bi-calendar3"></i></span>
-                <span class="nav-text" data-i18n="menu.calendario">Calendário</span>
-            </a>
-        </li>
-
-        <!-- Language Selector - Right Side -->
-        <li class="nav-item language-selector-right">
-            <div class="language-flags-group">
-                <button class="flag-btn active" data-lang="pt" title="Português">
-                    <svg class="flag-icon" viewBox="0 0 36 24" xmlns="http://www.w3.org/2000/svg">
-                        <rect width="36" height="24" fill="#009b3a"/>
-                        <path d="M18 3 L33 12 L18 21 L3 12 Z" fill="#fedf00"/>
-                        <circle cx="18" cy="12" r="4" fill="#002776"/>
-                    </svg>
-                </button>
-                <button class="flag-btn" data-lang="en" title="English">
-                    <svg class="flag-icon" viewBox="0 0 36 24" xmlns="http://www.w3.org/2000/svg">
-                        <rect width="36" height="24" fill="#012169"/>
-                        <path d="M0 0 L36 24 M36 0 L0 24" stroke="#fff" stroke-width="4"/>
-                        <path d="M0 0 L36 24 M36 0 L0 24" stroke="#C8102E" stroke-width="2.5"/>
-                        <path d="M18 0 V24 M0 12 H36" stroke="#fff" stroke-width="6"/>
-                        <path d="M18 0 V24 M0 12 H36" stroke="#C8102E" stroke-width="3.5"/>
-                    </svg>
-                </button>
-                <button class="flag-btn" data-lang="es" title="Español">
-                    <svg class="flag-icon" viewBox="0 0 36 24" xmlns="http://www.w3.org/2000/svg">
-                        <rect width="36" height="6" fill="#AA151B"/>
-                        <rect y="6" width="36" height="12" fill="#F1BF00"/>
-                        <rect y="18" width="36" height="6" fill="#AA151B"/>
-                    </svg>
-                </button>
-            </div>
-        </li>
-    </ul>
+        <div class="language-flags-group">
+            <button class="flag-btn active" data-lang="pt" title="Português">
+                <svg class="flag-icon" viewBox="0 0 36 24" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="36" height="24" fill="#009b3a"/>
+                    <path d="M18 3 L33 12 L18 21 L3 12 Z" fill="#fedf00"/>
+                    <circle cx="18" cy="12" r="4" fill="#002776"/>
+                </svg>
+            </button>
+            <button class="flag-btn" data-lang="en" title="English">
+                <svg class="flag-icon" viewBox="0 0 36 24" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="36" height="24" fill="#012169"/>
+                    <path d="M0 0 L36 24 M36 0 L0 24" stroke="#fff" stroke-width="4"/>
+                    <path d="M0 0 L36 24 M36 0 L0 24" stroke="#C8102E" stroke-width="2.5"/>
+                    <path d="M18 0 V24 M0 12 H36" stroke="#fff" stroke-width="6"/>
+                    <path d="M18 0 V24 M0 12 H36" stroke="#C8102E" stroke-width="3.5"/>
+                </svg>
+            </button>
+            <button class="flag-btn" data-lang="es" title="Español">
+                <svg class="flag-icon" viewBox="0 0 36 24" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="36" height="6" fill="#AA151B"/>
+                    <rect y="6" width="36" height="12" fill="#F1BF00"/>
+                    <rect y="18" width="36" height="6" fill="#AA151B"/>
+                </svg>
+            </button>
+        </div>
+    </div>
 </div>
 
-
-
-
-
-
 <script>
-    // User Dropdown Toggle
-    document.addEventListener('DOMContentLoaded', function() {
-        const dropdownToggle = document.getElementById('userDropdownToggle');
-        const dropdown = dropdownToggle?.closest('.user-dropdown');
-        
-        if (dropdownToggle && dropdown) {
-            dropdownToggle.addEventListener('click', function(e) {
-                e.stopPropagation();
-                dropdown.classList.toggle('active');
-            });
-            
-            // Fechar ao clicar fora
-            document.addEventListener('click', function(e) {
-                if (!dropdown.contains(e.target)) {
-                    dropdown.classList.remove('active');
-                }
-            });
-            
-            // Fechar ao clicar em um item do menu
-            const dropdownItems = dropdown.querySelectorAll('.dropdown-item');
-            dropdownItems.forEach(item => {
-                item.addEventListener('click', function() {
-                    dropdown.classList.remove('active');
-                });
-            });
-        }
+document.addEventListener('DOMContentLoaded', function () {
+    // User dropdown
+    const userToggle = document.getElementById('userDropdownToggle');
+    const userDropdown = document.getElementById('userDropdown');
+    if (userToggle) {
+        userToggle.addEventListener('click', function (e) {
+            e.stopPropagation();
+            userDropdown.classList.toggle('active');
+            gerenciarDropdown?.classList.remove('active');
+        });
+    }
+
+    // Gerenciar dropdown
+    const gerenciarToggle = document.getElementById('gerenciarToggle');
+    const gerenciarDropdown = document.getElementById('gerenciarDropdown');
+    if (gerenciarToggle) {
+        gerenciarToggle.addEventListener('click', function (e) {
+            e.stopPropagation();
+            gerenciarDropdown.classList.toggle('active');
+            userDropdown?.classList.remove('active');
+        });
+    }
+
+    // Close on outside click
+    document.addEventListener('click', function () {
+        userDropdown?.classList.remove('active');
+        gerenciarDropdown?.classList.remove('active');
     });
+});
 </script>
