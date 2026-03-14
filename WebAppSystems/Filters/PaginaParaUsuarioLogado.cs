@@ -7,7 +7,7 @@ namespace WebAppSystems.Filters
 {
     public class PaginaParaUsuarioLogado : ActionFilterAttribute
     {
-        public override void OnActionExecuted(ActionExecutedContext context)
+        public override void OnActionExecuting(ActionExecutingContext context)
         {
             string sessaoUsuario = context.HttpContext.Session.GetString("sessaoUsuarioLogado");
 
@@ -23,7 +23,7 @@ namespace WebAppSystems.Filters
                     context.Result = new RedirectToRouteResult(new RouteValueDictionary { { "controller", "Login" }, { "action", "Index" } });
                 }
             }
-            base.OnActionExecuted(context);
+            base.OnActionExecuting(context);
         }
     }
 }

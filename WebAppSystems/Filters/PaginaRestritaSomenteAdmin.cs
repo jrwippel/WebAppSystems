@@ -8,7 +8,7 @@ namespace WebAppSystems.Filters
 {
     public class PaginaRestritaSomenteAdmin :ActionFilterAttribute
     {
-        public override void OnActionExecuted(ActionExecutedContext context)
+        public override void OnActionExecuting(ActionExecutingContext context)
         {
             string sessaoUsuario = context.HttpContext.Session.GetString("sessaoUsuarioLogado");
 
@@ -22,6 +22,7 @@ namespace WebAppSystems.Filters
                 if (attorney == null)
                 {
                     context.Result = new RedirectToRouteResult(new RouteValueDictionary { { "controller", "Login" }, { "action", "Index" } });
+                    return;
                 }
 
                 if (attorney.Perfil == ProfileEnum.Padrao)
@@ -29,7 +30,7 @@ namespace WebAppSystems.Filters
                     context.Result = new RedirectToRouteResult(new RouteValueDictionary { { "controller", "Restrito" }, { "action", "Index" } });
                 }
             }
-            base.OnActionExecuted(context);
+            base.OnActionExecuting(context);
         }
     }
 }

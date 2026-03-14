@@ -118,7 +118,17 @@ namespace WebAppSystems.Services
             _context.Attorney.Update(usuarioDB);
             _context.SaveChanges();
             return usuarioDB;
+        }
 
+        // Atualiza apenas o hash da senha (usado no upgrade SHA1 → BCrypt)
+        public async Task AtualizarSenhaHashAsync(Attorney usuario)
+        {
+            var usuarioDB = await _context.Attorney.FindAsync(usuario.Id);
+            if (usuarioDB == null) return;
+            usuarioDB.Password = usuario.Password;
+            usuarioDB.UpdateDate = DateTime.Now;
+            _context.Attorney.Update(usuarioDB);
+            await _context.SaveChangesAsync();
         }
         public Attorney FindByLoginAsync(string login)
         {
