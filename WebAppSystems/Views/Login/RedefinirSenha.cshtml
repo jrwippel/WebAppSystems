@@ -1,7 +1,7 @@
 ﻿@model RedefinirSenhaModel
 @{
     Layout = "_LayoutDeslogado";
-    ViewData["Title"] = "Redefinir a Senha";
+    ViewData["Title"] = "Redefinir Senha";
 }
 
 <!DOCTYPE html>
@@ -10,14 +10,55 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reset Password - JRWIT Solutions</title>
-    <link href="/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="/lib/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="/css/custom-styles.css" rel="stylesheet">
+    <link href="/lib/bootstrap/dist/css/bootstrap.min.css?v=2" rel="stylesheet">
+    <link href="/lib/bootstrap-icons/font/bootstrap-icons.css?v=2" rel="stylesheet">
+    <link href="/css/custom-styles.css?v=2" rel="stylesheet">
 </head>
 <body>
     <div class="login-page">
-        <div class="login-wrapper" style="max-width: 500px;">
-            <div class="login-right" style="padding: 50px 40px;">
+        <div class="login-wrapper">
+
+            <!-- Left Side -->
+            <div class="login-left">
+                <div class="brand-section">
+                    <div class="brand-logo-container">
+                        <div class="logo-text">
+                            <div class="logo-icon-large">
+                                <i class="bi bi-shield-lock"></i>
+                            </div>
+                            <h1 class="logo-title">Password Reset</h1>
+                            <p class="logo-subtitle">Secure account recovery</p>
+                        </div>
+                    </div>
+
+                    <div class="features-list">
+                        <div class="feature-item">
+                            <div class="feature-icon"><i class="bi bi-envelope-check"></i></div>
+                            <div class="feature-text">
+                                <h3>Email Verification</h3>
+                                <p>We verify your identity via email</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon"><i class="bi bi-key"></i></div>
+                            <div class="feature-text">
+                                <h3>Temporary Password</h3>
+                                <p>A new password will be sent to you</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon"><i class="bi bi-lock"></i></div>
+                            <div class="feature-text">
+                                <h3>Stay Secure</h3>
+                                <p>Change your password after login</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side -->
+            <div class="login-right">
                 <div class="login-card">
                     <div class="login-header">
                         <div class="icon-wrapper">
@@ -34,7 +75,6 @@
                             @TempData["MensagemErro"]
                         </div>
                     }
-
                     @if (TempData["MensagemSucesso"] != null)
                     {
                         <div class="alert alert-success">
@@ -47,14 +87,9 @@
                         <div class="form-group">
                             <label for="login">Username</label>
                             <div class="input-group">
-                                <span class="input-icon">
-                                    <i class="bi bi-person"></i>
-                                </span>
-                                <input type="text" 
-                                       asp-for="Login" 
-                                       class="form-control" 
-                                       id="login" 
-                                       placeholder="Enter your username">
+                                <span class="input-icon"><i class="bi bi-person"></i></span>
+                                <input type="text" asp-for="Login" class="form-control" id="login"
+                                       placeholder="Enter your username" autocomplete="off">
                             </div>
                             @Html.ValidationMessageFor(x => x.Login, "", new { @class = "text-danger" })
                         </div>
@@ -62,14 +97,9 @@
                         <div class="form-group">
                             <label for="email">Email</label>
                             <div class="input-group">
-                                <span class="input-icon">
-                                    <i class="bi bi-envelope"></i>
-                                </span>
-                                <input type="email" 
-                                       asp-for="Email" 
-                                       class="form-control" 
-                                       id="email" 
-                                       placeholder="Enter your email">
+                                <span class="input-icon"><i class="bi bi-envelope"></i></span>
+                                <input type="email" asp-for="Email" class="form-control" id="email"
+                                       placeholder="Enter your email" autocomplete="off">
                             </div>
                             @Html.ValidationMessageFor(x => x.Email, "", new { @class = "text-danger" })
                         </div>
@@ -78,19 +108,22 @@
                             Send New Password
                             <i class="bi bi-send"></i>
                         </button>
+                    </form>
 
-                        <a asp-controller="Login" asp-action="Index" class="btn-back">
+                    <div class="login-footer">
+                        <a asp-controller="Login" asp-action="Index" class="forgot-link">
                             <i class="bi bi-arrow-left"></i>
                             Back to Login
                         </a>
-                    </form>
+                    </div>
                 </div>
 
                 <div class="brand-footer">
-                    <span class="brand-text">JRWIT.COM</span>
+                    <a href="https://jrwippel.github.io/WebAppSystems/" target="_blank" class="brand-text">JRWIT.COM</a>
                     <span class="brand-tagline">SMART SOLUTIONS FOR YOUR BUSINESS</span>
                 </div>
             </div>
+
         </div>
     </div>
 
