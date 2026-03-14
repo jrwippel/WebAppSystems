@@ -1,7 +1,5 @@
-﻿using System.Net.Mail;
-using System.Net;
-using Azure;
-using Azure.Communication.Email;
+﻿using System.Net;
+using System.Net.Mail;
 
 namespace WebAppSystems.Helper
 {
@@ -18,49 +16,34 @@ namespace WebAppSystems.Helper
         {
             try
             {
-                string connectionString = _configuration["AzureEmail:ConnectionString"];
-                string senderAddress = _configuration["AzureEmail:SenderAddress"];
+                string host = _configuration["SMTP:Host"];
+                int porta = int.Parse(_configuration["SMTP:Porta"]);
+                string username = _configuration["SMTP:Username"];
+                string senha = _configuration["SMTP:Senha"];
+                string nome = _configuration["SMTP:Name"];
 
-                var emailClient = new EmailClient(connectionString);
-
-                var emailMessage = new EmailMessage(
-                    senderAddress: senderAddress,
-                    content: new EmailContent(assunto)
-                    {
-                        PlainText = mensagem,
-                        Html = htmlBody ?? $@"
-                        <html>
-                            <body>
-                                <h1>{assunto}</h1>
-                                <p>{mensagem}</p>
-                            </body>
-                        </html>"
-                    },
-                    recipients: new EmailRecipients(new List<EmailAddress> { new EmailAddress(email) })
-                );
-
-                if (!string.IsNullOrEmpty(anexoPath))
+                var smtpClient = new SmtpClient(host, porta)
                 {
-                    // Extrai o nome do arquivo a partir do caminho completo
-                    string nomeArquivo = Path.GetFileName(anexoPath);
+                    Credentials = new NetworkCredential(username, senha),
+                    EnableSsl = true
+                };
 
-                    var attachment = new EmailAttachment(
-                        name: nomeArquivo,  // Nome do arquivo
-                        content: BinaryData.FromBytes(File.ReadAllBytes(anexoPath)),  // Conteúdo do arquivo em bytes
-                        contentType: "application/pdf" // Tipo de conteúdo (MIME type)
-                    );
+                var mailMessage = new MailMessage
+                {
+                    From = new MailAddress(username, nome),
+                    Subject = assunto,
+                    Body = htmlBody ?? $"<html><body><p>{mensagem}</p></body></html>",
+                    IsBodyHtml = true
+                };
 
-                    emailMessage.Attachments.Add(attachment); // Adiciona o anexo ao e-mail
+                mailMessage.To.Add(email);
+
+                if (!string.IsNullOrEmpty(anexoPath) && System.IO.File.Exists(anexoPath))
+                {
+                    mailMessage.Attachments.Add(new Attachment(anexoPath));
                 }
 
-
-
-                // Envia o e-mail de forma assíncrona
-                EmailSendOperation emailSendOperation = await emailClient.SendAsync(
-                    WaitUntil.Completed, // Aguarda a conclusão da operação
-                    emailMessage
-                );
-
+                await smtpClient.SendMailAsync(mailMessage);
                 return true;
             }
             catch (Exception ex)
@@ -70,5 +53,4 @@ namespace WebAppSystems.Helper
             }
         }
     }
-
 }
