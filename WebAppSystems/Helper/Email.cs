@@ -14,7 +14,7 @@ namespace WebAppSystems.Helper
             _configuration = configuration;
         }
 
-        public async Task<bool> EnviarAsync(string email, string assunto, string mensagem, string anexoPath = null)
+        public async Task<bool> EnviarAsync(string email, string assunto, string mensagem, string anexoPath = null, string htmlBody = null)
         {
             try
             {
@@ -28,7 +28,7 @@ namespace WebAppSystems.Helper
                     content: new EmailContent(assunto)
                     {
                         PlainText = mensagem,
-                        Html = $@"
+                        Html = htmlBody ?? $@"
                         <html>
                             <body>
                                 <h1>{assunto}</h1>
