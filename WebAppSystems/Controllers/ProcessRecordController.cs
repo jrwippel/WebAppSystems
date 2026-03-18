@@ -615,19 +615,13 @@ namespace WebAppSystems.Controllers
                     var clientDrawing = clientSheet.CreateDrawingPatriarch();
                     var clientAnchor = helper.CreateClientAnchor();
 
-                    // Logo do cliente: fixado nas linhas 1-5, colunas 7-9
-                    clientAnchor.AnchorType = AnchorType.MoveAndResize;
-                    clientAnchor.Col1 = 7;
-                    clientAnchor.Row1 = 0;
-                    clientAnchor.Col2 = 10;
-                    clientAnchor.Row2 = 5;
-                    clientAnchor.Dx1 = 0;
-                    clientAnchor.Dy1 = 0;
-                    clientAnchor.Dx2 = 0;
-                    clientAnchor.Dy2 = 0;
+                    // Logo do cliente: ancora na coluna 8, linha 1, e redimensiona proporcionalmente
+                    clientAnchor.Col1 = 8;
+                    clientAnchor.Row1 = 1;
 
                     int clientPictureIdx = workbook.AddPicture(clientImageData, GetPictureType(clientImageMimeType));
                     var clientPicture = clientDrawing.CreatePicture(clientAnchor, clientPictureIdx);
+                    clientPicture.Resize(1);
                 }
 
                 string fileName = "Relatório_TimeSheet";
