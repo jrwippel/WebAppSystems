@@ -186,40 +186,30 @@ namespace WebAppSystems.Controllers
                 ICellStyle cellStyle = workbook.CreateCellStyle();
                 cellStyle.WrapText = true;
 
-                // Criar o estilo de sombreamento com XSSF
-                // Gradiente horizontal: branco (esquerda) → azul (direita), por coluna
+                // Cor azul claro para linhas alternadas de dados
                 XSSFColor lightBlueEmphasis = new XSSFColor(new byte[] { 222, 235, 247 });
-
-                // Criar estilos por coluna: branco → azul claro
-                byte[] gradStart = { 255, 255, 255 }; // branco
-                byte[] gradEnd   = { 173, 214, 240 }; // azul médio
-                XSSFCellStyle[] colStyles = new XSSFCellStyle[10];
-                for (int col = 0; col < 10; col++)
-                {
-                    float t = col / 9f;
-                    byte r = (byte)(gradStart[0] + (gradEnd[0] - gradStart[0]) * t);
-                    byte g = (byte)(gradStart[1] + (gradEnd[1] - gradStart[1]) * t);
-                    byte b = (byte)(gradStart[2] + (gradEnd[2] - gradStart[2]) * t);
-                    XSSFCellStyle s = (XSSFCellStyle)workbook.CreateCellStyle();
-                    s.SetFillForegroundColor(new XSSFColor(new byte[] { r, g, b }));
-                    s.FillPattern = FillPattern.SolidForeground;
-                    colStyles[col] = s;
-                }
-
                 XSSFCellStyle shadedStyle = (XSSFCellStyle)workbook.CreateCellStyle();
                 shadedStyle.SetFillForegroundColor(lightBlueEmphasis);
                 shadedStyle.FillPattern = FillPattern.SolidForeground;
 
-                // Aplicar gradiente horizontal nas 5 linhas do cabeçalho
+                // Estilo da célula mesclada do cabeçalho: azul claro sólido
+                XSSFCellStyle headerBgStyle = (XSSFCellStyle)workbook.CreateCellStyle();
+                headerBgStyle.SetFillForegroundColor(new XSSFColor(new byte[] { 189, 215, 238 }));
+                headerBgStyle.FillPattern = FillPattern.SolidForeground;
+
+                // Criar as linhas 0-4 e preencher todas as células com a cor do cabeçalho
                 for (int i = 0; i <= 4; i++)
                 {
                     IRow row = sheet.GetRow(i) ?? sheet.CreateRow(i);
                     for (int j = 0; j <= 9; j++)
                     {
                         ICell cell = row.GetCell(j) ?? row.CreateCell(j);
-                        cell.CellStyle = colStyles[j];
+                        cell.CellStyle = headerBgStyle;
                     }
                 }
+
+                // Mesclar toda a região do cabeçalho (linhas 0-4, colunas 0-9)
+                sheet.AddMergedRegion(new NPOI.SS.Util.CellRangeAddress(0, 4, 0, 9));
 
 
                 // Criar o estilo de cabeçalho
