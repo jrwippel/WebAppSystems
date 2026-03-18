@@ -555,40 +555,24 @@ namespace WebAppSystems.Controllers
                 // Criar o estilo para a palavra "TimeSheet" com fonte de tamanho 30 e negrito
                 ICellStyle timeSheetStyle = workbook.CreateCellStyle();
                 IFont font1 = workbook.CreateFont();
-                font1.FontHeightInPoints = 30;  // Define o tamanho da fonte como 30
-                font1.Boldweight = (short)FontBoldWeight.Bold; // Define a fonte como negrito
+                font1.FontHeightInPoints = 30;
+                font1.Boldweight = (short)FontBoldWeight.Bold;
                 timeSheetStyle.SetFont(font1);
-
-                // Centralizar o texto na célula
                 timeSheetStyle.Alignment = NPOIHorizontalAlignment.Center;
                 timeSheetStyle.VerticalAlignment = NPOIVerticalAlignment.Center;
 
-                // Adicionar a palavra "TimeSheet" na célula (coluna 6, linha 3)
-                var row3 = sheet.GetRow(2) ?? sheet.CreateRow(2); // Linha 3 é índice 2 (começa do 0)
-                var cell3 = row3.GetCell(5) ?? row3.CreateCell(5); // Coluna 6 é índice 5
-                cell3.SetCellValue("TimeSheet");
-                cell3.CellStyle = timeSheetStyle; // Aplicar o estilo à célula
+                // TimeSheet vai na célula A1 (célula ativa da região mesclada)
+                var rowA1 = sheet.GetRow(0) ?? sheet.CreateRow(0);
+                var cellA1ts = rowA1.GetCell(0) ?? rowA1.CreateCell(0);
+                cellA1ts.SetCellValue("TimeSheet");
 
-                // Agora copiar o estilo de sombreamento, se necessário
-                var previousRow = sheet.GetRow(1); // Pega a linha 2 para copiar o estilo de uma célula
-                if (previousRow != null)
-                {
-                    var previousCell = previousRow.GetCell(5); // Pega a célula da mesma coluna
-                    if (previousCell != null)
-                    {
-                        var previousStyle = previousCell.CellStyle;
-                        if (previousStyle != null)
-                        {
-                            // Clonar o estilo de sombreamento sem afetar a fonte
-                            ICellStyle clonedStyle = workbook.CreateCellStyle();
-                            clonedStyle.CloneStyleFrom(previousStyle);
-                            clonedStyle.SetFont(font1); // Manter a fonte definida
-                            clonedStyle.Alignment = NPOIHorizontalAlignment.Center; // Manter centralizado
-                            clonedStyle.VerticalAlignment = NPOIVerticalAlignment.Center; // Manter centralizado
-                            cell3.CellStyle = clonedStyle; // Aplicar o estilo clonado à célula
-                        }
-                    }
-                }
+                // Clonar estilo do cabeçalho e aplicar fonte grande centralizada
+                ICellStyle tsStyle = workbook.CreateCellStyle();
+                tsStyle.CloneStyleFrom(headerBgStyle);
+                tsStyle.SetFont(font1);
+                tsStyle.Alignment = NPOIHorizontalAlignment.Center;
+                tsStyle.VerticalAlignment = NPOIVerticalAlignment.Center;
+                cellA1ts.CellStyle = tsStyle;
 
 
                 // Adicionar a imagem do cliente ao relatório Excel
@@ -611,16 +595,16 @@ namespace WebAppSystems.Controllers
                     var clientDrawing = clientSheet.CreateDrawingPatriarch();
                     var clientAnchor = helper.CreateClientAnchor();
 
-                    // Logo do cliente: fixado nas linhas 1-5, colunas 7-9
+                    // Logo do cliente: colunas 8-9 (similar ao tamanho do logo do escritório), com margem
                     clientAnchor.AnchorType = AnchorType.MoveAndResize;
-                    clientAnchor.Col1 = 7;
+                    clientAnchor.Col1 = 8;
                     clientAnchor.Row1 = 0;
                     clientAnchor.Col2 = 10;
                     clientAnchor.Row2 = 5;
-                    clientAnchor.Dx1 = 0;
-                    clientAnchor.Dy1 = 0;
-                    clientAnchor.Dx2 = 0;
-                    clientAnchor.Dy2 = 0;
+                    clientAnchor.Dx1 = 20 * 9144;  // margem esquerda ~20px
+                    clientAnchor.Dy1 = 5 * 9144;   // margem topo ~5px
+                    clientAnchor.Dx2 = -20 * 9144; // margem direita ~20px
+                    clientAnchor.Dy2 = -5 * 9144;  // margem base ~5px
 
                     int clientPictureIdx = workbook.AddPicture(clientImageData, GetPictureType(clientImageMimeType));
                     var clientPicture = clientDrawing.CreatePicture(clientAnchor, clientPictureIdx);
