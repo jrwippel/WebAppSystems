@@ -477,29 +477,33 @@ namespace WebAppSystems.Controllers
                 double totalHoursSummary = 0;
                 double totalValueSummary = 0;
 
+                // Estilo centralizado para dados do sumário
+                ICellStyle summaryCellStyle = workbook.CreateCellStyle();
+                summaryCellStyle.Alignment = NPOIHorizontalAlignment.Center;
+                summaryCellStyle.VerticalAlignment = NPOIVerticalAlignment.Center;
+
                 CultureInfo brazilianCulture = new CultureInfo("pt-BR");
                 foreach (var kvp in departmentSummary)
                 {
                     IRow row = sheet.CreateRow(summaryDataRow);
                     row.CreateCell(0).SetCellValue(kvp.Key);
+                    row.GetCell(0).CellStyle = summaryCellStyle;
                     double hours = kvp.Value.hours;
-                    totalHoursSummary += hours;  // add to total hours summary
+                    totalHoursSummary += hours;
 
-                    // Convertendo o total de horas em minutos e arredondando para o número mais próximo de minutos.
                     int totalMinutes = (int)Math.Round(hours * 60);
                     int wholeHours = totalMinutes / 60;
                     int remainingMinutes = totalMinutes % 60;
-
                     string formattedHours = string.Format("{0}:{1:00}", wholeHours, remainingMinutes);
 
-
                     row.CreateCell(1).SetCellValue(formattedHours);
+                    row.GetCell(1).CellStyle = summaryCellStyle;
 
                     double value = kvp.Value.value;
-                    totalValueSummary += value;  // add to total value summary
-                                                 //row.CreateCell(2).SetCellValue(value);
+                    totalValueSummary += value;
 
                     row.CreateCell(2).SetCellValue(value.ToString("N2", brazilianCulture));
+                    row.GetCell(2).CellStyle = summaryCellStyle;
                     summaryDataRow++;
                 }
 
