@@ -192,14 +192,18 @@ namespace WebAppSystems.Controllers
                 shadedStyle.SetFillForegroundColor(lightBlueEmphasis);
                 shadedStyle.FillPattern = FillPattern.SolidForeground;
 
-                // Estilo da célula mesclada do cabeçalho: azul claro sólido, sem bordas
+                // Estilo da célula mesclada do cabeçalho: azul claro sólido, com bordas brancas
                 XSSFCellStyle headerBgStyle = (XSSFCellStyle)workbook.CreateCellStyle();
-                headerBgStyle.SetFillForegroundColor(new XSSFColor(new byte[] { 189, 215, 238 }));
+                headerBgStyle.SetFillForegroundColor(new XSSFColor(new byte[] { 222, 235, 247 }));
                 headerBgStyle.FillPattern = FillPattern.SolidForeground;
-                headerBgStyle.BorderTop = BorderStyle.None;
-                headerBgStyle.BorderBottom = BorderStyle.None;
-                headerBgStyle.BorderLeft = BorderStyle.None;
-                headerBgStyle.BorderRight = BorderStyle.None;
+                headerBgStyle.BorderTop = BorderStyle.Medium;
+                headerBgStyle.BorderBottom = BorderStyle.Medium;
+                headerBgStyle.BorderLeft = BorderStyle.Medium;
+                headerBgStyle.BorderRight = BorderStyle.Medium;
+                ((XSSFCellStyle)headerBgStyle).SetTopBorderColor(new XSSFColor(new byte[] { 255, 255, 255 }));
+                ((XSSFCellStyle)headerBgStyle).SetBottomBorderColor(new XSSFColor(new byte[] { 255, 255, 255 }));
+                ((XSSFCellStyle)headerBgStyle).SetLeftBorderColor(new XSSFColor(new byte[] { 255, 255, 255 }));
+                ((XSSFCellStyle)headerBgStyle).SetRightBorderColor(new XSSFColor(new byte[] { 255, 255, 255 }));
 
                 // Criar as linhas 0-4 e preencher todas as células com a cor do cabeçalho
                 for (int i = 0; i <= 4; i++)
@@ -848,12 +852,12 @@ namespace WebAppSystems.Controllers
                 gradientFill.Append(new DocumentFormat.OpenXml.Spreadsheet.GradientStop
                 {
                     Position = 0,
-                    Color = new DocumentFormat.OpenXml.Spreadsheet.Color { Rgb = "FFFFFFFF" }
+                    Color = new DocumentFormat.OpenXml.Spreadsheet.Color { Rgb = "FFFFFFFF" } // branco
                 });
                 gradientFill.Append(new DocumentFormat.OpenXml.Spreadsheet.GradientStop
                 {
                     Position = 1,
-                    Color = new DocumentFormat.OpenXml.Spreadsheet.Color { Rgb = "FF9DC3E6" }
+                    Color = new DocumentFormat.OpenXml.Spreadsheet.Color { Rgb = "FFDEEBF7" } // azul igual linhas alternadas
                 });
 
                 var newFill = new DocumentFormat.OpenXml.Spreadsheet.Fill();
