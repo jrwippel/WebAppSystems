@@ -530,14 +530,18 @@ namespace WebAppSystems.Controllers
                 var drawing = sheet.CreateDrawingPatriarch();
                 var anchor = helper.CreateClientAnchor();
 
-                // Defina a posição da imagem e ajuste o tamanho conforme as configurações
-                anchor.Col1 = 0; // Defina a coluna inicial
-                anchor.Row1 = 1; // Defina a linha inicial
-                anchor.Col2 = anchor.Col1 + width; // Defina a coluna final com base na largura do logo
-                anchor.Row2 = anchor.Row1 + height; // Defina a linha final com base na altura do logo
+                // Logo do escritório: fixado nas linhas 1-5, colunas 0-3
+                anchor.AnchorType = AnchorType.MoveAndResize;
+                anchor.Col1 = 0;
+                anchor.Row1 = 0;
+                anchor.Col2 = 3;
+                anchor.Row2 = 5;
+                anchor.Dx1 = 0;
+                anchor.Dy1 = 0;
+                anchor.Dx2 = 0;
+                anchor.Dy2 = 0;
 
                 var picture = drawing.CreatePicture(anchor, pictureIdx);
-                picture.Resize(4);
 
 
 
@@ -597,20 +601,22 @@ namespace WebAppSystems.Controllers
                 if (clientImageData != null)
                 {
                     var clientSheet = workbook.GetSheet(sheetName);
-                    var clientDrawing = clientSheet.CreateDrawingPatriarch();  // Renomeie a variável para evitar conflito
+                    var clientDrawing = clientSheet.CreateDrawingPatriarch();
                     var clientAnchor = helper.CreateClientAnchor();
-                    clientAnchor.Col1 = 7;  // Inicia na coluna 8
-                    clientAnchor.Row1 = 1;  // A imagem começa na segunda linha
 
-                    // Adicionar a imagem do cliente à planilha
+                    // Logo do cliente: fixado nas linhas 1-5, colunas 7-9
+                    clientAnchor.AnchorType = AnchorType.MoveAndResize;
+                    clientAnchor.Col1 = 7;
+                    clientAnchor.Row1 = 0;
+                    clientAnchor.Col2 = 10;
+                    clientAnchor.Row2 = 5;
+                    clientAnchor.Dx1 = 0;
+                    clientAnchor.Dy1 = 0;
+                    clientAnchor.Dx2 = 0;
+                    clientAnchor.Dy2 = 0;
+
                     int clientPictureIdx = workbook.AddPicture(clientImageData, GetPictureType(clientImageMimeType));
-                    var clientPicture = clientDrawing.CreatePicture(clientAnchor, clientPictureIdx);  
-                    clientPicture.Resize(1);  // A imagem vai ocupar 3 colunas
-
-                    // Ajuste da altura da imagem para ocupar até a linha 7
-                    clientAnchor.Row2 = 6;  // Termina na linha 7
-                    
-
+                    var clientPicture = clientDrawing.CreatePicture(clientAnchor, clientPictureIdx);
                 }
 
                 string fileName = "Relatório_TimeSheet";
