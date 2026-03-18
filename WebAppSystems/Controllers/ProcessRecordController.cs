@@ -530,18 +530,13 @@ namespace WebAppSystems.Controllers
                 var drawing = sheet.CreateDrawingPatriarch();
                 var anchor = helper.CreateClientAnchor();
 
-                // Logo do escritório: fixado nas linhas 1-5, colunas 0-3
-                anchor.AnchorType = AnchorType.MoveAndResize;
                 anchor.Col1 = 0;
-                anchor.Row1 = 0;
-                anchor.Col2 = 3;
-                anchor.Row2 = 5;
-                anchor.Dx1 = 0;
-                anchor.Dy1 = 0;
-                anchor.Dx2 = 0;
-                anchor.Dy2 = 0;
+                anchor.Row1 = 1;
+                anchor.Col2 = anchor.Col1 + width;
+                anchor.Row2 = anchor.Row1 + height;
 
                 var picture = drawing.CreatePicture(anchor, pictureIdx);
+                picture.Resize(4);
 
 
 
