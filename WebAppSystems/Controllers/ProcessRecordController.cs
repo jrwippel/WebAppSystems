@@ -186,23 +186,23 @@ namespace WebAppSystems.Controllers
                 ICellStyle cellStyle = workbook.CreateCellStyle();
                 cellStyle.WrapText = true;
 
-                // Simular gradiente horizontal: branco (esquerda) → azul claro (direita)
-                // 10 colunas (0-9), interpolando de RGB(255,255,255) até RGB(189,215,238)
+                // Simular gradiente vertical: branco (topo) → azul claro (base)
+                // 5 linhas (0-4), interpolando de RGB(255,255,255) até RGB(189,215,238)
                 byte[] colorStart = { 255, 255, 255 }; // branco
                 byte[] colorEnd   = { 189, 215, 238 }; // azul claro Ênfase 1
 
-                // Pré-criar um estilo por coluna
-                XSSFCellStyle[] gradientStyles = new XSSFCellStyle[10];
-                for (int col = 0; col < 10; col++)
+                // Pré-criar um estilo por linha
+                XSSFCellStyle[] gradientStyles = new XSSFCellStyle[5];
+                for (int row2 = 0; row2 < 5; row2++)
                 {
-                    float t = col / 9f;
+                    float t = row2 / 4f;
                     byte r = (byte)(colorStart[0] + (colorEnd[0] - colorStart[0]) * t);
                     byte g = (byte)(colorStart[1] + (colorEnd[1] - colorStart[1]) * t);
                     byte b = (byte)(colorStart[2] + (colorEnd[2] - colorStart[2]) * t);
                     XSSFCellStyle s = (XSSFCellStyle)workbook.CreateCellStyle();
                     s.SetFillForegroundColor(new XSSFColor(new byte[] { r, g, b }));
                     s.FillPattern = FillPattern.SolidForeground;
-                    gradientStyles[col] = s;
+                    gradientStyles[row2] = s;
                 }
 
                 // Cor sólida azul claro para uso em outros estilos (linhas de dados alternadas)
@@ -218,7 +218,7 @@ namespace WebAppSystems.Controllers
                     for (int j = 0; j <= 9; j++)
                     {
                         ICell cell = row.GetCell(j) ?? row.CreateCell(j);
-                        cell.CellStyle = gradientStyles[j];
+                        cell.CellStyle = gradientStyles[i];
                     }
                 }
 
