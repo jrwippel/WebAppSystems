@@ -243,6 +243,7 @@ namespace WebAppSystems.Controllers
 
                 // Dados começam na linha 2
                 int rowNum = 2;
+                double totalHoras = 0;
 
                 Dictionary<string, (double hours, double value)> departmentSummary = new Dictionary<string, (double hours, double value)>();
 
