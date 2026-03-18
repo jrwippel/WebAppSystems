@@ -187,23 +187,37 @@ namespace WebAppSystems.Controllers
                 cellStyle.WrapText = true;
 
                 // Criar o estilo de sombreamento com XSSF
-                XSSFCellStyle shadedStyle = (XSSFCellStyle)workbook.CreateCellStyle();
-
-                // Definindo a cor azul claro Ênfase 1 mais claro 80% em RGB
+                // Gradiente horizontal: branco (esquerda) → azul (direita), por coluna
                 XSSFColor lightBlueEmphasis = new XSSFColor(new byte[] { 222, 235, 247 });
 
-                // Aplicar a cor ao estilo da célula
+                // Criar estilos por coluna: branco → azul claro
+                byte[] gradStart = { 255, 255, 255 }; // branco
+                byte[] gradEnd   = { 173, 214, 240 }; // azul médio
+                XSSFCellStyle[] colStyles = new XSSFCellStyle[10];
+                for (int col = 0; col < 10; col++)
+                {
+                    float t = col / 9f;
+                    byte r = (byte)(gradStart[0] + (gradEnd[0] - gradStart[0]) * t);
+                    byte g = (byte)(gradStart[1] + (gradEnd[1] - gradStart[1]) * t);
+                    byte b = (byte)(gradStart[2] + (gradEnd[2] - gradStart[2]) * t);
+                    XSSFCellStyle s = (XSSFCellStyle)workbook.CreateCellStyle();
+                    s.SetFillForegroundColor(new XSSFColor(new byte[] { r, g, b }));
+                    s.FillPattern = FillPattern.SolidForeground;
+                    colStyles[col] = s;
+                }
+
+                XSSFCellStyle shadedStyle = (XSSFCellStyle)workbook.CreateCellStyle();
                 shadedStyle.SetFillForegroundColor(lightBlueEmphasis);
                 shadedStyle.FillPattern = FillPattern.SolidForeground;
 
-                // Aplicar o estilo de sombreamento às células
+                // Aplicar gradiente horizontal nas 5 linhas do cabeçalho
                 for (int i = 0; i <= 4; i++)
                 {
                     IRow row = sheet.GetRow(i) ?? sheet.CreateRow(i);
                     for (int j = 0; j <= 9; j++)
                     {
                         ICell cell = row.GetCell(j) ?? row.CreateCell(j);
-                        cell.CellStyle = shadedStyle;
+                        cell.CellStyle = colStyles[j];
                     }
                 }
 
