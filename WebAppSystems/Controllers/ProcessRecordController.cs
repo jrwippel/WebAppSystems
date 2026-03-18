@@ -192,7 +192,7 @@ namespace WebAppSystems.Controllers
                 shadedStyle.SetFillForegroundColor(lightBlueEmphasis);
                 shadedStyle.FillPattern = FillPattern.SolidForeground;
 
-                // Estilo da célula mesclada do cabeçalho: azul claro sólido, com bordas brancas
+                // Estilo da célula mesclada do cabeçalho: azul claro com bordas brancas
                 XSSFCellStyle headerBgStyle = (XSSFCellStyle)workbook.CreateCellStyle();
                 headerBgStyle.SetFillForegroundColor(new XSSFColor(new byte[] { 222, 235, 247 }));
                 headerBgStyle.FillPattern = FillPattern.SolidForeground;
@@ -205,40 +205,34 @@ namespace WebAppSystems.Controllers
                 ((XSSFCellStyle)headerBgStyle).SetLeftBorderColor(new XSSFColor(new byte[] { 255, 255, 255 }));
                 ((XSSFCellStyle)headerBgStyle).SetRightBorderColor(new XSSFColor(new byte[] { 255, 255, 255 }));
 
-                // Criar as linhas 0-4 e preencher todas as células com a cor do cabeçalho
-                for (int i = 0; i <= 4; i++)
+                // Cabeçalho: apenas 1 linha (linha 0) com altura grande
+                IRow headerImgRow = sheet.CreateRow(0);
+                headerImgRow.HeightInPoints = 80; // altura generosa para logos e texto
+
+                for (int j = 0; j <= 9; j++)
                 {
-                    IRow row = sheet.GetRow(i) ?? sheet.CreateRow(i);
-                    for (int j = 0; j <= 9; j++)
-                    {
-                        ICell cell = row.GetCell(j) ?? row.CreateCell(j);
-                        cell.CellStyle = headerBgStyle;
-                    }
+                    ICell cell = headerImgRow.GetCell(j) ?? headerImgRow.CreateCell(j);
+                    cell.CellStyle = headerBgStyle;
                 }
 
-                // Mesclar toda a região do cabeçalho (linhas 0-4, colunas 0-9)
-                sheet.AddMergedRegion(new NPOI.SS.Util.CellRangeAddress(0, 4, 0, 9));
+                // Mesclar a linha 0 inteira (colunas 0-9)
+                sheet.AddMergedRegion(new NPOI.SS.Util.CellRangeAddress(0, 0, 0, 9));
 
-
-                // Criar o estilo de cabeçalho
+                // Criar o estilo de cabeçalho da tabela (linha preta)
                 ICellStyle headerStyle = workbook.CreateCellStyle();
-                headerStyle.FillForegroundColor = IndexedColors.Black.Index;  // Definir a cor de fundo para preto
-                headerStyle.FillPattern = FillPattern.SolidForeground;  // Padrão de preenchimento sólido
+                headerStyle.FillForegroundColor = IndexedColors.Black.Index;
+                headerStyle.FillPattern = FillPattern.SolidForeground;
 
-                // Criar a fonte para o cabeçalho
                 IFont font = workbook.CreateFont();
-                font.Color = IndexedColors.White.Index;  // Definir a cor da fonte para branco
-                font.Boldweight = (short)FontBoldWeight.Bold;  // Deixar o texto em negrito
+                font.Color = IndexedColors.White.Index;
+                font.Boldweight = (short)FontBoldWeight.Bold;
                 headerStyle.SetFont(font);
-
-                // Centralizar o texto no cabeçalho
                 headerStyle.Alignment = NPOIHorizontalAlignment.Center;
                 headerStyle.VerticalAlignment = NPOIVerticalAlignment.Center;
 
-                // Criar o cabeçalho na linha 8
-                var headerRow = sheet.CreateRow(5);
+                // Cabeçalho da tabela na linha 1
+                var headerRow = sheet.CreateRow(1);
 
-                // Criar as células do cabeçalho e aplicar o estilo
                 string[] headers = { "Data", "Responsável", "Solicitante", "Cliente", "Tipo", "Descrição", "Hora Inicial", "Hora Final", "Horas Trabalhadas", "Área" };
                 for (int i = 0; i < headers.Length; i++)
                 {
@@ -247,10 +241,8 @@ namespace WebAppSystems.Controllers
                     cell.CellStyle = headerStyle;
                 }
 
-                // Adicionar dados ao arquivo Excel
-                int rowNum = 6;  // Começando da linha 9, porque a primeira até a oitava são da imagem e o cabeçalho
-                var rowTotal = sheet.CreateRow(rowNum);  // Crie a linha do total
-                double totalHoras = 0;
+                // Dados começam na linha 2
+                int rowNum = 2;
 
                 Dictionary<string, (double hours, double value)> departmentSummary = new Dictionary<string, (double hours, double value)>();
 
@@ -543,7 +535,7 @@ namespace WebAppSystems.Controllers
                 var anchor = helper.CreateClientAnchor();
 
                 anchor.Col1 = 0;
-                anchor.Row1 = 1;
+                anchor.Row1 = 0;
                 anchor.Col2 = anchor.Col1 + width;
                 anchor.Row2 = anchor.Row1 + height;
 
@@ -564,7 +556,7 @@ namespace WebAppSystems.Controllers
                 // TimeSheet vai na célula A1 (célula ativa da região mesclada)
                 var rowA1 = sheet.GetRow(0) ?? sheet.CreateRow(0);
                 var cellA1ts = rowA1.GetCell(0) ?? rowA1.CreateCell(0);
-                cellA1ts.SetCellValue("TimeSheet");
+                cellA1ts.SetCellValue("Time Sheet");
 
                 // Clonar estilo do cabeçalho e aplicar fonte grande centralizada
                 ICellStyle tsStyle = workbook.CreateCellStyle();
@@ -595,16 +587,16 @@ namespace WebAppSystems.Controllers
                     var clientDrawing = clientSheet.CreateDrawingPatriarch();
                     var clientAnchor = helper.CreateClientAnchor();
 
-                    // Logo do cliente: colunas 8-9 (similar ao tamanho do logo do escritório), com margem
+                    // Logo do cliente: colunas 8-9, linha 0 apenas, com margem
                     clientAnchor.AnchorType = AnchorType.MoveAndResize;
                     clientAnchor.Col1 = 8;
                     clientAnchor.Row1 = 0;
                     clientAnchor.Col2 = 10;
-                    clientAnchor.Row2 = 5;
-                    clientAnchor.Dx1 = 20 * 9144;  // margem esquerda ~20px
-                    clientAnchor.Dy1 = 5 * 9144;   // margem topo ~5px
-                    clientAnchor.Dx2 = -20 * 9144; // margem direita ~20px
-                    clientAnchor.Dy2 = -5 * 9144;  // margem base ~5px
+                    clientAnchor.Row2 = 1;
+                    clientAnchor.Dx1 = 20 * 9144;
+                    clientAnchor.Dy1 = 5 * 9144;
+                    clientAnchor.Dx2 = -20 * 9144;
+                    clientAnchor.Dy2 = -5 * 9144;
 
                     int clientPictureIdx = workbook.AddPicture(clientImageData, GetPictureType(clientImageMimeType));
                     var clientPicture = clientDrawing.CreatePicture(clientAnchor, clientPictureIdx);
