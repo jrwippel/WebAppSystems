@@ -192,10 +192,14 @@ namespace WebAppSystems.Controllers
                 shadedStyle.SetFillForegroundColor(lightBlueEmphasis);
                 shadedStyle.FillPattern = FillPattern.SolidForeground;
 
-                // Estilo da célula mesclada do cabeçalho: azul claro sólido
+                // Estilo da célula mesclada do cabeçalho: azul claro sólido, sem bordas
                 XSSFCellStyle headerBgStyle = (XSSFCellStyle)workbook.CreateCellStyle();
                 headerBgStyle.SetFillForegroundColor(new XSSFColor(new byte[] { 189, 215, 238 }));
                 headerBgStyle.FillPattern = FillPattern.SolidForeground;
+                headerBgStyle.BorderTop = BorderStyle.None;
+                headerBgStyle.BorderBottom = BorderStyle.None;
+                headerBgStyle.BorderLeft = BorderStyle.None;
+                headerBgStyle.BorderRight = BorderStyle.None;
 
                 // Criar as linhas 0-4 e preencher todas as células com a cor do cabeçalho
                 for (int i = 0; i <= 4; i++)
@@ -839,7 +843,7 @@ namespace WebAppSystems.Controllers
                 var gradientFill = new DocumentFormat.OpenXml.Spreadsheet.GradientFill
                 {
                     Type = DocumentFormat.OpenXml.Spreadsheet.GradientValues.Linear,
-                    Degree = 0
+                    Degree = 90  // 90° = cima para baixo
                 };
                 gradientFill.Append(new DocumentFormat.OpenXml.Spreadsheet.GradientStop
                 {
