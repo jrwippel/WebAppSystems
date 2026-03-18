@@ -24,12 +24,31 @@ namespace WebAppSystems.Controllers
                 ViewBag.LoggedUserId = usuario.Id;
                 ViewBag.CurrentUserPerfil = usuario.Perfil;
 
-                var chartData = _processRecordsService.GetChartData();                
+                var chartData = _processRecordsService.GetChartData();
+
+                // KPIs
+                var today = DateTime.Today;
+                var firstDayOfMonth = new DateTime(today.Year, today.Month, 1);
+
+                var registrosHoje = await _processRecordsService.GetFinishedRecordsByDateAsync(today, today);
+                var registrosMes = await _processRecordsService.GetFinishedRecordsByDateAsync(firstDayOfMonth, today);
+                var registrosOntem = await _processRecordsService.GetFinishedRecordsByDateAsync(today.AddDays(-1), today.AddDays(-1));
+
+                var horasHoje = registrosHoje.Sum(r => r.CalculoHorasDecimal());
+                var horasMes = registrosMes.Sum(r => r.CalculoHorasDecimal());
+                var horasOntem = registrosOntem.Sum(r => r.CalculoHorasDecimal());
+                var clientesAtivos = registrosMes.Select(r => r.ClientId).Distinct().Count();
+
+                ViewBag.HorasHoje = horasHoje;
+                ViewBag.HorasMes = horasMes;
+                ViewBag.HorasOntem = horasOntem;
+                ViewBag.RegistrosHoje = registrosHoje.Count;
+                ViewBag.ClientesAtivos = clientesAtivos;
+
                 return View(chartData);
             }
             catch (SessionExpiredException)
             {
-                // Redirecione para a página de login se a sessão expirou
                 TempData["MensagemAviso"] = "A sessão expirou. Por favor, faça login novamente.";
                 return RedirectToAction("Index", "Login");
             }

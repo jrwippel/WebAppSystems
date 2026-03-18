@@ -1,73 +1,70 @@
 ﻿@using WebAppSystems.Models.Enums;
 @model WebAppSystems.Models.Client
+
 @{
-    ViewData["Title"] = "Cadastro";
+    ViewData["Title"] = "Novo Cliente";
 }
-<div class="card">
-    <div class="card-body">
-        <h4 class="card-title">Clientes</h4>
-        <hr />
 
-        <form asp-action="Create" method="post" enctype="multipart/form-data" novalidate>            
-            <div asp-validation-summary="ModelOnly" class="text-danger">Nome</div>
-            <div class="form-group">
-                <label asp-for="Name" class="control-label"></label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Document" class="control-label">Documento</label>
-                <input asp-for="Document" class="form-control" data-val="false" />
-                <span asp-validation-for="Document" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Email" class="control-label">Email</label>
-                <input asp-for="Email" class="form-control" data-val="false" />
-                <span asp-validation-for="Email" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Telephone" class="control-label">Telefone</label>
-                <input asp-for="Telephone" class="form-control" data-val="false" />
-                <span asp-validation-for="Telephone" class="text-danger"></span>
-            </div>
+<div class="page-container">
+    <div class="page-header">
+        <div class="page-header-icon"><i class="bi bi-person-badge"></i></div>
+        <div>
+            <h2>Cadastro de Cliente</h2>
+            <p>Preencha os dados do novo cliente</p>
+        </div>
+    </div>
 
-            <div class="form-group">
-                <label asp-for="Solicitante" class="control-label">Solicitante Padrão</label>
-                <input asp-for="Solicitante" class="form-control" />   
-            </div>
-            <div class="form-check">
-                <input type="checkbox" asp-for="ClienteInterno" class="form-check-input" />
-                <label asp-for="ClienteInterno" class="form-check-label">Cliente Interno</label>
-            </div>
-            <div class="form-check">
-                <input type="checkbox" asp-for="ClienteInativo" class="form-check-input" />
-                <label asp-for="ClienteInativo" class="form-check-label">Cliente Inativo</label>
-            </div>
-            <div class="mb-3"></div> 
-            <div class="form-group">
-                <label asp-for="ImageData" class="control-label">Logo</label>
-                <input asp-for="ImageData" name="imageData" type="file" class="form-control" />
-                <span asp-validation-for="ImageData" class="text-danger"></span>
-                @if (Model != null && Model.ImageData != null && !string.IsNullOrEmpty(Model.ImageMimeType))
-                {
-                    var imageBase64 = Convert.ToBase64String(Model.ImageData);
-                    var imageSrc = $"data:{Model.ImageMimeType};base64,{imageBase64}";
-                    <img src="@imageSrc" alt="Client Image" class="img-fluid" />
-                }
+    <div class="form-card">
+        <form asp-action="Create" method="post" enctype="multipart/form-data" novalidate>
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+            <div class="form-grid">
+                <div class="form-field">
+                    <label asp-for="Name">Nome</label>
+                    <input asp-for="Name" class="form-control" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+                <div class="form-field">
+                    <label asp-for="Document">Documento</label>
+                    <input asp-for="Document" class="form-control" data-val="false" />
+                </div>
+                <div class="form-field">
+                    <label asp-for="Email">Email</label>
+                    <input asp-for="Email" class="form-control" data-val="false" />
+                </div>
+                <div class="form-field">
+                    <label asp-for="Telephone">Telefone</label>
+                    <input asp-for="Telephone" class="form-control" data-val="false" />
+                </div>
+                <div class="form-field">
+                    <label asp-for="Solicitante">Solicitante Padrão</label>
+                    <input asp-for="Solicitante" class="form-control" />
+                </div>
+                <div class="form-field">
+                    <label asp-for="ImageData">Logo</label>
+                    <input asp-for="ImageData" name="imageData" type="file" class="form-control" />
+                </div>
             </div>
 
-            <div class="mt-3">
-                <button type="submit" class="btn btn-primary">Salvar</button>
-                <a asp-action="Index" class="btn btn-secondary">Voltar</a>
+            <div class="form-checks">
+                <label class="check-item">
+                    <input type="checkbox" asp-for="ClienteInterno" />
+                    <span>Cliente Interno</span>
+                </label>
+                <label class="check-item">
+                    <input type="checkbox" asp-for="ClienteInativo" />
+                    <span>Cliente Inativo</span>
+                </label>
             </div>
 
+            <div class="form-actions">
+                <button type="submit" class="btn-save"><i class="bi bi-check-lg"></i> Salvar</button>
+                <a asp-action="Index" class="btn-back"><i class="bi bi-arrow-left"></i> Voltar</a>
+            </div>
         </form>
     </div>
 </div>
 
-
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
 }

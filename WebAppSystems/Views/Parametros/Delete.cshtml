@@ -1,33 +1,40 @@
 ﻿@model WebAppSystems.Models.Parametros
 
 @{
-    ViewData["Title"] = "Delete";
+    ViewData["Title"] = "Excluir Configuração";
 }
 
-<h1>Delete</h1>
+<div class="page-container">
+    <div class="page-header">
+        <div class="page-header-icon" style="background: linear-gradient(135deg,#e53e3e,#c53030)"><i class="bi bi-trash"></i></div>
+        <div>
+            <h2>Excluir Configuração</h2>
+            <p>Esta ação não pode ser desfeita</p>
+        </div>
+    </div>
 
-<h3>Are you sure you want to delete this?</h3>
-<div>
-    <h4>Parametros</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Width)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Width)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Height)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Height)
-        </dd>
-    </dl>
-    
-    <form asp-action="Delete">
-        <input type="hidden" asp-for="Id" />
-        <input type="submit" value="Delete" class="btn btn-danger" /> |
-        <a asp-action="Index">Back to List</a>
-    </form>
+    <div class="form-card">
+        <div class="alert alert-danger" style="border-radius:10px; margin-bottom:20px;">
+            <i class="bi bi-exclamation-triangle-fill"></i> Tem certeza que deseja excluir esta configuração?
+        </div>
+
+        <div class="details-grid">
+            <div class="detail-item">
+                <span class="detail-label">Largura</span>
+                <span class="detail-value">@Model?.Width px</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Altura</span>
+                <span class="detail-value">@Model?.Height px</span>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <form asp-action="Delete" style="display:inline;">
+                <input type="hidden" asp-for="Id" />
+                <button type="submit" class="btn-delete"><i class="bi bi-trash"></i> Confirmar Exclusão</button>
+            </form>
+            <a asp-action="Index" class="btn-back"><i class="bi bi-arrow-left"></i> Cancelar</a>
+        </div>
+    </div>
 </div>

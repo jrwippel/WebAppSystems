@@ -15,6 +15,35 @@
         min-height: 44px;
     }
 
+    /* O container-fluid vira flex com 3 zonas: esquerda | centro | direita */
+    .navbar > .container-fluid {
+        display: flex !important;
+        align-items: center;
+        position: relative;
+    }
+
+    .navbar-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+
+    .navbar-center {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+    }
+
+    .navbar-right-flags {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
     /* Brand / User dropdown */
     .user-dropdown { position: relative; }
 
@@ -32,6 +61,28 @@
         border-radius: 6px;
         transition: background 0.2s;
         white-space: nowrap;
+        max-width: 220px;
+    }
+
+    .user-toggle-info {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1px;
+    }
+
+    .user-toggle-workspace {
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.2;
+        color: white;
+    }
+
+    .user-toggle-login {
+        font-size: 10px;
+        font-weight: 400;
+        opacity: 0.8;
+        line-height: 1.2;
     }
 
     .user-dropdown-toggle:hover { background: rgba(255,255,255,0.12); }
@@ -260,51 +311,53 @@
     }
 
     @@media (max-width: 768px) {
+        .navbar-center { position: static; transform: none; }
         .navbar-nav { flex-direction: column; align-items: flex-start; padding: 8px 0; gap: 0; }
         .nav-link { width: 100%; }
         .gerenciar-menu, .user-dropdown-menu { position: static; opacity: 1; visibility: visible; transform: none; box-shadow: none; border-radius: 0; }
-        .navbar-right { margin-left: 0; padding: 8px 0; }
+        .navbar-right-flags { margin-left: 0; padding: 8px 0; }
+        .navbar-left { flex-wrap: wrap; }
     }
 </style>
 
-<!-- Left: user dropdown + hours -->
-<div class="user-dropdown" id="userDropdown">
-    <button class="user-dropdown-toggle" id="userDropdownToggle">
-        <span>👤 @Model.Name's <span data-i18n="menu.workspace">workspace</span></span>
-        <i class="bi bi-chevron-down dropdown-arrow"></i>
-    </button>
+<!-- LEFT: user dropdown only -->
+<div class="navbar-left">
+    <div class="user-dropdown" id="userDropdown">
+        <button class="user-dropdown-toggle" id="userDropdownToggle"
+                title="Eberhardt, Carrascoza, Bossi, Silva, Matteussi &amp; Costa Beber Advogados">
+            <div class="user-toggle-info">
+                <span class="user-toggle-workspace">Eberhardt, Carrascoza, BSM &amp; CB Adv.</span>
+                <span class="user-toggle-login">@Model.Login</span>
+            </div>
+            <i class="bi bi-chevron-down dropdown-arrow"></i>
+        </button>
 
-    <div class="user-dropdown-menu" id="userDropdownMenu">
-        <div class="dropdown-header">
-            <div class="user-info">
-                <span class="user-icon-large">👤</span>
-                <div class="user-details">
-                    <strong>@Model.Name</strong>
-                    <span class="user-email">@Model.Login</span>
+        <div class="user-dropdown-menu" id="userDropdownMenu">
+            <div class="dropdown-header">
+                <div class="user-info">
+                    <span class="user-icon-large">👤</span>
+                    <div class="user-details">
+                        <strong>@Model.Name</strong>
+                        <span class="user-email">@Model.Login</span>
+                    </div>
                 </div>
             </div>
+            <div class="dd-divider"></div>
+            <a class="dd-item" asp-controller="AlterarSenha" asp-action="Index">
+                <i class="bi bi-shield-lock"></i><span data-i18n="menu.senha">Senha</span>
+            </a>
+            <a class="dd-item" asp-controller="Parametros" asp-action="Index">
+                <i class="bi bi-gear"></i><span data-i18n="menu.configuracoes">Configurações</span>
+            </a>
+            <a class="dd-item" asp-controller="Home" asp-action="About">
+                <i class="bi bi-info-circle"></i><span data-i18n="menu.about">Sobre</span>
+            </a>
+            <div class="dd-divider"></div>
+            <a class="dd-item logout" asp-controller="Login" asp-action="Sair">
+                <i class="bi bi-box-arrow-right"></i><span data-i18n="menu.sair">Sair</span>
+            </a>
         </div>
-        <div class="dd-divider"></div>
-        <a class="dd-item" asp-controller="AlterarSenha" asp-action="Index">
-            <i class="bi bi-shield-lock"></i><span data-i18n="menu.senha">Senha</span>
-        </a>
-        <a class="dd-item" asp-controller="Parametros" asp-action="Index">
-            <i class="bi bi-gear"></i><span data-i18n="menu.configuracoes">Configurações</span>
-        </a>
-        <a class="dd-item" asp-controller="Home" asp-action="About">
-            <i class="bi bi-info-circle"></i><span data-i18n="menu.about">Sobre</span>
-        </a>
-        <div class="dd-divider"></div>
-        <a class="dd-item logout" asp-controller="Login" asp-action="Sair">
-            <i class="bi bi-box-arrow-right"></i><span data-i18n="menu.sair">Sair</span>
-        </a>
     </div>
-</div>
-
-<div class="hours-today">
-    <i class="bi bi-clock-history"></i>
-    <span data-i18n="menu.hourstoday">Hoje:</span>
-    <strong>@ViewBag.HorasHoje.ToString("F1")h</strong>
 </div>
 
 <!-- Collapse toggle (mobile) -->
@@ -313,93 +366,91 @@
     <span class="navbar-toggler-icon"></span>
 </button>
 
-<!-- Nav items -->
+<!-- CENTER: Nav items -->
 <div class="navbar-collapse collapse d-sm-inline-flex">
-    <ul class="navbar-nav">
-        <li class="nav-item">
-            <a class="nav-link" asp-controller="Home" asp-action="Index">
-                <i class="bi bi-house-door"></i>
-                <span data-i18n="menu.home">Home</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" asp-controller="TimeTracker" asp-action="Index">
-                <i class="bi bi-stopwatch"></i>
-                <span data-i18n="menu.timetracker">Time Tracker</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" asp-controller="ProcessRecord" asp-action="Index">
-                <i class="bi bi-file-earmark-text"></i>
-                <span data-i18n="menu.relatorios">Relatórios</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" asp-controller="ProcessRecords" asp-action="Index">
-                <i class="bi bi-list-check"></i>
-                <span data-i18n="menu.atividades">Atividades</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" asp-controller="Calendar" asp-action="Index">
-                <i class="bi bi-calendar3"></i>
-                <span data-i18n="menu.calendario">Calendário</span>
-            </a>
-        </li>
-
-        @if (showAdminItems)
-        {
-            <li class="nav-item gerenciar-dropdown" id="gerenciarDropdown">
-                <button class="gerenciar-toggle" id="gerenciarToggle">
-                    <i class="bi bi-grid"></i>
-                    <span>Gerenciar</span>
-                    <i class="bi bi-chevron-down dropdown-arrow" style="font-size:10px;"></i>
-                </button>
-                <div class="gerenciar-menu" id="gerenciarMenu">
-                    <div class="gerenciar-section-label">Cadastros</div>
-                    <a class="gerenciar-item" asp-controller="Attorneys" asp-action="Index">
-                        <i class="bi bi-people"></i><span data-i18n="menu.usuarios">Usuários</span>
-                    </a>
-                    <a class="gerenciar-item" asp-controller="Clients" asp-action="Index">
-                        <i class="bi bi-person-badge"></i><span data-i18n="menu.clientes">Clientes</span>
-                    </a>
-                    <a class="gerenciar-item" asp-controller="Departments" asp-action="Index">
-                        <i class="bi bi-building"></i><span data-i18n="menu.area">Área</span>
-                    </a>
-                    @if (isAdmin)
-                    {
-                        <div class="dd-divider"></div>
-                        <div class="gerenciar-section-label">Financeiro</div>
-                        <a class="gerenciar-item" asp-controller="ValorClientes" asp-action="Index">
-                            <i class="bi bi-cash-coin"></i><span data-i18n="menu.valores">Valores</span>
-                        </a>
-                        <a class="gerenciar-item" asp-controller="Mensalistas" asp-action="Index">
-                            <i class="bi bi-calendar-check"></i><span data-i18n="menu.mensalistas">Mensalistas</span>
-                        </a>
-                        <a class="gerenciar-item" asp-controller="Mensalista" asp-action="Index">
-                            <i class="bi bi-graph-up-arrow"></i><span data-i18n="menu.resultados">Resultados</span>
-                        </a>
-                        <a class="gerenciar-item" asp-controller="PercentualAreas" asp-action="Index">
-                            <i class="bi bi-percent"></i><span data-i18n="menu.percentuais">Percentuais</span>
-                        </a>
-                    }
+    <div class="navbar-center">
+        <ul class="navbar-nav">
+            <li class="nav-item">
+                <div class="hours-today">
+                    <i class="bi bi-clock-history"></i>
+                    <span data-i18n="menu.hourstoday">Hoje:</span>
+                    <strong>@ViewBag.HorasHoje.ToString("F1")h</strong>
                 </div>
             </li>
-        }
-    </ul>
+                <a class="nav-link" asp-controller="Home" asp-action="Index">
+                    <i class="bi bi-house-door"></i>
+                    <span data-i18n="menu.home">Home</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" asp-controller="TimeTracker" asp-action="Index">
+                    <i class="bi bi-stopwatch"></i>
+                    <span data-i18n="menu.timetracker">Time Tracker</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" asp-controller="ProcessRecord" asp-action="Index">
+                    <i class="bi bi-file-earmark-text"></i>
+                    <span data-i18n="menu.relatorios">Relatórios</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" asp-controller="ProcessRecords" asp-action="Index">
+                    <i class="bi bi-list-check"></i>
+                    <span data-i18n="menu.atividades">Atividades</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" asp-controller="Calendar" asp-action="Index">
+                    <i class="bi bi-calendar3"></i>
+                    <span data-i18n="menu.calendario">Calendário</span>
+                </a>
+            </li>
 
-    <!-- Right side: logo acima das bandeiras -->
-    <div class="navbar-right">
-        @{
-            var parametros = ViewBag.Parametros as WebAppSystems.Models.Parametros;
-            if (parametros != null && parametros.LogoData != null)
+            @if (showAdminItems)
             {
-                var base64Logo = Convert.ToBase64String(parametros.LogoData);
-                var logoSrc = $"data:{parametros.LogoMimeType};base64,{base64Logo}";
-                <img src="@logoSrc" alt="Logo" class="office-logo-small" />
+                <li class="nav-item gerenciar-dropdown" id="gerenciarDropdown">
+                    <button class="gerenciar-toggle" id="gerenciarToggle">
+                        <i class="bi bi-grid"></i>
+                        <span>Gerenciar</span>
+                        <i class="bi bi-chevron-down dropdown-arrow" style="font-size:10px;"></i>
+                    </button>
+                    <div class="gerenciar-menu" id="gerenciarMenu">
+                        <div class="gerenciar-section-label">Cadastros</div>
+                        <a class="gerenciar-item" asp-controller="Attorneys" asp-action="Index">
+                            <i class="bi bi-people"></i><span data-i18n="menu.usuarios">Usuários</span>
+                        </a>
+                        <a class="gerenciar-item" asp-controller="Clients" asp-action="Index">
+                            <i class="bi bi-person-badge"></i><span data-i18n="menu.clientes">Clientes</span>
+                        </a>
+                        <a class="gerenciar-item" asp-controller="Departments" asp-action="Index">
+                            <i class="bi bi-building"></i><span data-i18n="menu.area">Área</span>
+                        </a>
+                        @if (isAdmin)
+                        {
+                            <div class="dd-divider"></div>
+                            <div class="gerenciar-section-label">Financeiro</div>
+                            <a class="gerenciar-item" asp-controller="ValorClientes" asp-action="Index">
+                                <i class="bi bi-cash-coin"></i><span data-i18n="menu.valores">Valores</span>
+                            </a>
+                            <a class="gerenciar-item" asp-controller="Mensalistas" asp-action="Index">
+                                <i class="bi bi-calendar-check"></i><span data-i18n="menu.mensalistas">Mensalistas</span>
+                            </a>
+                            <a class="gerenciar-item" asp-controller="Mensalista" asp-action="Index">
+                                <i class="bi bi-graph-up-arrow"></i><span data-i18n="menu.resultados">Resultados</span>
+                            </a>
+                            <a class="gerenciar-item" asp-controller="PercentualAreas" asp-action="Index">
+                                <i class="bi bi-percent"></i><span data-i18n="menu.percentuais">Percentuais</span>
+                            </a>
+                        }
+                    </div>
+                </li>
             }
-        }
+        </ul>
+    </div>
 
+    <!-- RIGHT: flags -->
+    <div class="navbar-right-flags">
         <div class="language-flags-group">
             <button class="flag-btn active" data-lang="pt" title="Português">
                 <svg class="flag-icon" viewBox="0 0 36 24" xmlns="http://www.w3.org/2000/svg">

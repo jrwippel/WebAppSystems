@@ -1,5 +1,7 @@
-﻿using System.Net;
-using System.Net.Mail;
+﻿using System.Net.Mail;
+using System.Net;
+using Azure;
+using Azure.Communication.Email;
 
 namespace WebAppSystems.Helper
 {
@@ -16,34 +18,37 @@ namespace WebAppSystems.Helper
         {
             try
             {
-                string host = _configuration["SMTP:Host"];
-                int porta = int.Parse(_configuration["SMTP:Porta"]);
-                string username = _configuration["SMTP:Username"];
-                string senha = _configuration["SMTP:Senha"];
-                string nome = _configuration["SMTP:Name"];
+                string connectionString = _configuration["AzureEmail:ConnectionString"];
+                string senderAddress = _configuration["AzureEmail:SenderAddress"];
 
-                var smtpClient = new SmtpClient(host, porta)
+                var emailClient = new EmailClient(connectionString);
+
+                var emailMessage = new EmailMessage(
+                    senderAddress: senderAddress,
+                    content: new EmailContent(assunto)
+                    {
+                        PlainText = mensagem,
+                        Html = htmlBody ?? $@"<html><body><h1>{assunto}</h1><p>{mensagem}</p></body></html>"
+                    },
+                    recipients: new EmailRecipients(new List<EmailAddress> { new EmailAddress(email) })
+                );
+
+                if (!string.IsNullOrEmpty(anexoPath))
                 {
-                    Credentials = new NetworkCredential(username, senha),
-                    EnableSsl = true
-                };
-
-                var mailMessage = new MailMessage
-                {
-                    From = new MailAddress(username, nome),
-                    Subject = assunto,
-                    Body = htmlBody ?? $"<html><body><p>{mensagem}</p></body></html>",
-                    IsBodyHtml = true
-                };
-
-                mailMessage.To.Add(email);
-
-                if (!string.IsNullOrEmpty(anexoPath) && System.IO.File.Exists(anexoPath))
-                {
-                    mailMessage.Attachments.Add(new Attachment(anexoPath));
+                    string nomeArquivo = Path.GetFileName(anexoPath);
+                    var attachment = new EmailAttachment(
+                        name: nomeArquivo,
+                        content: BinaryData.FromBytes(File.ReadAllBytes(anexoPath)),
+                        contentType: "application/pdf"
+                    );
+                    emailMessage.Attachments.Add(attachment);
                 }
 
-                await smtpClient.SendMailAsync(mailMessage);
+                EmailSendOperation emailSendOperation = await emailClient.SendAsync(
+                    WaitUntil.Completed,
+                    emailMessage
+                );
+
                 return true;
             }
             catch (Exception ex)

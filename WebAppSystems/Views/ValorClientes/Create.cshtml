@@ -1,39 +1,44 @@
 ﻿@model WebAppSystems.Models.ValorCliente
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Novo Valor";
 }
 
-<h4>Cadastro de Valores por Cliente e Advogado/Sócio</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
+<div class="page-container">
+    <div class="page-header">
+        <div class="page-header-icon"><i class="bi bi-cash-coin"></i></div>
+        <div>
+            <h2>Valores por Cliente</h2>
+            <p>Cadastro de valor hora por cliente e advogado/sócio</p>
+        </div>
+    </div>
+
+    <div class="form-card">
         <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="ClientId" class="control-label">Cliente</label>
-                <select asp-for="ClientId" class ="form-control" asp-items="ViewBag.ClientId"></select>
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+            <div class="form-field">
+                <label asp-for="ClientId">Cliente</label>
+                <select asp-for="ClientId" class="form-control" asp-items="ViewBag.ClientId"></select>
             </div>
-            <div class="form-group">
-                <label asp-for="AttorneyId" class="control-label">Advogado/Sócio</label>
-                <select asp-for="AttorneyId" class ="form-control" asp-items="ViewBag.AttorneyId"></select>
+            <div class="form-field">
+                <label asp-for="AttorneyId">Advogado/Sócio</label>
+                <select asp-for="AttorneyId" class="form-control" asp-items="ViewBag.AttorneyId"></select>
             </div>
-            <div class="form-group">
-                <label asp-for="Valor" class="control-label">Valor</label>
-                @Html.TextBoxFor(model => model.Valor, new { @class = "form-control", data_val = "false" })
+            <div class="form-field">
+                <label asp-for="Valor">Valor (R$/h)</label>
+                @Html.TextBoxFor(model => model.Valor, new { @class = "form-control", data_val = "false", placeholder = "0,00" })
                 <span asp-validation-for="Valor" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
+
+            <div class="form-actions">
+                <button type="submit" class="btn-save"><i class="bi bi-check-lg"></i> Salvar</button>
+                <a asp-action="Index" class="btn-back"><i class="bi bi-arrow-left"></i> Voltar</a>
             </div>
         </form>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
 }

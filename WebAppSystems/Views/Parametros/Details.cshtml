@@ -1,30 +1,41 @@
 ﻿@model WebAppSystems.Models.Parametros
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Configurações";
 }
 
-<h1>Details</h1>
+<div class="page-container">
+    <div class="page-header">
+        <div class="page-header-icon"><i class="bi bi-gear"></i></div>
+        <div>
+            <h2>Configurações do Sistema</h2>
+            <p>Detalhes das configurações atuais</p>
+        </div>
+    </div>
 
-<div>
-    <h4>Parametros</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Width)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Width)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Height)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Height)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+    <div class="form-card">
+        <div class="details-grid">
+            @if (Model?.LogoData != null)
+            {
+                var src = $"data:{Model.LogoMimeType};base64,{Convert.ToBase64String(Model.LogoData)}";
+                <div class="detail-item full-width">
+                    <span class="detail-label">Logo</span>
+                    <img src="@src" alt="Logo" style="max-height:80px; border-radius:6px;" />
+                </div>
+            }
+            <div class="detail-item">
+                <span class="detail-label">Largura</span>
+                <span class="detail-value">@Model?.Width px</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Altura</span>
+                <span class="detail-value">@Model?.Height px</span>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn-save"><i class="bi bi-pencil"></i> Editar</a>
+            <a asp-action="Index" class="btn-back"><i class="bi bi-arrow-left"></i> Voltar</a>
+        </div>
+    </div>
 </div>

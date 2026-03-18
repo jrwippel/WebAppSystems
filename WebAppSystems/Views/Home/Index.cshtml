@@ -1,6 +1,72 @@
 ﻿@model WebAppSystems.Models.ChartData
+@using WebAppSystems.Models.Enums
+
+@functions {
+    string FormatHoras(double h) {
+        int hh = (int)h;
+        int mm = (int)((h - hh) * 60);
+        return hh > 0 ? $"{hh}h{mm:00}" : $"{mm}min";
+    }
+}
+
+@{
+    double horasHoje = ViewBag.HorasHoje ?? 0.0;
+    double horasMes = ViewBag.HorasMes ?? 0.0;
+    double horasOntem = ViewBag.HorasOntem ?? 0.0;
+    int registrosHoje = ViewBag.RegistrosHoje ?? 0;
+    int clientesAtivos = ViewBag.ClientesAtivos ?? 0;
+    var isAdmin = (ProfileEnum)ViewBag.CurrentUserPerfil == ProfileEnum.Admin;
+}
 
 <div class="dashboard-container">
+
+    <!-- KPI Cards (Admin only) -->
+    @if (isAdmin)
+    {
+        <div class="kpi-row">
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background: linear-gradient(135deg,#667eea,#764ba2)">
+                    <i class="bi bi-clock"></i>
+                </div>
+                <div class="kpi-info">
+                    <span class="kpi-label">HORAS HOJE</span>
+                    <span class="kpi-value">@FormatHoras(horasHoje)</span>
+                    <span class="kpi-sub">— @(horasOntem > 0 ? FormatHoras(horasOntem) + " ontem" : "sem dados ontem")</span>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background: linear-gradient(135deg,#f093fb,#f5576c)">
+                    <i class="bi bi-calendar-month"></i>
+                </div>
+                <div class="kpi-info">
+                    <span class="kpi-label">HORAS NO MÊS</span>
+                    <span class="kpi-value">@FormatHoras(horasMes)</span>
+                    <span class="kpi-sub">— @DateTime.Now.ToString("MMMM", new System.Globalization.CultureInfo("pt-BR"))</span>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background: linear-gradient(135deg,#4facfe,#00f2fe)">
+                    <i class="bi bi-list-check"></i>
+                </div>
+                <div class="kpi-info">
+                    <span class="kpi-label">REGISTROS HOJE</span>
+                    <span class="kpi-value">@registrosHoje</span>
+                    <span class="kpi-sub">lançamentos finalizados</span>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background: linear-gradient(135deg,#43e97b,#38f9d7)">
+                    <i class="bi bi-people"></i>
+                </div>
+                <div class="kpi-info">
+                    <span class="kpi-label">CLIENTES ATIVOS</span>
+                    <span class="kpi-value">@clientesAtivos</span>
+                    <span class="kpi-sub">no mês atual</span>
+                </div>
+            </div>
+        </div>
+    }
+
     <div class="tabs-container">
         <div class="tab-buttons">
             <button class="tab-btn active" data-tab="tab1">
@@ -67,6 +133,70 @@
             padding: 20px;
             max-width: 1400px;
             margin: 0 auto;
+        }
+
+        /* KPI Cards */
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .kpi-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .kpi-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 22px;
+            color: white;
+        }
+
+        .kpi-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .kpi-label {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            color: #a0aec0;
+            text-transform: uppercase;
+        }
+
+        .kpi-value {
+            font-size: 26px;
+            font-weight: 700;
+            color: #2d3748;
+            line-height: 1.1;
+        }
+
+        .kpi-sub {
+            font-size: 11px;
+            color: #718096;
+        }
+
+        @@media (max-width: 900px) {
+            .kpi-row { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @@media (max-width: 500px) {
+            .kpi-row { grid-template-columns: 1fr; }
         }
 
         .tabs-container {

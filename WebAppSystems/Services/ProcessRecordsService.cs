@@ -27,6 +27,15 @@ namespace WebAppSystems.Services
                 .FirstOrDefaultAsync(obj => obj.Id == id);
         }
 
+        public async Task<List<ProcessRecord>> GetFinishedRecordsByDateAsync(DateTime from, DateTime to)
+        {
+            return await _context.ProcessRecord
+                .Where(p => p.Date.Date >= from.Date && p.Date.Date <= to.Date
+                         && p.HoraFinal != TimeSpan.Zero
+                         && p.HoraFinal > p.HoraInicial)
+                .ToListAsync();
+        }
+
 
         public async Task<(IEnumerable<ProcessRecord> records, int totalRecords)> FindAllAsync(
             int page,

@@ -4,28 +4,33 @@
     ViewData["Title"] = "Nova Área";
 }
 
-<div class="card">
-    <div class="card-body">
-        <h4 class="card-title">Cadastro de Áreas</h4>
-        <hr />
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+<div class="page-container">
+    <div class="page-header">
+        <div class="page-header-icon"><i class="bi bi-building"></i></div>
+        <div>
+            <h2>Cadastro de Área</h2>
+            <p>Adicione uma nova área ao sistema</p>
+        </div>
+    </div>
 
-            <div class="form-group">
-                <label asp-for="Name" class="control-label"> Descrição da Área</label>
-                <input asp-for="Name" class="form-control" />
+    <div class="form-card">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+            <div class="form-field">
+                <label asp-for="Name">Descrição da Área</label>
+                <input asp-for="Name" class="form-control" placeholder="Ex: Contencioso, Consultivo..." />
                 <span asp-validation-for="Name" class="text-danger"></span>
             </div>
-            <div class="mt-3">
-                <button type="submit" class="btn btn-primary">Salvar</button>
-                <a asp-action="Index" class="btn btn-secondary">Voltar</a>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-save"><i class="bi bi-check-lg"></i> Salvar</button>
+                <a asp-action="Index" class="btn-back"><i class="bi bi-arrow-left"></i> Voltar</a>
             </div>
         </form>
     </div>
 </div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
 }
