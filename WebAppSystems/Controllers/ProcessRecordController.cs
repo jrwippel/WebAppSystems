@@ -186,38 +186,28 @@ namespace WebAppSystems.Controllers
                 ICellStyle cellStyle = workbook.CreateCellStyle();
                 cellStyle.WrapText = true;
 
-                // Gradiente vertical: azul médio (topo) → branco (base)
-                byte[] colorStart = { 155, 194, 230 }; // azul Ênfase 1 40% (topo - mais forte)
-                byte[] colorEnd   = { 255, 255, 255 }; // branco (base)
+                // Criar o estilo de célula com quebra de texto
+                ICellStyle cellStyle = workbook.CreateCellStyle();
+                cellStyle.WrapText = true;
 
-                // Pré-criar um estilo por linha
-                XSSFCellStyle[] gradientStyles = new XSSFCellStyle[5];
-                for (int row2 = 0; row2 < 5; row2++)
-                {
-                    float t = row2 / 4f;
-                    byte r = (byte)(colorStart[0] + (colorEnd[0] - colorStart[0]) * t);
-                    byte g = (byte)(colorStart[1] + (colorEnd[1] - colorStart[1]) * t);
-                    byte b = (byte)(colorStart[2] + (colorEnd[2] - colorStart[2]) * t);
-                    XSSFCellStyle s = (XSSFCellStyle)workbook.CreateCellStyle();
-                    s.SetFillForegroundColor(new XSSFColor(new byte[] { r, g, b }));
-                    s.FillPattern = FillPattern.SolidForeground;
-                    gradientStyles[row2] = s;
-                }
-
-                // Cor sólida azul claro para uso em outros estilos (linhas de dados alternadas)
-                XSSFColor lightBlueEmphasis = new XSSFColor(new byte[] { 222, 235, 247 });
+                // Criar o estilo de sombreamento com XSSF
                 XSSFCellStyle shadedStyle = (XSSFCellStyle)workbook.CreateCellStyle();
+
+                // Definindo a cor azul claro Ênfase 1 mais claro 80% em RGB
+                XSSFColor lightBlueEmphasis = new XSSFColor(new byte[] { 222, 235, 247 });
+
+                // Aplicar a cor ao estilo da célula
                 shadedStyle.SetFillForegroundColor(lightBlueEmphasis);
                 shadedStyle.FillPattern = FillPattern.SolidForeground;
 
-                // Aplicar gradiente nas 5 linhas do cabeçalho
+                // Aplicar o estilo de sombreamento às células
                 for (int i = 0; i <= 4; i++)
                 {
                     IRow row = sheet.GetRow(i) ?? sheet.CreateRow(i);
                     for (int j = 0; j <= 9; j++)
                     {
                         ICell cell = row.GetCell(j) ?? row.CreateCell(j);
-                        cell.CellStyle = gradientStyles[i];
+                        cell.CellStyle = shadedStyle;
                     }
                 }
 
