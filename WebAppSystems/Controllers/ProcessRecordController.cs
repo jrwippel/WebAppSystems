@@ -186,10 +186,6 @@ namespace WebAppSystems.Controllers
                 ICellStyle cellStyle = workbook.CreateCellStyle();
                 cellStyle.WrapText = true;
 
-                // Criar o estilo de célula com quebra de texto
-                ICellStyle cellStyle = workbook.CreateCellStyle();
-                cellStyle.WrapText = true;
-
                 // Criar o estilo de sombreamento com XSSF
                 XSSFCellStyle shadedStyle = (XSSFCellStyle)workbook.CreateCellStyle();
 
