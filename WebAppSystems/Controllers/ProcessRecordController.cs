@@ -634,6 +634,9 @@ namespace WebAppSystems.Controllers
                     workbook.Write(stream);
                     var content = stream.ToArray();
 
+                    // Injetar gradiente horizontal (branco → azul) na célula mesclada do cabeçalho via OpenXML
+                    content = InjectGradientFill(content);
+
                     return File(
                         content,
                         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -804,10 +807,75 @@ namespace WebAppSystems.Controllers
                     return PictureType.PNG;
                 case "image/jpeg":
                     return PictureType.JPEG;
-                // Add more cases for other image types if needed
                 default:
-                    return PictureType.PNG; // Default to PNG if the type is not recognized
+                    return PictureType.PNG;
             }
+        }
+
+        // Injeta gradiente horizontal (branco → azul) na célula mesclada do cabeçalho via OpenXML
+        private byte[] InjectGradientFill(byte[] xlsxBytes)
+        {
+            using var ms = new MemoryStream(xlsxBytes);
+            using var spreadDoc = DocumentFormat.OpenXml.Packaging.SpreadsheetDocument.Open(ms, true);
+
+            var wbPart = spreadDoc.WorkbookPart;
+            var wsPart = wbPart.WorksheetParts.First();
+            var ws = wsPart.Worksheet;
+
+            // Pegar a célula A1 (topo-esquerda da região mesclada)
+            var sheetData = ws.GetFirstChild<DocumentFormat.OpenXml.Spreadsheet.SheetData>();
+            var row1 = sheetData.Elements<DocumentFormat.OpenXml.Spreadsheet.Row>()
+                .FirstOrDefault(r => r.RowIndex == 1);
+            if (row1 == null) return xlsxBytes;
+
+            var cellA1 = row1.Elements<DocumentFormat.OpenXml.Spreadsheet.Cell>()
+                .FirstOrDefault(c => c.CellReference == "A1");
+            if (cellA1 == null) return xlsxBytes;
+
+            // Obter o styleSheet
+            var stylesPart = wbPart.WorkbookStylesPart;
+            var stylesheet = stylesPart.Stylesheet;
+
+            // Criar novo fill com gradiente horizontal branco → azul
+            var gradientFill = new DocumentFormat.OpenXml.Spreadsheet.GradientFill
+            {
+                Type = DocumentFormat.OpenXml.Spreadsheet.GradientValues.Linear,
+                Degree = 0  // 0° = esquerda para direita
+            };
+            gradientFill.Append(new DocumentFormat.OpenXml.Spreadsheet.GradientStop
+            {
+                Position = 0,
+                Color = new DocumentFormat.OpenXml.Spreadsheet.Color { Rgb = "FFFFFFFF" } // branco
+            });
+            gradientFill.Append(new DocumentFormat.OpenXml.Spreadsheet.GradientStop
+            {
+                Position = 1,
+                Color = new DocumentFormat.OpenXml.Spreadsheet.Color { Rgb = "FF9DC3E6" } // azul médio
+            });
+
+            var newFill = new DocumentFormat.OpenXml.Spreadsheet.Fill();
+            newFill.Append(gradientFill);
+
+            // Adicionar o fill ao stylesheet
+            stylesheet.Fills.Append(newFill);
+            uint newFillId = (uint)(stylesheet.Fills.Count() - 1);
+
+            // Criar novo xf (cell format) baseado no xf atual da célula, apontando para o novo fill
+            uint currentXfId = cellA1.StyleIndex?.Value ?? 0;
+            var cellXfs = stylesheet.CellFormats;
+            var currentXf = (DocumentFormat.OpenXml.Spreadsheet.CellFormat)cellXfs.ElementAt((int)currentXfId).Clone();
+            currentXf.FillId = newFillId;
+            currentXf.ApplyFill = true;
+            cellXfs.Append(currentXf);
+            uint newXfId = (uint)(cellXfs.Count() - 1);
+
+            // Aplicar o novo estilo à célula A1
+            cellA1.StyleIndex = newXfId;
+
+            stylesheet.Save();
+            spreadDoc.Save();
+
+            return ms.ToArray();
         }
 
 
