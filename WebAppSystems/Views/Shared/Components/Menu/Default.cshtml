@@ -264,32 +264,10 @@
 
     /* Office logo + name above flags */
     .navbar-right-flags {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        gap: 3px;
-    }
-
-    .office-brand {
+        margin-left: auto;
         display: flex;
         align-items: center;
-        gap: 6px;
-    }
-
-    .office-logo-nav {
-        max-height: 24px;
-        max-width: 36px;
-        object-fit: contain;
-        border-radius: 3px;
-    }
-
-    .office-name-nav {
-        font-size: 9px;
-        color: rgba(255,255,255,0.75);
-        font-weight: 500;
-        line-height: 1.2;
-        max-width: 160px;
-        text-align: right;
+        flex-shrink: 0;
     }
 
     /* Language flags */
@@ -472,19 +450,8 @@
         </ul>
     </div>
 
-    <!-- RIGHT: logo + name + flags -->
+    <!-- RIGHT: flags -->
     <div class="navbar-right-flags">
-        @if (ViewBag.Parametros != null && !string.IsNullOrEmpty(ViewBag.Parametros.Logo))
-        {
-            <div class="office-brand">
-                <img src="@ViewBag.Parametros.Logo" class="office-logo-nav" alt="Logo" />
-                <span class="office-name-nav">Eberhardt, Carrascoza, BSM &amp; CB Adv.</span>
-            </div>
-        }
-        else
-        {
-            <span class="office-name-nav">Eberhardt, Carrascoza, BSM &amp; CB Adv.</span>
-        }
         <div class="language-flags-group">
             <button class="flag-btn active" data-lang="pt" title="Português">
                 <svg class="flag-icon" viewBox="0 0 36 24" xmlns="http://www.w3.org/2000/svg">
