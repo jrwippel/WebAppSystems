@@ -548,7 +548,6 @@ namespace WebAppSystems.Controllers
 
                 anchor.Col1 = 0;
                 anchor.Row1 = 0;
-                anchor.Dy1 = 200000; // margem superior
                 anchor.Col2 = anchor.Col1 + width;
                 anchor.Row2 = anchor.Row1 + height;
 
