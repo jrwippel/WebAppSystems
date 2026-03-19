@@ -615,17 +615,14 @@ namespace WebAppSystems.Controllers
                     var clientDrawing = clientSheet.CreateDrawingPatriarch();
                     var clientAnchor = helper.CreateClientAnchor();
 
-                    // Logo do cliente: ancora na coluna 8, linha 1 até coluna 9, linha 4
-                    // Mesmo intervalo de linhas que o logo do escritório (linhas 1-4)
+                    // Logo do cliente: ancora na coluna 8, linha 1, mesmo Row1 do escritório
+                    // Usa Resize() para manter proporção original da imagem
                     clientAnchor.Col1 = 8;
                     clientAnchor.Row1 = 1;
-                    clientAnchor.Dy1 = 200000; // margem superior
-                    clientAnchor.Col2 = 10;
-                    clientAnchor.Row2 = 5;
-                    clientAnchor.Dy2 = -200000; // margem inferior
 
                     int clientPictureIdx = workbook.AddPicture(clientImageData, GetPictureType(clientImageMimeType));
                     var clientPicture = clientDrawing.CreatePicture(clientAnchor, clientPictureIdx);
+                    clientPicture.Resize(3);
                 }
 
                 string fileName = "Relatório_TimeSheet";
