@@ -615,14 +615,28 @@ namespace WebAppSystems.Controllers
                     var clientDrawing = clientSheet.CreateDrawingPatriarch();
                     var clientAnchor = helper.CreateClientAnchor();
 
-                    // Logo do cliente: ancora na coluna 8, linha 1, mesmo Row1 do escritório
-                    // Usa Resize() para manter proporção original da imagem
                     clientAnchor.Col1 = 8;
                     clientAnchor.Row1 = 1;
 
                     int clientPictureIdx = workbook.AddPicture(clientImageData, GetPictureType(clientImageMimeType));
                     var clientPicture = clientDrawing.CreatePicture(clientAnchor, clientPictureIdx);
-                    clientPicture.Resize(3);
+
+                    // Calcular fator de escala para o cliente ter a mesma altura visual que o escritório (Resize(4))
+                    // Resize(n) escala n vezes o tamanho original em pixels
+                    // Queremos: clientHeight * clientFactor = officeHeight * 4
+                    try
+                    {
+                        using var officeImg = SixLabors.ImageSharp.Image.Load(imageBytes);
+                        using var clientImg = SixLabors.ImageSharp.Image.Load(clientImageData);
+                        double targetHeightPx = officeImg.Height * 4.0;
+                        double clientFactor = targetHeightPx / clientImg.Height;
+                        clientPicture.Resize(clientFactor);
+                    }
+                    catch
+                    {
+                        // fallback se não conseguir ler dimensões
+                        clientPicture.Resize(4);
+                    }
                 }
 
                 string fileName = "Relatório_TimeSheet";
