@@ -547,7 +547,7 @@ namespace WebAppSystems.Controllers
                 var anchor = helper.CreateClientAnchor();
 
                 anchor.Col1 = 0;
-                anchor.Row1 = 1;
+                anchor.Row1 = 0;
                 anchor.Col2 = anchor.Col1 + width;
                 anchor.Row2 = anchor.Row1 + height;
 
@@ -618,9 +618,9 @@ namespace WebAppSystems.Controllers
                     // Logo do cliente: ancora na coluna 8, linha 1 até coluna 9, linha 4
                     // Mesmo intervalo de linhas que o logo do escritório (linhas 1-4)
                     clientAnchor.Col1 = 8;
-                    clientAnchor.Row1 = 1;
+                    clientAnchor.Row1 = 0;
                     clientAnchor.Col2 = 10;
-                    clientAnchor.Row2 = 5;
+                    clientAnchor.Row2 = 4;
 
                     int clientPictureIdx = workbook.AddPicture(clientImageData, GetPictureType(clientImageMimeType));
                     var clientPicture = clientDrawing.CreatePicture(clientAnchor, clientPictureIdx);
