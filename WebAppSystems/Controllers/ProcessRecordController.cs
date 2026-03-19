@@ -548,6 +548,7 @@ namespace WebAppSystems.Controllers
 
                 anchor.Col1 = 0;
                 anchor.Row1 = 0;
+                anchor.Dy1 = 200000; // margem superior
                 anchor.Col2 = anchor.Col1 + width;
                 anchor.Row2 = anchor.Row1 + height;
 
@@ -619,6 +620,7 @@ namespace WebAppSystems.Controllers
                     // Mesmo intervalo de linhas que o logo do escritório (linhas 1-4)
                     clientAnchor.Col1 = 8;
                     clientAnchor.Row1 = 0;
+                    clientAnchor.Dy1 = 200000; // margem superior
                     clientAnchor.Col2 = 10;
                     clientAnchor.Row2 = 4;
 
