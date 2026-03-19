@@ -613,28 +613,28 @@ namespace WebAppSystems.Controllers
                 {
                     var clientSheet = workbook.GetSheet(sheetName);
                     var clientDrawing = clientSheet.CreateDrawingPatriarch();
-                    var clientAnchor = helper.CreateClientAnchor();
-
-                    clientAnchor.Col1 = 8;
-                    clientAnchor.Row1 = 1;
 
                     int clientPictureIdx = workbook.AddPicture(clientImageData, GetPictureType(clientImageMimeType));
-                    var clientPicture = clientDrawing.CreatePicture(clientAnchor, clientPictureIdx);
 
                     // Calcular fator de escala para o cliente ter a mesma altura visual que o escritório (Resize(4))
-                    // Resize(n) escala n vezes o tamanho original em pixels
-                    // Queremos: clientHeight * clientFactor = officeHeight * 4
                     try
                     {
                         using var officeImg = SixLabors.ImageSharp.Image.Load(imageBytes);
                         using var clientImg = SixLabors.ImageSharp.Image.Load(clientImageData);
                         double targetHeightPx = officeImg.Height * 4.0;
                         double clientFactor = targetHeightPx / clientImg.Height;
+
+                        var clientAnchor = new XSSFClientAnchor(0, 0, 0, 0, 8, 1, 10, 5);
+                        clientAnchor.AnchorType = AnchorType.MoveAndResize;
+                        var clientPicture = clientDrawing.CreatePicture(clientAnchor, clientPictureIdx);
                         clientPicture.Resize(clientFactor);
                     }
                     catch
                     {
-                        // fallback se não conseguir ler dimensões
+                        var clientAnchor = helper.CreateClientAnchor();
+                        clientAnchor.Col1 = 8;
+                        clientAnchor.Row1 = 1;
+                        var clientPicture = clientDrawing.CreatePicture(clientAnchor, clientPictureIdx);
                         clientPicture.Resize(4);
                     }
                 }
