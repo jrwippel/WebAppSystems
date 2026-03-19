@@ -622,6 +622,7 @@ namespace WebAppSystems.Controllers
                     clientAnchor.Dy1 = 200000; // margem superior
                     clientAnchor.Col2 = 10;
                     clientAnchor.Row2 = 5;
+                    clientAnchor.Dy2 = -200000; // margem inferior
 
                     int clientPictureIdx = workbook.AddPicture(clientImageData, GetPictureType(clientImageMimeType));
                     var clientPicture = clientDrawing.CreatePicture(clientAnchor, clientPictureIdx);
