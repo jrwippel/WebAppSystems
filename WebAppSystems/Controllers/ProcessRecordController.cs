@@ -613,30 +613,16 @@ namespace WebAppSystems.Controllers
                 {
                     var clientSheet = workbook.GetSheet(sheetName);
                     var clientDrawing = clientSheet.CreateDrawingPatriarch();
+                    var clientAnchor = helper.CreateClientAnchor();
+
+                    // Anchor fixo: mesma área vertical do escritório (Row1=1 até Row2=5)
+                    clientAnchor.Col1 = 8;
+                    clientAnchor.Row1 = 1;
+                    clientAnchor.Col2 = 10;
+                    clientAnchor.Row2 = 5;
 
                     int clientPictureIdx = workbook.AddPicture(clientImageData, GetPictureType(clientImageMimeType));
-
-                    // Calcular fator de escala para o cliente ter a mesma altura visual que o escritório (Resize(4))
-                    try
-                    {
-                        using var officeImg = SixLabors.ImageSharp.Image.Load(imageBytes);
-                        using var clientImg = SixLabors.ImageSharp.Image.Load(clientImageData);
-                        double targetHeightPx = officeImg.Height * 4.0;
-                        double clientFactor = targetHeightPx / clientImg.Height;
-
-                        var clientAnchor = new XSSFClientAnchor(0, 0, 0, 0, 8, 1, 10, 5);
-                        clientAnchor.AnchorType = AnchorType.MoveAndResize;
-                        var clientPicture = clientDrawing.CreatePicture(clientAnchor, clientPictureIdx);
-                        clientPicture.Resize(clientFactor);
-                    }
-                    catch
-                    {
-                        var clientAnchor = helper.CreateClientAnchor();
-                        clientAnchor.Col1 = 8;
-                        clientAnchor.Row1 = 1;
-                        var clientPicture = clientDrawing.CreatePicture(clientAnchor, clientPictureIdx);
-                        clientPicture.Resize(4);
-                    }
+                    clientDrawing.CreatePicture(clientAnchor, clientPictureIdx);
                 }
 
                 string fileName = "Relatório_TimeSheet";
