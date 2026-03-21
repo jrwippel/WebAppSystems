@@ -137,9 +137,125 @@
                 <i class="bi bi-stop-fill"></i>
             </button>
         </div>
-    </div>  
-     
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    </div>
+
+    <!-- Page Loading Overlay -->
+    <div id="pageLoadingOverlay" style="display:none;">
+        <div class="loading-card">
+            <div class="loading-clock">
+                <svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="30" cy="30" r="28" fill="none" stroke="#667eea" stroke-width="3"/>
+                    <circle cx="30" cy="30" r="2.5" fill="#667eea"/>
+                    <line id="hourHand" x1="30" y1="30" x2="30" y2="16" stroke="#667eea" stroke-width="3" stroke-linecap="round"/>
+                    <line id="minuteHand" x1="30" y1="30" x2="30" y2="10" stroke="#764ba2" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="30" y1="4" x2="30" y2="8" stroke="#667eea" stroke-width="2"/>
+                    <line x1="30" y1="52" x2="30" y2="56" stroke="#667eea" stroke-width="2"/>
+                    <line x1="4" y1="30" x2="8" y2="30" stroke="#667eea" stroke-width="2"/>
+                    <line x1="52" y1="30" x2="56" y2="30" stroke="#667eea" stroke-width="2"/>
+                </svg>
+            </div>
+            <p class="loading-text">Aguarde...</p>
+            <p class="loading-sub">Um momento, por favor</p>
+        </div>
+    </div>
+
+    <style>
+        #pageLoadingOverlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(3px);
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .loading-card {
+            background: white;
+            border-radius: 16px;
+            padding: 32px 40px;
+            box-shadow: 0 12px 40px rgba(102, 126, 234, 0.25);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid rgba(102, 126, 234, 0.15);
+        }
+        .loading-clock { width: 64px; height: 64px; }
+        .loading-clock svg { width: 100%; height: 100%; }
+        .loading-text { font-size: 16px; font-weight: 700; color: #2d3748; margin: 0; }
+        .loading-sub { font-size: 13px; color: #a0aec0; margin: 0; }
+    </style>
+
+    <script>
+        (function () {
+            var overlay = document.getElementById('pageLoadingOverlay');
+            var minuteHand = document.getElementById('minuteHand');
+            var hourHand = document.getElementById('hourHand');
+            var animFrame;
+            var startTime;
+            var showTimer;
+            var DELAY = 350;
+
+            function animateClock(ts) {
+                if (!startTime) startTime = ts;
+                var elapsed = ts - startTime;
+                var minDeg = (elapsed / 2000) * 360;
+                var hourDeg = (elapsed / 24000) * 360;
+                minuteHand.setAttribute('transform', 'rotate(' + minDeg + ', 30, 30)');
+                hourHand.setAttribute('transform', 'rotate(' + hourDeg + ', 30, 30)');
+                animFrame = requestAnimationFrame(animateClock);
+            }
+
+            function scheduleLoader() {
+                showTimer = setTimeout(function () {
+                    overlay.style.display = 'flex';
+                    startTime = null;
+                    animFrame = requestAnimationFrame(animateClock);
+                }, DELAY);
+            }
+
+            function hideLoader() {
+                clearTimeout(showTimer);
+                overlay.style.display = 'none';
+                cancelAnimationFrame(animFrame);
+                startTime = null;
+            }
+
+            window.addEventListener('pageshow', hideLoader);
+            window.addEventListener('load', hideLoader);
+
+            var lastSubmitButton = null;
+            document.addEventListener('click', function (e) {
+                var btn = e.target.closest('button[type="submit"], input[type="submit"]');
+                if (btn) lastSubmitButton = btn;
+            }, true);
+
+            document.addEventListener('click', function (e) {
+                var el = e.target.closest('a');
+                if (!el) return;
+                var href = el.getAttribute('href');
+                if (!href || href === '#' || href.startsWith('javascript') || href.startsWith('mailto')) return;
+                if (el.getAttribute('target') === '_blank') return;
+                if (el.hasAttribute('download')) return;
+                if (el.getAttribute('onclick')) return;
+                scheduleLoader();
+            });
+
+            var downloadActions = ['DownloadReport', 'DownloadPdfReport', 'GerarPreFatura'];
+
+            document.addEventListener('submit', function (e) {
+                if (e.target.tagName !== 'FORM') return;
+                var formaction = lastSubmitButton ? lastSubmitButton.getAttribute('formaction') : null;
+                if (formaction) {
+                    var isDownload = downloadActions.some(function(a) { return formaction.indexOf(a) !== -1; });
+                    if (isDownload) { lastSubmitButton = null; return; }
+                }
+                scheduleLoader();
+                lastSubmitButton = null;
+            });
+        })();
+    </script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.datatables.net/v/dt/dt-1.13.4/datatables.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
