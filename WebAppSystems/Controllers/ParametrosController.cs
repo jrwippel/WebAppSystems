@@ -117,55 +117,109 @@ namespace WebAppSystems.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Width,Height")] Parametros parametros, IFormFile logo)
+        public async Task<IActionResult> Edit(int id, IFormFile logo, int Width, int Height, decimal AliquotaTributos)
         {
-            if (id != parametros.Id)
+            var existing = await _context.Parametros.FindAsync(id);
+            if (existing == null) return NotFound();
+
+            existing.Width = Width;
+            existing.Height = Height;
+            existing.AliquotaTributos = AliquotaTributos;
+
+            if (logo != null)
             {
-                return NotFound();
+                if (logo.Length > 5 * 1024 * 1024)
+                {
+                    ModelState.AddModelError("Logo", "A imagem deve ter no máximo 5MB.");
+                    return View(existing);
+                }
+                using var ms = new MemoryStream();
+                await logo.CopyToAsync(ms);
+                existing.LogoData = ms.ToArray();
+                existing.LogoMimeType = logo.ContentType;
             }
 
-           // if (ModelState.IsValid)
-           //{
-                try
-                {
-                    // Se um novo logo for carregado, substitua o existente
-                    if (logo != null)
-                    {
-                        using (var memoryStream = new MemoryStream())
-                        {
-                            await logo.CopyToAsync(memoryStream);
-                            parametros.LogoData = memoryStream.ToArray();
-                            parametros.LogoMimeType = logo.ContentType;
-                        }
-                    }
-                    else
-                    {
-                        // Mantenha os dados do logo atual se um novo logo não for carregado
-                        var existingParametros = await _context.Parametros.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id);
-                        if (existingParametros != null)
-                        {
-                            parametros.LogoData = existingParametros.LogoData;
-                            parametros.LogoMimeType = existingParametros.LogoMimeType;
-                        }
-                    }
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!ParametrosExists(id)) return NotFound();
+                throw;
+            }
 
-                    _context.Update(parametros);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
+            return RedirectToAction(nameof(Index));
+        }
+
+        // GET: Parametros/EditLogo/5
+        public async Task<IActionResult> EditLogo(int? id)
+        {
+            if (id == null) return NotFound();
+            var p = await _context.Parametros.FindAsync(id);
+            if (p == null) return NotFound();
+            return View(p);
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditLogo(int id, IFormFile logo, int Width, int Height)
+        {
+            var existing = await _context.Parametros.FindAsync(id);
+            if (existing == null) return NotFound();
+
+            existing.Width = Width;
+            existing.Height = Height;
+
+            if (logo != null)
+            {
+                if (logo.Length > 5 * 1024 * 1024)
                 {
-                    if (!ParametrosExists(parametros.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    ModelState.AddModelError("Logo", "A imagem deve ter no máximo 5MB.");
+                    return View(existing);
                 }
-                return RedirectToAction(nameof(Index));
-            //}
-            //return View(parametros);
+                using var ms = new MemoryStream();
+                await logo.CopyToAsync(ms);
+                existing.LogoData = ms.ToArray();
+                existing.LogoMimeType = logo.ContentType;
+            }
+
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+        }
+
+        // GET: Parametros/EditFinanceiro/5
+        public async Task<IActionResult> EditFinanceiro(int? id)
+        {
+            if (id == null) return NotFound();
+            var p = await _context.Parametros.FindAsync(id);
+            if (p == null) return NotFound();
+            return View(p);
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditFinanceiro(int id, string AliquotaTributos)
+        {
+            var existing = await _context.Parametros.FindAsync(id);
+            if (existing == null) return NotFound();
+
+            if (decimal.TryParse(AliquotaTributos?.Replace(',', '.'),
+                System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture,
+                out decimal aliquota))
+            {
+                existing.AliquotaTributos = aliquota;
+            }
+
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+        }
+
+        // GET: Parametros/Logo/5
+        public async Task<IActionResult> Logo(int id)
+        {
+            var p = await _context.Parametros.FindAsync(id);
+            if (p?.LogoData == null) return NotFound();
+            return File(p.LogoData, p.LogoMimeType ?? "image/png");
         }
 
 

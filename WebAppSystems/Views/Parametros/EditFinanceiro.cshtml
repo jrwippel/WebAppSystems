@@ -1,0 +1,63 @@
+@model WebAppSystems.Models.Parametros
+@{ ViewData["Title"] = "Editar Financeiro"; }
+
+<div class="cfg-wrap">
+    <div class="cfg-header">
+        <div class="cfg-header-left">
+            <i class="bi bi-percent cfg-icon"></i>
+            <div>
+                <h1>Financeiro</h1>
+                <p>Parâmetros utilizados nos cálculos de resultado</p>
+            </div>
+        </div>
+        <a asp-action="Index" class="btn-back"><i class="bi bi-arrow-left"></i> Voltar</a>
+    </div>
+
+    <form asp-action="EditFinanceiro" method="post" class="cfg-form">
+        <input type="hidden" asp-for="Id" />
+        <div asp-validation-summary="ModelOnly" class="alert-error"></div>
+
+        <div class="cfg-section">
+            <div class="field" style="max-width:280px">
+                <label asp-for="AliquotaTributos">Alíquota de Tributos (%)</label>
+                <input type="text" name="AliquotaTributos"
+                       value="@Model.AliquotaTributos.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)"
+                       class="form-control" placeholder="Ex: 14.53" />
+                <span asp-validation-for="AliquotaTributos" class="err"></span>
+                <small>Use ponto como separador decimal. Ex: 14.53</small>
+            </div>
+        </div>
+
+        <div class="cfg-actions">
+            <button type="submit" class="btn-save"><i class="bi bi-check-lg"></i> Salvar</button>
+            <a asp-action="Index" class="btn-cancel">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts { @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); } }
+
+<style>
+    .cfg-wrap { max-width: 480px; margin: 0 auto; padding: 24px 16px; }
+    .cfg-header { display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; box-shadow: 0 4px 20px rgba(102,126,234,.25); }
+    .cfg-header-left { display: flex; align-items: center; gap: 14px; }
+    .cfg-icon { font-size: 26px; color: rgba(255,255,255,.85); }
+    .cfg-header h1 { font-size: 20px; font-weight: 700; color: #fff; margin: 0 0 2px; }
+    .cfg-header p  { font-size: 13px; color: rgba(255,255,255,.8); margin: 0; }
+    .btn-back { display: flex; align-items: center; gap: 6px; padding: 8px 16px; background: #fff; color: #667eea; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; white-space: nowrap; }
+    .btn-back:hover { color: #764ba2; }
+    .cfg-form { background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,.07); overflow: hidden; }
+    .cfg-section { padding: 28px; }
+    .field { display: flex; flex-direction: column; margin-bottom: 14px; }
+    .field label { font-size: 13px; font-weight: 600; color: #4a5568; margin-bottom: 5px; }
+    .field small { font-size: 12px; color: #a0aec0; margin-top: 4px; }
+    .form-control { padding: 9px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px; transition: border-color .15s; }
+    .form-control:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,.1); }
+    .err { font-size: 12px; color: #e53e3e; margin-top: 3px; }
+    .alert-error { background: #fff5f5; border: 1.5px solid #feb2b2; border-radius: 8px; padding: 10px 14px; margin: 16px 28px 0; color: #c53030; font-size: 13px; }
+    .cfg-actions { display: flex; gap: 10px; padding: 18px 28px; border-top: 1px solid #e2e8f0; background: #f7fafc; }
+    .btn-save { display: flex; align-items: center; gap: 7px; padding: 10px 24px; background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+    .btn-save:hover { opacity: .9; }
+    .btn-cancel { display: flex; align-items: center; padding: 10px 20px; background: #fff; color: #718096; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; }
+    .btn-cancel:hover { background: #edf2f7; }
+</style>

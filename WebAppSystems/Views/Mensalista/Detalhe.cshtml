@@ -183,6 +183,7 @@
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: { y: { ticks: { callback: v => 'R$ ' + v.toLocaleString('pt-BR') } } }
             }
@@ -204,7 +205,7 @@
                     borderWidth: 2, borderColor: '#fff'
                 }]
             },
-            options: { responsive: true, plugins: { legend: { position: 'bottom' } }, cutout: '65%' }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, cutout: '65%' }
         });
     }
 
@@ -288,8 +289,9 @@
     .metric-val.neg   { color: #742a2a; }
 
     .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .chart-box { background: #f7fafc; border-radius: 10px; padding: 16px; }
+    .chart-box { background: #f7fafc; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; }
     .chart-title { font-size: 13px; font-weight: 700; color: #4a5568; margin-bottom: 12px; }
+    .chart-box canvas { height: 260px !important; }
     .no-data { color: #a0aec0; font-size: 14px; padding: 20px 0; }
 
     @@media (max-width: 900px) {

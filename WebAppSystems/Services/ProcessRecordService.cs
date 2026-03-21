@@ -158,12 +158,17 @@ namespace WebAppSystems.Services
                 }
 
                 decimal valorTotalHoras = 0;
+
+                // Carrega todos os valores do cliente de uma vez (padrão + exceções)
+                var valoresCliente = await _context.ValorCliente
+                    .Where(v => v.ClientId == mensalista.ClientId)
+                    .ToListAsync();
+
                 foreach (var record in recordsList)
                 {
                     var userId = record.AttorneyId;
-                    //var valorPorHora = Convert.ToDecimal(_context.PrecoCliente
-                    var valorPorHora = Convert.ToDecimal(_context.ValorCliente
-                        .FirstOrDefault(pc => pc.ClientId == mensalista.ClientId && pc.AttorneyId == userId)?.Valor ?? 0.0);
+                    var valorPorHora = Convert.ToDecimal(
+                        ValorClienteService.GetValor(valoresCliente, mensalista.ClientId, userId));
 
                     valorTotalHoras += (decimal)(record.CalculoHorasDecimal()) * valorPorHora;
                 }
@@ -176,11 +181,14 @@ namespace WebAppSystems.Services
                 if (departmentId.HasValue)
                 {
                     percentual = GetMensalistaDepartmentPercentual(mensalista, departmentId.Value);
-                }                
+                }
 
-                decimal tributos = mensalista.ValorMensalBruto * (decimal)0.1453;
+                var parametros = await _context.Parametros.FirstOrDefaultAsync();
+                decimal aliquota = (parametros?.AliquotaTributos ?? 14.53m) / 100m;
+
+                decimal tributos = mensalista.ValorMensalBruto * aliquota;
                 decimal valorMensalLiquido = mensalista.ValorMensalBruto - tributos - mensalista.ComissaoParceiro - mensalista.ComissaoSocio;
-                decimal valorHoraTecLiquida = valorTotalHoras - (valorTotalHoras * (decimal)0.1453);
+                decimal valorHoraTecLiquida = valorTotalHoras - (valorTotalHoras * aliquota);
                 decimal valorAreaLiquido = valorMensalLiquido * percentual / 100;
                 decimal valorResultadoBruto = (mensalista.ValorMensalBruto * percentual / 100) - valorTotalHoras;
                 decimal valorResultadoLiquido = valorAreaLiquido - valorHoraTecLiquida;

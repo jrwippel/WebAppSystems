@@ -80,8 +80,7 @@ namespace WebAppSystems.Controllers
                     else
                     {
                         var novo = new ValorCliente { ClientId = item.ClientId, AttorneyId = item.AttorneyId, Valor = item.Valor };
-                        _context.ValorCliente.Add(novo);
-                        await _context.SaveChangesAsync();
+                        _context.ValorCliente.Add(novo);                        await _context.SaveChangesAsync();
                         result.Add(new { id = novo.Id, clientId = novo.ClientId, attorneyId = novo.AttorneyId });
                     }
                 }
@@ -95,7 +94,7 @@ namespace WebAppSystems.Controllers
         {
             public int Id { get; set; }
             public int ClientId { get; set; }
-            public int AttorneyId { get; set; }
+            public int? AttorneyId { get; set; }
             public double Valor { get; set; }
         }
 

@@ -23,5 +23,8 @@ namespace WebAppSystems.Models
         // Propriedades para armazenar a imagem no banco de dados
         public byte[] LogoData { get; set; }
         public string LogoMimeType { get; set; }
+
+        [Range(0, 100, ErrorMessage = "A alíquota deve ser entre 0 e 100")]
+        public decimal AliquotaTributos { get; set; } = 14.53m;
     }
 }
