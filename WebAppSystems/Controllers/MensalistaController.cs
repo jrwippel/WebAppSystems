@@ -241,9 +241,52 @@ namespace WebAppSystems.Controllers
             return View(new List<MensalistaHoursViewModel> { specificMensalistaHours });
         }    
 
-        
+        public async Task<IActionResult> Detalhe(int id, string monthYear, int? clientId, int? departmentId)
+        {
+            var mensalista = await _mensalistaService.FindByIdAsync(id);
+            if (mensalista == null) return NotFound();
 
+            DateTime parsedDate = DateTime.Now;
+            if (!string.IsNullOrEmpty(monthYear) && monthYear.Length == 7)
+            {
+                parsedDate = DateTime.ParseExact(monthYear, "MM/yyyy", System.Globalization.CultureInfo.InvariantCulture);
+            }
 
+            // Mês atual
+            ConvertMonthYearToRange(parsedDate, out DateTime minDate, out DateTime maxDate);
+            var mesAtualList = await _processRecordService.FindByDateMensalistaAsync(minDate, maxDate, clientId, departmentId, QueryType.Monthly);
+            var mesAtual = mesAtualList.FirstOrDefault(m => m.Mensalista.Id == id);
+
+            // Média 3 meses
+            DateTime start3m = new DateTime(parsedDate.Year, parsedDate.Month, 1).AddMonths(-3);
+            DateTime end3m = new DateTime(parsedDate.Year, parsedDate.Month, 1).AddMonths(1).AddDays(-1);
+            var mediaList = await _processRecordService.FindByDateMensalistaAsync(start3m, end3m, clientId, departmentId, QueryType.Average);
+            var media = mediaList.FirstOrDefault(m => m.Mensalista.Id == id);
+
+            // Acumulado 3 meses
+            var acumList = await _processRecordService.FindByDateMensalistaAsync(start3m, end3m, clientId, departmentId, QueryType.Cumulative);
+            var acum = acumList.FirstOrDefault(m => m.Mensalista.Id == id);
+
+            string deptName = "";
+            if (departmentId.HasValue)
+            {
+                var dept = (await _departmentService.FindAllAsync()).FirstOrDefault(d => d.Id == departmentId.Value);
+                deptName = dept?.Name ?? "";
+            }
+
+            var vm = new MensalistaDetalheViewModel
+            {
+                MesAtual = mesAtual,
+                Media3Meses = media,
+                Acumulado3Meses = acum,
+                InputMonthYear = parsedDate.ToString("MM/yyyy"),
+                ClientId = clientId,
+                DepartmentId = departmentId,
+                DepartmentName = deptName
+            };
+
+            return View(vm);
+        }
 
         public async Task<IActionResult> DownloadReport(string monthYearString, int? clientId, int? departmentId, string recordType = null, string format = "xlsx")
         {

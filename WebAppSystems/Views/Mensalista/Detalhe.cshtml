@@ -1,0 +1,404 @@
+@model WebAppSystems.Models.ViewModels.MensalistaDetalheViewModel
+
+@functions {
+    public static string Fmt(double hours)
+    {
+        int h = (int)hours; int m = (int)Math.Round((hours - h) * 60);
+        return $"{h:D2}:{m:D2}";
+    }
+    public static string FmtN2(decimal v) => v.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("pt-BR"));
+}
+
+@{
+    ViewData["Title"] = "Detalhe";
+    var ptBR = System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
+    var mes = Model.MesAtual;
+    var media = Model.Media3Meses;
+    var acum = Model.Acumulado3Meses;
+    var clientName = mes?.Mensalista?.Client?.Name ?? media?.Mensalista?.Client?.Name ?? acum?.Mensalista?.Client?.Name ?? "Cliente";
+    var percentual = mes?.Percentual ?? 0;
+    var backUrl = Url.Action("SimpleSearch", "Mensalista", new {
+        monthYearString = Model.InputMonthYear?.Replace("/",""),
+        clientId = Model.ClientId,
+        departmentId = Model.DepartmentId
+    });
+
+    // Dados para gráficos (mês atual)
+    decimal receitaArea = mes?.ValorAreaLiquido ?? 0;
+    decimal custoTec = mes?.ValorHoraTecLiquida ?? 0;
+    decimal resultLiq = mes?.ValorResultadoLiquido ?? 0;
+    decimal mensalBruto = mes?.Mensalista?.ValorMensalBruto ?? 0;
+    decimal tributos = mes?.Tributos ?? 0;
+    decimal comissoes = (mes?.Mensalista?.ComissaoParceiro ?? 0) + (mes?.Mensalista?.ComissaoSocio ?? 0);
+    decimal mensalLiq = mes?.ValorMensalLiquido ?? 0;
+    decimal margem = receitaArea != 0 ? Math.Round(resultLiq / receitaArea * 100, 1) : 0;
+}
+
+<div class="detalhe-container">
+
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-left">
+            <div class="header-icon"><i class="bi bi-graph-up-arrow"></i></div>
+            <div class="header-text">
+                <h1 class="page-title">@clientName</h1>
+                <p class="page-subtitle">@Model.InputMonthYear · @Model.DepartmentName.ToUpper() · @percentual%</p>
+            </div>
+        </div>
+        <a href="@backUrl" class="btn-back"><i class="bi bi-arrow-left"></i> Voltar</a>
+    </div>
+
+    <!-- KPI Cards -->
+    @if (mes != null)
+    {
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-icon"><i class="bi bi-currency-dollar"></i></div>
+                <div class="kpi-label">Receita Área Líq.</div>
+                <div class="kpi-value">@FmtN2(receitaArea)</div>
+                <div class="kpi-sub">Mensalidade @FmtN2(mensalBruto) × @percentual%</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon"><i class="bi bi-clock"></i></div>
+                <div class="kpi-label">Custo Técnico Líq.</div>
+                <div class="kpi-value">@FmtN2(custoTec)</div>
+                <div class="kpi-sub">@Fmt(mes.TotalHours) horas lançadas</div>
+            </div>
+            <div class="kpi-card @(resultLiq >= 0 ? "" : "kpi-negative")">
+                <div class="kpi-icon"><i class="bi bi-graph-up"></i></div>
+                <div class="kpi-label">Resultado Líquido</div>
+                <div class="kpi-value @(resultLiq >= 0 ? "positive" : "negative")">@FmtN2(resultLiq)</div>
+                <div class="kpi-sub">Receita - Custo</div>
+            </div>
+            <div class="kpi-card @(margem >= 0 ? "" : "kpi-negative")">
+                <div class="kpi-icon"><i class="bi bi-percent"></i></div>
+                <div class="kpi-label">Margem Líquida</div>
+                <div class="kpi-value @(margem >= 0 ? "positive" : "negative")">@margem%</div>
+                <div class="kpi-sub">Resultado / Receita</div>
+            </div>
+        </div>
+    }
+
+    <!-- Abas -->
+    <div class="tabs-card">
+        <div class="tabs-header">
+            <button class="tab-btn active" onclick="switchTab('mes')">
+                <i class="bi bi-calendar-check"></i> Mês Atual
+            </button>
+            <button class="tab-btn" onclick="switchTab('media')">
+                <i class="bi bi-bar-chart-line"></i> Média 3 Meses
+            </button>
+            <button class="tab-btn" onclick="switchTab('acum')">
+                <i class="bi bi-graph-up"></i> Acumulado 3 Meses
+            </button>
+        </div>
+
+        <!-- Aba Mês Atual -->
+        <div id="tab-mes" class="tab-content active">
+            @if (mes != null)
+            {
+                <div class="metrics-row">
+                    <div class="metric-item">
+                        <div class="metric-label">HORAS</div>
+                        <div class="metric-value blue">@Fmt(mes.TotalHours)</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">HORA TÉC. BRUTA</div>
+                        <div class="metric-value">@FmtN2(mes.ValorTotalHoras)</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">HORA TÉC. LÍQUIDA</div>
+                        <div class="metric-value">@FmtN2(mes.ValorHoraTecLiquida)</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">RECEITA ÁREA BRUTA</div>
+                        <div class="metric-value">@FmtN2(mes.ValorAreaBruto)</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">RECEITA ÁREA LÍQUIDA</div>
+                        <div class="metric-value">@FmtN2(mes.ValorAreaLiquido)</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">RESULTADO BRUTO</div>
+                        <div class="metric-value @(mes.ValorResultadoBruto >= 0 ? "positive" : "negative")">@FmtN2(mes.ValorResultadoBruto)</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">RESULTADO LÍQUIDO</div>
+                        <div class="metric-value @(mes.ValorResultadoLiquido >= 0 ? "positive" : "negative")">@FmtN2(mes.ValorResultadoLiquido)</div>
+                    </div>
+                </div>
+                <div class="charts-row">
+                    <div class="chart-card">
+                        <div class="chart-title">Receita vs Custo</div>
+                        <canvas id="barChart" height="220"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-title">Composição da Receita</div>
+                        <canvas id="donutChart" height="220"></canvas>
+                    </div>
+                </div>
+            }
+            else { <p class="no-data">Sem dados para o mês selecionado.</p> }
+        </div>
+
+        <!-- Aba Média 3 Meses -->
+        <div id="tab-media" class="tab-content">
+            @if (media != null)
+            {
+                <div class="metrics-row">
+                    <div class="metric-item">
+                        <div class="metric-label">HORAS (MÉDIA)</div>
+                        <div class="metric-value blue">@Fmt(media.TotalHours)</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">HORA TÉC. BRUTA</div>
+                        <div class="metric-value">@FmtN2(media.ValorTotalHoras)</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">HORA TÉC. LÍQUIDA</div>
+                        <div class="metric-value">@FmtN2(media.ValorHoraTecLiquida)</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">RECEITA ÁREA BRUTA</div>
+                        <div class="metric-value">@FmtN2(media.ValorAreaBruto)</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">RECEITA ÁREA LÍQUIDA</div>
+                        <div class="metric-value">@FmtN2(media.ValorAreaLiquido)</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">RESULTADO BRUTO</div>
+                        <div class="metric-value @(media.ValorResultadoBruto >= 0 ? "positive" : "negative")">@FmtN2(media.ValorResultadoBruto)</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">RESULTADO LÍQUIDO</div>
+                        <div class="metric-value @(media.ValorResultadoLiquido >= 0 ? "positive" : "negative")">@FmtN2(media.ValorResultadoLiquido)</div>
+                    </div>
+                </div>
+                <div class="charts-row">
+                    <div class="chart-card">
+                        <div class="chart-title">Receita vs Custo (Média)</div>
+                        <canvas id="barChartMedia" height="220"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-title">Composição da Receita (Média)</div>
+                        <canvas id="donutChartMedia" height="220"></canvas>
+                    </div>
+                </div>
+            }
+            else { <p class="no-data">Sem dados de média disponíveis.</p> }
+        </div>
+
+        <!-- Aba Acumulado 3 Meses -->
+        <div id="tab-acum" class="tab-content">
+            @if (acum != null)
+            {
+                <div class="metrics-row">
+                    <div class="metric-item">
+                        <div class="metric-label">HORAS (ACUM.)</div>
+                        <div class="metric-value blue">@Fmt(acum.TotalHours)</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">HORA TÉC. BRUTA</div>
+                        <div class="metric-value">@FmtN2(acum.ValorTotalHoras)</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">HORA TÉC. LÍQUIDA</div>
+                        <div class="metric-value">@FmtN2(acum.ValorHoraTecLiquida)</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">RECEITA ÁREA BRUTA</div>
+                        <div class="metric-value">@FmtN2(acum.ValorAreaBruto)</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">RECEITA ÁREA LÍQUIDA</div>
+                        <div class="metric-value">@FmtN2(acum.ValorAreaLiquido)</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">RESULTADO BRUTO</div>
+                        <div class="metric-value @(acum.ValorResultadoBruto >= 0 ? "positive" : "negative")">@FmtN2(acum.ValorResultadoBruto)</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">RESULTADO LÍQUIDO</div>
+                        <div class="metric-value @(acum.ValorResultadoLiquido >= 0 ? "positive" : "negative")">@FmtN2(acum.ValorResultadoLiquido)</div>
+                    </div>
+                </div>
+                <div class="charts-row">
+                    <div class="chart-card">
+                        <div class="chart-title">Receita vs Custo (Acumulado)</div>
+                        <canvas id="barChartAcum" height="220"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-title">Composição da Receita (Acumulado)</div>
+                        <canvas id="donutChartAcum" height="220"></canvas>
+                    </div>
+                </div>
+            }
+            else { <p class="no-data">Sem dados acumulados disponíveis.</p> }
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    function switchTab(name) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.getElementById('tab-' + name).classList.add('active');
+        event.currentTarget.classList.add('active');
+    }
+
+    function makeBarChart(id, receita, custo, resultado) {
+        const ctx = document.getElementById(id);
+        if (!ctx) return;
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Receita Área Líq.', 'Custo Técnico Líq.', 'Resultado Líq.'],
+                datasets: [{
+                    data: [receita, custo, resultado],
+                    backgroundColor: [
+                        'rgba(102,126,234,0.8)',
+                        'rgba(237,187,51,0.8)',
+                        resultado >= 0 ? 'rgba(72,187,120,0.8)' : 'rgba(245,101,101,0.8)'
+                    ],
+                    borderRadius: 6, borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true, plugins: { legend: { display: false } },
+                scales: { y: { grid: { color: '#f0f4f8' }, ticks: { color: '#718096' } }, x: { grid: { display: false }, ticks: { color: '#718096' } } }
+            }
+        });
+    }
+
+    function makeDonutChart(id, liquido, tributos, comissoes) {
+        const ctx = document.getElementById(id);
+        if (!ctx) return;
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Líquido (área)', 'Tributos', 'Comissões'],
+                datasets: [{
+                    data: [Math.max(0, liquido), Math.max(0, tributos), Math.max(0, comissoes)],
+                    backgroundColor: ['rgba(102,126,234,0.8)', 'rgba(237,187,51,0.8)', 'rgba(159,122,234,0.8)'],
+                    borderWidth: 2, borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true, cutout: '65%',
+                plugins: { legend: { position: 'bottom', labels: { color: '#4a5568', padding: 16 } } }
+            }
+        });
+    }
+
+    // Mês atual
+    makeBarChart('barChart', @((double)receitaArea), @((double)custoTec), @((double)resultLiq));
+    makeDonutChart('donutChart', @((double)receitaArea), @((double)tributos), @((double)comissoes));
+
+    @if (media != null)
+    {
+        <text>
+    makeBarChart('barChartMedia', @((double)(media.ValorAreaLiquido)), @((double)(media.ValorHoraTecLiquida)), @((double)(media.ValorResultadoLiquido)));
+    makeDonutChart('donutChartMedia', @((double)(media.ValorAreaLiquido)), @((double)(media.Tributos)), @((double)((media.Mensalista.ComissaoParceiro + media.Mensalista.ComissaoSocio))));
+        </text>
+    }
+    @if (acum != null)
+    {
+        <text>
+    makeBarChart('barChartAcum', @((double)(acum.ValorAreaLiquido)), @((double)(acum.ValorHoraTecLiquida)), @((double)(acum.ValorResultadoLiquido)));
+    makeDonutChart('donutChartAcum', @((double)(acum.ValorAreaLiquido)), @((double)(acum.Tributos)), @((double)((acum.Mensalista.ComissaoParceiro + acum.Mensalista.ComissaoSocio))));
+        </text>
+    }
+</script>
+
+<style>
+    .detalhe-container { max-width: 100%; margin: 0 auto; padding: 20px; }
+
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px; padding: 24px 28px; margin-bottom: 20px;
+        box-shadow: 0 6px 25px rgba(102,126,234,0.25);
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .header-icon {
+        width: 50px; height: 50px; background: rgba(255,255,255,0.2);
+        border-radius: 12px; display: flex; align-items: center;
+        justify-content: center; font-size: 24px; color: white;
+    }
+    .page-title { font-size: 22px; font-weight: 700; color: white; margin: 0 0 4px 0; }
+    .page-subtitle { font-size: 13px; color: rgba(255,255,255,0.85); margin: 0; }
+    .btn-back {
+        display: flex; align-items: center; gap: 8px; padding: 10px 20px;
+        background: white; color: #667eea; border-radius: 8px;
+        font-size: 14px; font-weight: 600; text-decoration: none; transition: all 0.2s;
+    }
+    .btn-back:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(255,255,255,0.3); color: #764ba2; }
+
+    .kpi-grid {
+        display: grid; grid-template-columns: repeat(4, 1fr);
+        gap: 16px; margin-bottom: 20px;
+    }
+    .kpi-card {
+        background: white; border-radius: 12px; padding: 20px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+        border-left: 4px solid #e2e8f0;
+    }
+    .kpi-card.kpi-negative { border-left-color: #fc8181; }
+    .kpi-icon { font-size: 18px; color: #667eea; margin-bottom: 8px; }
+    .kpi-label { font-size: 12px; font-weight: 600; color: #718096; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px; }
+    .kpi-value { font-size: 22px; font-weight: 700; color: #2d3748; margin-bottom: 4px; }
+    .kpi-value.positive { color: #38a169; }
+    .kpi-value.negative { color: #e53e3e; }
+    .kpi-sub { font-size: 12px; color: #a0aec0; }
+
+    .tabs-card {
+        background: white; border-radius: 12px;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.05); overflow: hidden;
+    }
+    .tabs-header {
+        display: flex; border-bottom: 2px solid #e2e8f0; padding: 0 8px;
+    }
+    .tab-btn {
+        display: flex; align-items: center; gap: 8px;
+        padding: 16px 24px; background: none; border: none;
+        font-size: 14px; font-weight: 600; color: #718096;
+        cursor: pointer; border-bottom: 3px solid transparent;
+        margin-bottom: -2px; transition: all 0.2s;
+    }
+    .tab-btn:hover { color: #667eea; }
+    .tab-btn.active { color: #667eea; border-bottom-color: #667eea; }
+
+    .tab-content { display: none; padding: 24px; }
+    .tab-content.active { display: block; }
+
+    .metrics-row {
+        display: flex; flex-wrap: wrap; gap: 24px;
+        padding-bottom: 24px; border-bottom: 1px solid #f0f4f8; margin-bottom: 24px;
+    }
+    .metric-item { min-width: 100px; }
+    .metric-label { font-size: 11px; font-weight: 700; color: #a0aec0; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
+    .metric-value { font-size: 16px; font-weight: 700; color: #2d3748; }
+    .metric-value.blue { color: #3182ce; }
+    .metric-value.positive { color: #38a169; }
+    .metric-value.negative { color: #e53e3e; }
+
+    .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .chart-card { background: #fafbfc; border-radius: 10px; padding: 20px; }
+    .chart-title { font-size: 14px; font-weight: 600; color: #4a5568; margin-bottom: 16px; }
+
+    .no-data { padding: 40px; text-align: center; color: #a0aec0; font-size: 15px; }
+
+    @@media (max-width: 1024px) {
+        .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @@media (max-width: 768px) {
+        .detalhe-container { padding: 12px; }
+        .page-header { flex-direction: column; gap: 16px; align-items: stretch; }
+        .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+        .charts-row { grid-template-columns: 1fr; }
+        .tab-btn { padding: 12px 14px; font-size: 13px; }
+        .metrics-row { gap: 16px; }
+    }
+</style>

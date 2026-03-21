@@ -1,19 +1,28 @@
 ﻿@model IEnumerable<WebAppSystems.Models.ViewModels.MensalistaHoursViewModel>
 
+@functions {
+    public static string FormatHours(double hours)
+    {
+        int h = (int)hours;
+        int m = (int)Math.Round((hours - h) * 60);
+        return $"{h:D2}:{m:D2}";
+    }
+}
+
 @{
     ViewData["Title"] = "Resultados";
     var selectedClientId = ViewData["clientId"]?.ToString();
     var selectedDepartmentId = ViewData["departmentId"]?.ToString();
     var todayFormatted = DateTime.Now.ToString("MM/yyyy");
+    var ptBR = System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
 }
 
 <div class="results-container">
+
     <!-- Header -->
     <div class="page-header">
         <div class="header-content">
-            <div class="header-icon">
-                <i class="bi bi-table"></i>
-            </div>
+            <div class="header-icon"><i class="bi bi-table"></i></div>
             <div class="header-text">
                 <h1 class="page-title">Resultados</h1>
                 <p class="page-subtitle">Análise detalhada de mensalistas</p>
@@ -21,508 +30,228 @@
         </div>
     </div>
 
-    <!-- Search Form Card -->
+    <!-- Filtros -->
     <div class="search-card">
         <form asp-controller="Mensalista" asp-action="SimpleSearch" method="get">
             <div class="form-grid">
                 <div class="form-group">
-                    <label for="monthYear">
-                        <i class="bi bi-calendar3"></i>
-                        Mês/Ano
-                    </label>
-                    <input type="text" class="form-control" name="monthYearString" id="monthYear" 
-                           value="@(ViewData["inputMonthYear"] ?? todayFormatted)" 
-                           onblur="formatInput(this)" 
-                           placeholder="MM/YYYY" />
+                    <label><i class="bi bi-calendar3"></i> Mês/Ano</label>
+                    <input type="text" class="form-control" name="monthYearString" id="monthYear"
+                           value="@(ViewData["inputMonthYear"] ?? todayFormatted)"
+                           onblur="formatInput(this)" placeholder="MM/YYYY" />
                 </div>
-
                 <div class="form-group">
-                    <label for="clientId">
-                        <i class="bi bi-person-circle"></i>
-                        Cliente
-                    </label>
+                    <label><i class="bi bi-person-circle"></i> Cliente</label>
                     <select class="form-control" name="clientId" id="clientId">
                         <option value="">Todos</option>
                         @foreach (var client in ViewBag.Clients)
                         {
-                            if (client.Id.ToString() == selectedClientId)
-                            {
-                                <option value="@client.Id" selected>@client.Name</option>
-                            }
-                            else
-                            {
-                                <option value="@client.Id">@client.Name</option>
-                            }
+                            <option value="@client.Id" @(client.Id.ToString() == selectedClientId ? "selected" : "")>@client.Name</option>
                         }
                     </select>
                 </div>
-
                 <div class="form-group">
-                    <label for="departmentId">
-                        <i class="bi bi-building"></i>
-                        Área
-                    </label>
+                    <label><i class="bi bi-building"></i> Área</label>
                     <select class="form-control" name="departmentId" id="departmentId" required>
                         <option value="">Selecionar</option>
                         @foreach (var department in ViewBag.Department)
                         {
-                            if (department.Id.ToString() == selectedDepartmentId)
-                            {
-                                <option value="@department.Id" selected>@department.Name</option>
-                            }
-                            else
-                            {
-                                <option value="@department.Id">@department.Name</option>
-                            }
+                            <option value="@department.Id" @(department.Id.ToString() == selectedDepartmentId ? "selected" : "")>@department.Name</option>
                         }
                     </select>
                 </div>
             </div>
-
             <div class="button-group">
-                <button type="submit" class="btn-primary" onclick="return validateForm()">
-                    <i class="bi bi-search"></i>
-                    Visualizar
+                <button type="submit" class="btn-visualizar" onclick="return validateForm()">
+                    <i class="bi bi-search"></i> Visualizar
                 </button>
-                <button type="submit" formaction="@Url.Action("DownloadReport")" class="btn-secondary">
-                    <i class="bi bi-file-earmark-spreadsheet"></i>
-                    Gerar CSV
+                <button type="submit" formaction="@Url.Action("DownloadReport")" class="btn-csv">
+                    <i class="bi bi-file-earmark-spreadsheet"></i> Gerar CSV
                 </button>
             </div>
         </form>
     </div>
 
-    <!-- Results Table -->
-    <div class="table-card">
-        <div class="table-responsive">
-            <table class="modern-table">
-                <thead>
-                    <tr>
-                        <th>Cliente</th>
-                        <th>Mensal Bruto</th>
-                        <th>Tributos</th>
-                        <th>Com. Parceiro</th>
-                        <th>Com. Sócio</th>
-                        <th>Mensal Liq</th>
-                        <th>%</th>
-                        <th>Valor Área Bruto</th>
-                        <th>Valor Área Liq</th>
-                        <th class="actions-column">Ação</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in Model)
-                    {
+    <!-- Tabela de Resultados -->
+    @if (Model != null && Model.Any())
+    {
+        <div class="table-card">
+            <div class="table-responsive">
+                <table class="modern-table">
+                    <thead>
                         <tr>
-                            <td>
-                                <div class="client-name">
-                                    <div class="client-icon">
-                                        <i class="bi bi-person-circle"></i>
-                                    </div>
-                                    <span>@item.Mensalista.Client.Name</span>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="value-badge">
-                                    @item.Mensalista.ValorMensalBruto.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("pt-BR"))
-                                </span>
-                            </td>
-                            <td>
-                                <span class="value-badge">
-                                    @item.Tributos.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("pt-BR"))
-                                </span>
-                            </td>
-                            <td>
-                                <span class="value-badge">
-                                    @item.Mensalista.ComissaoParceiro.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("pt-BR"))
-                                </span>
-                            </td>
-                            <td>
-                                <span class="value-badge">
-                                    @item.Mensalista.ComissaoSocio.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("pt-BR"))
-                                </span>
-                            </td>
-                            <td>
-                                <span class="value-badge">
-                                    @item.ValorMensalLiquido.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("pt-BR"))
-                                </span>
-                            </td>
-                            <td>
-                                @($"{item.Percentual:0} %")
-                            </td>
-                            <td>
-                                <span class="value-badge">
-                                    @item.ValorAreaBruto.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("pt-BR"))
-                                </span>
-                            </td>
-                            <td>
-                                <span class="value-badge">
-                                    @item.ValorAreaLiquido.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("pt-BR"))
-                                </span>
-                            </td>
-                            <td class="actions-column">
-                                <div class="action-buttons">
-                                    <a href="@Url.Action("ResultadoMes", "Mensalista", new { id = item.Mensalista.Id, monthYear = ViewData["inputMonthYear"], clientId = ViewData["clientId"], departmentId = ViewData["departmentId"] })"
-                                       class="btn-action btn-month" title="Resultado do Mês">
-                                        <i class="bi bi-calendar-day"></i>
-                                    </a>
-                                    <a href="@Url.Action("ResultadoMedia", "Mensalista", new { id = item.Mensalista.Id, monthYear = ViewData["inputMonthYear"], clientId = ViewData["clientId"], departmentId = ViewData["departmentId"] })"
-                                       class="btn-action btn-average" title="Resultado Médio">
-                                        <i class="bi bi-bar-chart-line"></i>
-                                    </a>
-                                    <a href="@Url.Action("ResultadoAcumulado", "Mensalista", new { id = item.Mensalista.Id, monthYear = ViewData["inputMonthYear"], clientId = ViewData["clientId"], departmentId = ViewData["departmentId"] })"
-                                       class="btn-action btn-accumulated" title="Resultado Acumulado">
-                                        <i class="bi bi-graph-up"></i>
-                                    </a>
-                                </div>
-                            </td>
+                            <th>CLIENTE</th>
+                            <th>RECEITA ÁREA LÍQ</th>
+                            <th>CUSTO TÉCNICO</th>
+                            <th>RESULTADO LÍQ</th>
+                            <th>HORAS</th>
+                            <th>STATUS</th>
                         </tr>
-                    }
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            var isPositive = item.ValorResultadoLiquido >= 0;
+                            var monthYearParam = ViewData["inputMonthYear"]?.ToString();
+                            <tr class="clickable-row" onclick="window.location='@Url.Action("Detalhe", "Mensalista", new { id = item.Mensalista.Id, monthYear = ViewData["inputMonthYear"], clientId = ViewData["clientId"], departmentId = ViewData["departmentId"] })'">
+                                <td>
+                                    <div class="client-name">
+                                        <div class="client-avatar"><i class="bi bi-person-circle"></i></div>
+                                        <span>@item.Mensalista.Client.Name</span>
+                                    </div>
+                                </td>
+                                <td><span class="val-neutral">@item.ValorAreaLiquido.ToString("N2", ptBR)</span></td>
+                                <td><span class="val-neutral">@item.ValorHoraTecLiquida.ToString("N2", ptBR)</span></td>
+                                <td>
+                                    <span class="@(isPositive ? "val-positive" : "val-negative")">
+                                        @item.ValorResultadoLiquido.ToString("N2", ptBR)
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="hours-badge">
+                                        <i class="bi bi-clock"></i> @FormatHours(item.TotalHours)
+                                    </span>
+                                </td>
+                                <td>
+                                    @if (isPositive)
+                                    {
+                                        <span class="status-ok"><i class="bi bi-check-circle-fill"></i></span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-nok"><i class="bi bi-x-circle-fill"></i></span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
+    }
 </div>
 
 <script>
     function validateForm() {
-        var departmentValue = document.getElementById("departmentId").value;
-        if (departmentValue === "") {
+        if (!document.getElementById("departmentId").value) {
             alert("Por favor, selecione um departamento.");
             return false;
         }
         return true;
     }
-
     function formatInput(input) {
-        let value = input.value;
-        if (value.length == 6) {
-            input.value = value.substring(0, 2) + '/' + value.substring(2, 6);
-        }
+        let v = input.value;
+        if (v.length == 6) input.value = v.substring(0, 2) + '/' + v.substring(2, 6);
     }
 </script>
 
 <style>
-    .results-container {
-        max-width: 100%;
-        margin: 0 auto;
-        padding: 20px;
-    }
+    .results-container { max-width: 100%; margin: 0 auto; padding: 20px; }
 
     .page-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 12px;
-        padding: 32px;
-        margin-bottom: 24px;
-        box-shadow: 0 6px 25px rgba(102, 126, 234, 0.25);
+        border-radius: 12px; padding: 28px 32px; margin-bottom: 20px;
+        box-shadow: 0 6px 25px rgba(102,126,234,0.25);
     }
-
-    .header-content {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-    }
-
+    .header-content { display: flex; align-items: center; gap: 20px; }
     .header-icon {
-        width: 60px;
-        height: 60px;
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 28px;
-        color: white;
-        backdrop-filter: blur(10px);
+        width: 56px; height: 56px; background: rgba(255,255,255,0.2);
+        border-radius: 12px; display: flex; align-items: center;
+        justify-content: center; font-size: 26px; color: white;
     }
-
-    .page-title {
-        font-size: 28px;
-        font-weight: 700;
-        color: white;
-        margin: 0 0 6px 0;
-    }
-
-    .page-subtitle {
-        font-size: 15px;
-        color: rgba(255, 255, 255, 0.9);
-        margin: 0;
-    }
+    .page-title { font-size: 26px; font-weight: 700; color: white; margin: 0 0 4px 0; }
+    .page-subtitle { font-size: 14px; color: rgba(255,255,255,0.85); margin: 0; }
 
     .search-card {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
-        padding: 32px;
-        margin-bottom: 24px;
+        background: white; border-radius: 12px;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+        padding: 28px; margin-bottom: 20px;
     }
-
     .form-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 20px;
-        margin-bottom: 24px;
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+        gap: 20px; margin-bottom: 20px;
     }
-
-    .form-group {
-        display: flex;
-        flex-direction: column;
-    }
-
+    .form-group { display: flex; flex-direction: column; }
     .form-group label {
-        font-size: 14px;
-        font-weight: 600;
-        color: #4a5568;
-        margin-bottom: 8px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
+        font-size: 13px; font-weight: 600; color: #4a5568;
+        margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
     }
-
-    .form-group label i {
-        color: #667eea;
-        font-size: 16px;
-    }
-
+    .form-group label i { color: #667eea; }
     .form-control {
-        padding: 12px 16px;
-        border: 2px solid #e2e8f0;
-        border-radius: 8px;
-        font-size: 14px;
-        transition: all 0.3s ease;
-        background: white;
-        min-height: 44px;
-        line-height: 1.5;
+        padding: 11px 14px; border: 2px solid #e2e8f0; border-radius: 8px;
+        font-size: 14px; transition: border-color 0.2s; background: white;
     }
-
-    .form-control:focus {
-        outline: none;
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-
+    .form-control:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.1); }
     select.form-control {
         appearance: none;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667eea' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
-        background-repeat: no-repeat;
-        background-position: right 12px center;
-        padding-right: 36px;
+        background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px;
     }
-
     .button-group {
-        display: flex;
-        gap: 12px;
-        padding-top: 24px;
-        border-top: 2px solid #e2e8f0;
+        display: flex; gap: 12px; padding-top: 20px; border-top: 2px solid #e2e8f0;
     }
-
-    .btn-primary,
-    .btn-secondary {
-        flex: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 14px 24px;
-        border-radius: 8px;
-        font-size: 15px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        border: none;
+    .btn-visualizar, .btn-csv {
+        flex: 1; display: flex; align-items: center; justify-content: center;
+        gap: 8px; padding: 13px 24px; border-radius: 8px;
+        font-size: 15px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s;
     }
-
-    .btn-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
+    .btn-visualizar {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;
     }
-
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-    }
-
-    .btn-secondary {
-        background: #f7fafc;
-        color: #4a5568;
-        border: 2px solid #e2e8f0;
-    }
-
-    .btn-secondary:hover {
-        background: #e2e8f0;
-        color: #2d3748;
-    }
+    .btn-visualizar:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.4); }
+    .btn-csv { background: #f7fafc; color: #4a5568; border: 2px solid #e2e8f0; }
+    .btn-csv:hover { background: #e2e8f0; }
 
     .table-card {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
-        overflow: hidden;
+        background: white; border-radius: 12px;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.05); overflow: hidden;
     }
-
-    .table-responsive {
-        overflow-x: auto;
-    }
-
-    .modern-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    .modern-table thead {
-        background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
-    }
-
+    .table-responsive { overflow-x: auto; }
+    .modern-table { width: 100%; border-collapse: collapse; }
+    .modern-table thead { background: #f8fafc; }
     .modern-table th {
-        padding: 12px 8px;
-        text-align: left;
-        font-size: 11px;
-        font-weight: 700;
-        color: #4a5568;
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
+        padding: 14px 16px; text-align: left; font-size: 11px; font-weight: 700;
+        color: #718096; text-transform: uppercase; letter-spacing: 0.5px;
         border-bottom: 2px solid #e2e8f0;
-        white-space: nowrap;
+    }
+    .modern-table td { padding: 14px 16px; font-size: 14px; color: #2d3748; border-bottom: 1px solid #f0f4f8; }
+    .clickable-row { cursor: pointer; transition: background 0.15s; }
+    .clickable-row:hover { background: #f7fafc; }
+
+    .client-name { display: flex; align-items: center; gap: 10px; }
+    .client-avatar {
+        width: 34px; height: 34px; border-radius: 50%;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        display: flex; align-items: center; justify-content: center;
+        color: white; font-size: 16px; flex-shrink: 0;
     }
 
-    .modern-table td {
-        padding: 12px 8px;
-        font-size: 13px;
-        color: #2d3748;
-        border-bottom: 1px solid #f7fafc;
-        white-space: nowrap;
+    .val-neutral {
+        display: inline-block; padding: 4px 10px;
+        background: #edf2f7; color: #4a5568;
+        border-radius: 6px; font-size: 13px; font-weight: 600;
     }
-
-    .modern-table tbody tr {
-        transition: all 0.2s ease;
+    .val-positive {
+        display: inline-block; padding: 4px 10px;
+        background: #c6f6d5; color: #22543d;
+        border-radius: 6px; font-size: 13px; font-weight: 600;
     }
-
-    .modern-table tbody tr:hover {
-        background: #f7fafc;
+    .val-negative {
+        display: inline-block; padding: 4px 10px;
+        background: #fed7d7; color: #742a2a;
+        border-radius: 6px; font-size: 13px; font-weight: 600;
     }
-
-    .client-name {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        min-width: 150px;
+    .hours-badge {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 4px 10px; background: #ebf8ff; color: #2b6cb0;
+        border-radius: 6px; font-size: 13px; font-weight: 600;
     }
-
-    .client-icon {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 16px;
-        flex-shrink: 0;
-    }
-
-    .value-badge {
-        display: inline-block;
-        padding: 4px 8px;
-        background: #e6f2ff;
-        color: #0066cc;
-        border-radius: 6px;
-        font-size: 12px;
-        font-weight: 600;
-        white-space: nowrap;
-    }
-
-    .percent-badge {
-        display: inline-block;
-        padding: 6px 12px;
-        background: #c6f6d5;
-        color: #22543d;
-        border-radius: 8px;
-        font-size: 13px;
-        font-weight: 600;
-    }
-
-    .actions-column {
-        width: 140px;
-    }
-
-    .action-buttons {
-        display: flex;
-        gap: 6px;
-    }
-
-    .btn-action {
-        width: 36px;
-        height: 36px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 8px;
-        border: none;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        text-decoration: none;
-        font-size: 14px;
-    }
-
-    .btn-month {
-        background: #e6fffa;
-        color: #234e52;
-    }
-
-    .btn-month:hover {
-        background: #81e6d9;
-        transform: translateY(-2px);
-    }
-
-    .btn-average {
-        background: #fef5e7;
-        color: #744210;
-    }
-
-    .btn-average:hover {
-        background: #f6e05e;
-        transform: translateY(-2px);
-    }
-
-    .btn-accumulated {
-        background: #e6f2ff;
-        color: #0066cc;
-    }
-
-    .btn-accumulated:hover {
-        background: #90cdf4;
-        transform: translateY(-2px);
-    }
+    .status-ok { color: #38a169; font-size: 22px; }
+    .status-nok { color: #e53e3e; font-size: 22px; }
 
     @@media (max-width: 768px) {
-        .results-container {
-            padding: 12px;
-        }
-
-        .page-header {
-            padding: 24px;
-        }
-
-        .search-card {
-            padding: 20px;
-        }
-
-        .form-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .button-group {
-            flex-direction: column;
-        }
-
-        .modern-table {
-            font-size: 12px;
-        }
-
-        .modern-table th,
-        .modern-table td {
-            padding: 12px 8px;
-        }
+        .results-container { padding: 12px; }
+        .form-grid { grid-template-columns: 1fr; }
+        .button-group { flex-direction: column; }
     }
 </style>
