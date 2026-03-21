@@ -113,6 +113,19 @@ namespace WebAppSystems
                 {
                     var myDbContext = services.GetRequiredService<WebAppSystemsContext>();
                     myDbContext.Database.Migrate();
+
+                    // Garante que AttorneyId é nullable (migration manual)
+                    myDbContext.Database.ExecuteSqlRaw(@"
+                        IF EXISTS (
+                            SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                            WHERE TABLE_NAME = 'ValorCliente'
+                              AND COLUMN_NAME = 'AttorneyId'
+                              AND IS_NULLABLE = 'NO'
+                        )
+                        BEGIN
+                            ALTER TABLE [dbo].[ValorCliente] ALTER COLUMN [AttorneyId] INT NULL;
+                        END
+                    ");
                 }
                 catch (Exception ex)
                 {
