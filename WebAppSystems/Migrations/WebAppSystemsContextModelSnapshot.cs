@@ -378,7 +378,7 @@ namespace WebAppSystems.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<int>("AttorneyId")
+                    b.Property<int?>("AttorneyId")
                         .HasColumnType("int");
 
                     b.Property<int>("ClientId")
@@ -492,8 +492,7 @@ namespace WebAppSystems.Migrations
                     b.HasOne("WebAppSystems.Models.Attorney", "Attorney")
                         .WithMany()
                         .HasForeignKey("AttorneyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("WebAppSystems.Models.Client", "Client")
                         .WithMany()
