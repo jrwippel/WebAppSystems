@@ -1,352 +1,304 @@
-@model WebAppSystems.Models.ViewModels.MensalistaDetalheViewModel
-
-@functions {
-    public static string Fmt(double hours) {
-        int h = (int)hours; int m = (int)Math.Round((hours - h) * 60);
-        return $"{h:D2}:{m:D2}";
-    }
-    public static string FmtN2(decimal v) => v.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("pt-BR"));
-    public static string FmtJs(decimal v) => v.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
-    public static string FmtJs(double v)  => v.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
-}
-
 @{
-    ViewData["Title"] = "Detalhe";
-    var mes   = Model.MesAtual;
-    var media = Model.Media3Meses;
-    var acum  = Model.Acumulado3Meses;
-    var clientName = mes?.Mensalista?.Client?.Name
-                  ?? media?.Mensalista?.Client?.Name
-                  ?? acum?.Mensalista?.Client?.Name ?? "Cliente";
-    var percentual = mes?.Percentual ?? media?.Percentual ?? acum?.Percentual ?? 0;
+    ViewData["Title"] = "Dashboard do Cliente";
+    var mes       = Model.MesAtual;
+    var media     = Model.Media3Meses;
+    var acumulado = Model.Acumulado3Meses;
+    var ptBR = System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
+    string Fmt(decimal v) => v.ToString("N2", ptBR);
+    string FmtH(double h) { int wh = (int)h; int wm = (int)Math.Round((h - wh) * 60); return $"{wh:D2}:{wm:D2}"; }
+    string ResultClass(decimal v) => v >= 0 ? "kpi-positive" : "kpi-negative";
     var backUrl = Url.Action("SimpleSearch", "Mensalista", new {
         monthYearString = Model.InputMonthYear?.Replace("/",""),
         clientId        = Model.ClientId,
         departmentId    = Model.DepartmentId
     });
-
-    decimal receitaArea = mes?.ValorAreaLiquido    ?? 0;
-    decimal custoTec    = mes?.ValorHoraTecLiquida ?? 0;
-    decimal resultLiq   = mes?.ValorResultadoLiquido ?? 0;
-    decimal mensalBruto = mes?.Mensalista?.ValorMensalBruto ?? 0;
-    decimal tributos    = mes?.Tributos ?? 0;
-    decimal comissoes   = (mes?.Mensalista?.ComissaoParceiro ?? 0) + (mes?.Mensalista?.ComissaoSocio ?? 0);
-    decimal margem      = receitaArea != 0 ? Math.Round(resultLiq / receitaArea * 100, 1) : 0;
 }
+@model WebAppSystems.Models.ViewModels.MensalistaDetalheViewModel
 
-<div class="det-page">
+<div class="dash-container">
 
-    <!-- HEADER -->
-    <div class="det-header">
-        <div class="det-header-left">
-            <div class="det-header-icon"><i class="bi bi-graph-up-arrow"></i></div>
+    <!-- Header -->
+    <div class="dash-header">
+        <div class="dash-header-left">
+            <div class="dash-header-icon"><i class="bi bi-graph-up-arrow"></i></div>
             <div>
-                <div class="det-header-title">@clientName</div>
-                <div class="det-header-sub">@Model.InputMonthYear · @Model.DepartmentName.ToUpper() · @percentual%</div>
+                <h1>@mes.Mensalista.Client.Name</h1>
+                <p>@Model.InputMonthYear &nbsp;·&nbsp; @Model.DepartmentName &nbsp;·&nbsp; @(mes.Percentual.ToString("0"))%</p>
             </div>
         </div>
-        <a href="@backUrl" class="det-btn-back"><i class="bi bi-arrow-left"></i> Voltar</a>
+        <a href="@backUrl" class="btn-back"><i class="bi bi-arrow-left"></i> Voltar</a>
     </div>
 
-    <!-- KPI CARDS -->
-    @if (mes != null)
-    {
-        <div class="det-kpi-row">
-            <div class="det-kpi">
-                <div class="det-kpi-label"><i class="bi bi-currency-dollar"></i> Receita Área Líq.</div>
-                <div class="det-kpi-val">@FmtN2(receitaArea)</div>
-                <div class="det-kpi-sub">Mensalidade @FmtN2(mensalBruto) × @percentual%</div>
-            </div>
-            <div class="det-kpi">
-                <div class="det-kpi-label"><i class="bi bi-clock"></i> Custo Técnico Líq.</div>
-                <div class="det-kpi-val">@FmtN2(custoTec)</div>
-                <div class="det-kpi-sub">@Fmt(mes.TotalHours) horas lançadas</div>
-            </div>
-            <div class="det-kpi @(resultLiq < 0 ? "det-kpi-neg" : "")">
-                <div class="det-kpi-label"><i class="bi bi-graph-up"></i> Resultado Líquido</div>
-                <div class="det-kpi-val @(resultLiq < 0 ? "neg" : "pos")">@FmtN2(resultLiq)</div>
-                <div class="det-kpi-sub">Receita - Custo</div>
-            </div>
-            <div class="det-kpi @(margem < 0 ? "det-kpi-neg" : "")">
-                <div class="det-kpi-label"><i class="bi bi-percent"></i> Margem Líquida</div>
-                <div class="det-kpi-val @(margem < 0 ? "neg" : "pos")">@margem%</div>
-                <div class="det-kpi-sub">Resultado / Receita</div>
-            </div>
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-label"><i class="bi bi-cash-stack"></i> Receita Área Líq.</div>
+            <div class="kpi-value">@Fmt(mes.ValorAreaLiquido)</div>
+            <div class="kpi-sub">Mensalidade @Fmt(mes.Mensalista.ValorMensalBruto) × @mes.Percentual.ToString("0")%</div>
         </div>
-    }
+        <div class="kpi-card">
+            <div class="kpi-label"><i class="bi bi-clock-history"></i> Custo Técnico Líq.</div>
+            <div class="kpi-value">@Fmt(mes.ValorHoraTecLiquida)</div>
+            <div class="kpi-sub">@FmtH(mes.TotalHours) horas lançadas</div>
+        </div>
+        <div class="kpi-card @ResultClass(mes.ValorResultadoLiquido) kpi-highlight">
+            <div class="kpi-label"><i class="bi bi-trophy"></i> Resultado Líquido</div>
+            <div class="kpi-value">@Fmt(mes.ValorResultadoLiquido)</div>
+            <div class="kpi-sub">Receita - Custo</div>
+        </div>
+        @{ var margem = mes.ValorAreaLiquido > 0 ? mes.ValorResultadoLiquido / mes.ValorAreaLiquido * 100 : 0; }
+        <div class="kpi-card @ResultClass(margem) kpi-highlight">
+            <div class="kpi-label"><i class="bi bi-percent"></i> Margem Líquida</div>
+            <div class="kpi-value">@margem.ToString("0.0", ptBR)%</div>
+            <div class="kpi-sub">Resultado / Receita</div>
+        </div>
+    </div>
 
-    <!-- TABS CARD -->
-    <div class="det-card">
-        <div class="det-tabs">
-            <button class="det-tab active" onclick="switchTab(this,'tab-mes')">
-                <i class="bi bi-calendar-check"></i> Mês Atual
+    <!-- Tabs -->
+    <div class="tabs-card">
+        <div class="tabs-nav">
+            <button class="tab-btn active" onclick="switchTab('mes', this)">
+                <i class="bi bi-calendar-day"></i> Mês Atual
             </button>
-            <button class="det-tab" onclick="switchTab(this,'tab-media')">
+            <button class="tab-btn" onclick="switchTab('media', this)">
                 <i class="bi bi-bar-chart-line"></i> Média 3 Meses
             </button>
-            <button class="det-tab" onclick="switchTab(this,'tab-acum')">
+            <button class="tab-btn" onclick="switchTab('acumulado', this)">
                 <i class="bi bi-graph-up"></i> Acumulado 3 Meses
             </button>
         </div>
 
-        <!-- MÊS ATUAL -->
-        <div id="tab-mes" class="det-tab-content active">
-            @if (mes != null)
-            {
-                <div class="det-metrics">
-                    <div class="det-metric"><div class="dm-label">HORAS</div><div class="dm-val blue">@Fmt(mes.TotalHours)</div></div>
-                    <div class="det-metric"><div class="dm-label">HORA TÉC. BRUTA</div><div class="dm-val">@FmtN2(mes.ValorTotalHoras)</div></div>
-                    <div class="det-metric"><div class="dm-label">HORA TÉC. LÍQUIDA</div><div class="dm-val">@FmtN2(mes.ValorHoraTecLiquida)</div></div>
-                    <div class="det-metric"><div class="dm-label">RECEITA ÁREA BRUTA</div><div class="dm-val">@FmtN2(mes.ValorAreaBruto)</div></div>
-                    <div class="det-metric"><div class="dm-label">RECEITA ÁREA LÍQUIDA</div><div class="dm-val">@FmtN2(mes.ValorAreaLiquido)</div></div>
-                    <div class="det-metric"><div class="dm-label">RESULTADO BRUTO</div><div class="dm-val @(mes.ValorResultadoBruto < 0 ? "neg" : "")">@FmtN2(mes.ValorResultadoBruto)</div></div>
-                    <div class="det-metric"><div class="dm-label">RESULTADO LÍQUIDO</div><div class="dm-val @(mes.ValorResultadoLiquido < 0 ? "neg" : "")">@FmtN2(mes.ValorResultadoLiquido)</div></div>
+        <!-- Tab: Mês -->
+        <div id="tab-mes" class="tab-content active">
+            <div class="tab-metrics">
+                @{ RenderMetrics(mes); }
+            </div>
+            <div class="chart-row">
+                <div class="chart-box">
+                    <div class="chart-title">Receita vs Custo</div>
+                    <canvas id="chartMes"></canvas>
                 </div>
-                <div class="det-charts">
-                    <div class="det-chart-box">
-                        <div class="det-chart-title">Receita vs Custo</div>
-                        <canvas id="barMes"></canvas>
-                    </div>
-                    <div class="det-chart-box">
-                        <div class="det-chart-title">Composição da Receita</div>
-                        <canvas id="donutMes"></canvas>
-                    </div>
+                <div class="chart-box">
+                    <div class="chart-title">Composição da Receita</div>
+                    <canvas id="chartMesDonut"></canvas>
                 </div>
-            }
-            else { <p class="det-empty">Sem dados para o mês selecionado.</p> }
+            </div>
         </div>
 
-        <!-- MÉDIA 3 MESES -->
-        <div id="tab-media" class="det-tab-content">
-            @if (media != null)
-            {
-                <div class="det-metrics">
-                    <div class="det-metric"><div class="dm-label">HORAS</div><div class="dm-val blue">@Fmt(media.TotalHours)</div></div>
-                    <div class="det-metric"><div class="dm-label">HORA TÉC. BRUTA</div><div class="dm-val">@FmtN2(media.ValorTotalHoras)</div></div>
-                    <div class="det-metric"><div class="dm-label">HORA TÉC. LÍQUIDA</div><div class="dm-val">@FmtN2(media.ValorHoraTecLiquida)</div></div>
-                    <div class="det-metric"><div class="dm-label">RECEITA ÁREA BRUTA</div><div class="dm-val">@FmtN2(media.ValorAreaBruto)</div></div>
-                    <div class="det-metric"><div class="dm-label">RECEITA ÁREA LÍQUIDA</div><div class="dm-val">@FmtN2(media.ValorAreaLiquido)</div></div>
-                    <div class="det-metric"><div class="dm-label">RESULTADO BRUTO</div><div class="dm-val @(media.ValorResultadoBruto < 0 ? "neg" : "")">@FmtN2(media.ValorResultadoBruto)</div></div>
-                    <div class="det-metric"><div class="dm-label">RESULTADO LÍQUIDO</div><div class="dm-val @(media.ValorResultadoLiquido < 0 ? "neg" : "")">@FmtN2(media.ValorResultadoLiquido)</div></div>
+        <!-- Tab: Média -->
+        <div id="tab-media" class="tab-content">
+            <div class="tab-metrics">
+                @{ RenderMetrics(media); }
+            </div>
+            <div class="chart-row">
+                <div class="chart-box">
+                    <div class="chart-title">Receita vs Custo (Média)</div>
+                    <canvas id="chartMedia"></canvas>
                 </div>
-                <div class="det-charts">
-                    <div class="det-chart-box">
-                        <div class="det-chart-title">Receita vs Custo (Média)</div>
-                        <canvas id="barMedia"></canvas>
-                    </div>
-                    <div class="det-chart-box">
-                        <div class="det-chart-title">Composição da Receita (Média)</div>
-                        <canvas id="donutMedia"></canvas>
-                    </div>
+                <div class="chart-box">
+                    <div class="chart-title">Composição da Receita</div>
+                    <canvas id="chartMediaDonut"></canvas>
                 </div>
-            }
-            else { <p class="det-empty">Sem dados de média disponíveis.</p> }
+            </div>
         </div>
 
-        <!-- ACUMULADO 3 MESES -->
-        <div id="tab-acum" class="det-tab-content">
-            @if (acum != null)
-            {
-                <div class="det-metrics">
-                    <div class="det-metric"><div class="dm-label">HORAS</div><div class="dm-val blue">@Fmt(acum.TotalHours)</div></div>
-                    <div class="det-metric"><div class="dm-label">HORA TÉC. BRUTA</div><div class="dm-val">@FmtN2(acum.ValorTotalHoras)</div></div>
-                    <div class="det-metric"><div class="dm-label">HORA TÉC. LÍQUIDA</div><div class="dm-val">@FmtN2(acum.ValorHoraTecLiquida)</div></div>
-                    <div class="det-metric"><div class="dm-label">RECEITA ÁREA BRUTA</div><div class="dm-val">@FmtN2(acum.ValorAreaBruto)</div></div>
-                    <div class="det-metric"><div class="dm-label">RECEITA ÁREA LÍQUIDA</div><div class="dm-val">@FmtN2(acum.ValorAreaLiquido)</div></div>
-                    <div class="det-metric"><div class="dm-label">RESULTADO BRUTO</div><div class="dm-val @(acum.ValorResultadoBruto < 0 ? "neg" : "")">@FmtN2(acum.ValorResultadoBruto)</div></div>
-                    <div class="det-metric"><div class="dm-label">RESULTADO LÍQUIDO</div><div class="dm-val @(acum.ValorResultadoLiquido < 0 ? "neg" : "")">@FmtN2(acum.ValorResultadoLiquido)</div></div>
+        <!-- Tab: Acumulado -->
+        <div id="tab-acumulado" class="tab-content">
+            <div class="tab-metrics">
+                @{ RenderMetrics(acumulado); }
+            </div>
+            <div class="chart-row">
+                <div class="chart-box">
+                    <div class="chart-title">Receita vs Custo (Acumulado)</div>
+                    <canvas id="chartAcumulado"></canvas>
                 </div>
-                <div class="det-charts">
-                    <div class="det-chart-box">
-                        <div class="det-chart-title">Receita vs Custo (Acumulado)</div>
-                        <canvas id="barAcum"></canvas>
-                    </div>
-                    <div class="det-chart-box">
-                        <div class="det-chart-title">Composição da Receita (Acumulado)</div>
-                        <canvas id="donutAcum"></canvas>
-                    </div>
+                <div class="chart-box">
+                    <div class="chart-title">Composição da Receita</div>
+                    <canvas id="chartAcumuladoDonut"></canvas>
                 </div>
-            }
-            else { <p class="det-empty">Sem dados acumulados disponíveis.</p> }
+            </div>
         </div>
     </div>
 </div>
 
+@functions {
+    void RenderMetrics(WebAppSystems.Models.ViewModels.MensalistaHoursViewModel d)
+    {
+        if (d == null) { <p class="no-data">Sem dados para este período.</p> return; }
+        var ptBR = System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
+        string Fmt(decimal v) => v.ToString("N2", ptBR);
+        int wh = (int)d.TotalHours; int wm = (int)Math.Round((d.TotalHours - wh) * 60);
+        <div class="metrics-row">
+            <div class="metric"><span class="metric-label">Horas</span><span class="metric-val hours">@($"{wh:D2}:{wm:D2}")</span></div>
+            <div class="metric"><span class="metric-label">Hora Téc. Bruta</span><span class="metric-val">@Fmt(d.ValorTotalHoras)</span></div>
+            <div class="metric"><span class="metric-label">Hora Téc. Líquida</span><span class="metric-val">@Fmt(d.ValorHoraTecLiquida)</span></div>
+            <div class="metric"><span class="metric-label">Receita Área Bruta</span><span class="metric-val">@Fmt(d.ValorAreaBruto)</span></div>
+            <div class="metric"><span class="metric-label">Receita Área Líquida</span><span class="metric-val">@Fmt(d.ValorAreaLiquido)</span></div>
+            <div class="metric"><span class="metric-label">Resultado Bruto</span><span class="metric-val @(d.ValorResultadoBruto >= 0 ? "pos" : "neg")">@Fmt(d.ValorResultadoBruto)</span></div>
+            <div class="metric"><span class="metric-label">Resultado Líquido</span><span class="metric-val @(d.ValorResultadoLiquido >= 0 ? "pos" : "neg")">@Fmt(d.ValorResultadoLiquido)</span></div>
+        </div>
+    }
+}
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-    function switchTab(btn, id) {
-        document.querySelectorAll('.det-tab').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.det-tab-content').forEach(c => c.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById(id).classList.add('active');
-    }
+    const data = {
+        mes: {
+            receita:    @mes.ValorAreaLiquido.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            custo:      @mes.ValorHoraTecLiquida.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            resultado:  @mes.ValorResultadoLiquido.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            mensalBruto:@mes.Mensalista.ValorMensalBruto.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            tributos:   @mes.Tributos.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            comissoes:  @((mes.Mensalista.ComissaoParceiro + mes.Mensalista.ComissaoSocio).ToString(System.Globalization.CultureInfo.InvariantCulture))
+        },
+        media: {
+            receita:    @(media?.ValorAreaLiquido.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "0"),
+            custo:      @(media?.ValorHoraTecLiquida.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "0"),
+            resultado:  @(media?.ValorResultadoLiquido.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "0"),
+            mensalBruto:@(media?.Mensalista.ValorMensalBruto.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "0"),
+            tributos:   @(media?.Tributos.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "0"),
+            comissoes:  @(media != null ? (media.Mensalista.ComissaoParceiro + media.Mensalista.ComissaoSocio).ToString(System.Globalization.CultureInfo.InvariantCulture) : "0")
+        },
+        acumulado: {
+            receita:    @(acumulado?.ValorAreaLiquido.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "0"),
+            custo:      @(acumulado?.ValorHoraTecLiquida.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "0"),
+            resultado:  @(acumulado?.ValorResultadoLiquido.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "0"),
+            mensalBruto:@(acumulado?.Mensalista.ValorMensalBruto.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "0"),
+            tributos:   @(acumulado?.Tributos.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "0"),
+            comissoes:  @(acumulado != null ? (acumulado.Mensalista.ComissaoParceiro + acumulado.Mensalista.ComissaoSocio).ToString(System.Globalization.CultureInfo.InvariantCulture) : "0")
+        }
+    };
 
-    const barColors = ['#7c8cf8', '#f6c23e', '#e74a3b'];
-    const donutColors = ['#7c8cf8', '#f6c23e', '#b39ddb'];
-
-    function makeBar(id, receita, custo, resultado) {
-        const el = document.getElementById(id);
-        if (!el) return;
-        new Chart(el, {
+    function makeBarChart(id, d) {
+        const resultColor = d.resultado >= 0 ? 'rgba(34,197,94,0.8)' : 'rgba(239,68,68,0.8)';
+        new Chart(document.getElementById(id), {
             type: 'bar',
             data: {
                 labels: ['Receita Área Líq.', 'Custo Técnico Líq.', 'Resultado Líq.'],
                 datasets: [{
-                    data: [receita, custo, resultado],
-                    backgroundColor: [barColors[0], barColors[1], resultado >= 0 ? '#48bb78' : barColors[2]],
-                    borderRadius: 4, borderSkipped: false, barPercentage: 0.5
+                    data: [d.receita, d.custo, d.resultado],
+                    backgroundColor: ['rgba(102,126,234,0.8)', 'rgba(251,191,36,0.8)', resultColor],
+                    borderRadius: 6
                 }]
             },
             options: {
                 responsive: true,
                 plugins: { legend: { display: false } },
-                scales: {
-                    y: {
-                        grid: { color: '#edf2f7' },
-                        ticks: {
-                            color: '#718096', font: { size: 11 },
-                            callback: v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:0})
-                        }
-                    },
-                    x: { grid: { display: false }, ticks: { color: '#718096', font: { size: 11 } } }
-                }
+                scales: { y: { ticks: { callback: v => 'R$ ' + v.toLocaleString('pt-BR') } } }
             }
         });
     }
 
-    function makeDonut(id, liquido, tributos, comissoes) {
-        const el = document.getElementById(id);
-        if (!el) return;
-        new Chart(el, {
+    function makeDonutChart(id, d) {
+        new Chart(document.getElementById(id), {
             type: 'doughnut',
             data: {
                 labels: ['Líquido (área)', 'Tributos', 'Comissões'],
                 datasets: [{
-                    data: [Math.max(0, liquido), Math.max(0, tributos), Math.max(0, comissoes)],
-                    backgroundColor: donutColors,
-                    borderWidth: 3, borderColor: '#fff', hoverOffset: 6
+                    data: [
+                        Math.max(0, d.receita),
+                        Math.max(0, d.tributos),
+                        Math.max(0, d.comissoes)
+                    ],
+                    backgroundColor: ['rgba(102,126,234,0.85)', 'rgba(251,191,36,0.85)', 'rgba(167,139,250,0.85)'],
+                    borderWidth: 2, borderColor: '#fff'
                 }]
             },
-            options: {
-                responsive: true, cutout: '68%',
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: { color: '#4a5568', padding: 20, font: { size: 12 }, usePointStyle: true, pointStyleWidth: 10 }
-                    }
-                }
-            }
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } }, cutout: '65%' }
         });
     }
 
-    // Mês atual
-    @if (mes != null)
-    {
-        <text>
-    makeBar('barMes', @Html.Raw(FmtJs(receitaArea)), @Html.Raw(FmtJs(custoTec)), @Html.Raw(FmtJs(resultLiq)));
-    makeDonut('donutMes', @Html.Raw(FmtJs(receitaArea)), @Html.Raw(FmtJs(tributos)), @Html.Raw(FmtJs(comissoes)));
-        </text>
+    function switchTab(name, btn) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('tab-' + name).classList.add('active');
+        btn.classList.add('active');
     }
-    @if (media != null)
-    {
-        <text>
-    makeBar('barMedia', @Html.Raw(FmtJs(media.ValorAreaLiquido)), @Html.Raw(FmtJs(media.ValorHoraTecLiquida)), @Html.Raw(FmtJs(media.ValorResultadoLiquido)));
-    makeDonut('donutMedia', @Html.Raw(FmtJs(media.ValorAreaLiquido)), @Html.Raw(FmtJs(media.Tributos)), @Html.Raw(FmtJs(media.Mensalista.ComissaoParceiro + media.Mensalista.ComissaoSocio)));
-        </text>
-    }
-    @if (acum != null)
-    {
-        <text>
-    makeBar('barAcum', @Html.Raw(FmtJs(acum.ValorAreaLiquido)), @Html.Raw(FmtJs(acum.ValorHoraTecLiquida)), @Html.Raw(FmtJs(acum.ValorResultadoLiquido)));
-    makeDonut('donutAcum', @Html.Raw(FmtJs(acum.ValorAreaLiquido)), @Html.Raw(FmtJs(acum.Tributos)), @Html.Raw(FmtJs(acum.Mensalista.ComissaoParceiro + acum.Mensalista.ComissaoSocio)));
-        </text>
-    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        makeBarChart('chartMes', data.mes);
+        makeDonutChart('chartMesDonut', data.mes);
+        makeBarChart('chartMedia', data.media);
+        makeDonutChart('chartMediaDonut', data.media);
+        makeBarChart('chartAcumulado', data.acumulado);
+        makeDonutChart('chartAcumuladoDonut', data.acumulado);
+    });
 </script>
 
 <style>
-    body { background: #f0f2f8 !important; }
+    .dash-container { max-width: 1200px; margin: 0 auto; padding: 20px; }
 
-    .det-page { max-width: 980px; margin: 0 auto; padding: 24px; }
-
-    /* HEADER */
-    .det-header {
+    .dash-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 14px; padding: 22px 28px; margin-bottom: 20px;
+        border-radius: 12px; padding: 24px 28px; margin-bottom: 24px;
         display: flex; justify-content: space-between; align-items: center;
-        box-shadow: 0 6px 24px rgba(102,126,234,0.3);
+        box-shadow: 0 6px 25px rgba(102,126,234,0.25);
     }
-    .det-header-left { display: flex; align-items: center; gap: 16px; }
-    .det-header-icon {
-        width: 46px; height: 46px; background: rgba(255,255,255,0.2);
-        border-radius: 10px; display: flex; align-items: center;
-        justify-content: center; font-size: 22px; color: white;
+    .dash-header-left { display: flex; align-items: center; gap: 16px; }
+    .dash-header-icon {
+        width: 50px; height: 50px; background: rgba(255,255,255,0.2);
+        border-radius: 12px; display: flex; align-items: center;
+        justify-content: center; font-size: 24px; color: white;
     }
-    .det-header-title { font-size: 20px; font-weight: 700; color: white; }
-    .det-header-sub { font-size: 12px; color: rgba(255,255,255,0.8); margin-top: 2px; }
-    .det-btn-back {
-        display: flex; align-items: center; gap: 6px;
-        padding: 9px 18px; background: white; color: #667eea;
-        border-radius: 8px; font-size: 13px; font-weight: 600;
-        text-decoration: none; transition: all 0.2s;
+    .dash-header h1 { font-size: 22px; font-weight: 700; color: white; margin: 0 0 4px; }
+    .dash-header p  { font-size: 13px; color: rgba(255,255,255,0.85); margin: 0; }
+    .btn-back {
+        display: flex; align-items: center; gap: 8px; padding: 10px 20px;
+        background: white; color: #667eea; border-radius: 8px;
+        font-size: 14px; font-weight: 600; text-decoration: none; transition: all 0.2s;
     }
-    .det-btn-back:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.15); color: #764ba2; }
+    .btn-back:hover { transform: translateY(-2px); color: #764ba2; }
 
-    /* KPI */
-    .det-kpi-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 20px; }
-    .det-kpi {
-        background: white; border-radius: 12px; padding: 18px 20px;
-        box-shadow: 0 1px 8px rgba(0,0,0,0.06); border-left: 4px solid #e2e8f0;
+    .kpi-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 24px; }
+    .kpi-card {
+        background: white; border-radius: 12px; padding: 20px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.06); border-left: 4px solid #e2e8f0;
     }
-    .det-kpi.det-kpi-neg { border-left-color: #fc8181; }
-    .det-kpi-label { font-size: 11px; font-weight: 600; color: #a0aec0; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
-    .det-kpi-label i { color: #667eea; font-size: 13px; }
-    .det-kpi-val { font-size: 24px; font-weight: 700; color: #1a202c; margin-bottom: 6px; }
-    .det-kpi-val.neg { color: #e53e3e; }
-    .det-kpi-val.pos { color: #1a202c; }
-    .det-kpi-sub { font-size: 11px; color: #a0aec0; }
+    .kpi-card.kpi-positive { border-left-color: #48bb78; }
+    .kpi-card.kpi-negative { border-left-color: #fc8181; }
+    .kpi-card.kpi-highlight { background: #f7faff; }
+    .kpi-card.kpi-positive .kpi-value { color: #22543d; }
+    .kpi-card.kpi-negative .kpi-value { color: #742a2a; }
+    .kpi-label { font-size: 12px; font-weight: 600; color: #718096; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+    .kpi-value { font-size: 22px; font-weight: 800; color: #2d3748; margin-bottom: 6px; }
+    .kpi-sub   { font-size: 12px; color: #a0aec0; }
 
-    /* TABS CARD */
-    .det-card { background: white; border-radius: 14px; box-shadow: 0 1px 8px rgba(0,0,0,0.06); overflow: hidden; }
-    .det-tabs { display: flex; border-bottom: 1px solid #e2e8f0; padding: 0 4px; }
-    .det-tab {
-        display: flex; align-items: center; gap: 7px;
-        padding: 16px 22px; background: none; border: none;
-        font-size: 13px; font-weight: 600; color: #a0aec0;
-        cursor: pointer; border-bottom: 3px solid transparent;
-        margin-bottom: -1px; transition: all 0.2s; white-space: nowrap;
+    .tabs-card { background: white; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); overflow: hidden; }
+    .tabs-nav  { display: flex; border-bottom: 2px solid #e2e8f0; background: #f7fafc; }
+    .tab-btn {
+        flex: 1; padding: 14px; border: none; background: none; cursor: pointer;
+        font-size: 13px; font-weight: 600; color: #718096;
+        display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;
     }
-    .det-tab:hover { color: #667eea; }
-    .det-tab.active { color: #667eea; border-bottom-color: #667eea; }
+    .tab-btn.active { color: #667eea; border-bottom: 3px solid #667eea; background: white; margin-bottom: -2px; }
+    .tab-btn:hover:not(.active) { background: #edf2f7; color: #4a5568; }
 
-    .det-tab-content { display: none; padding: 24px; }
-    .det-tab-content.active { display: block; }
+    .tab-content { display: none; padding: 24px; }
+    .tab-content.active { display: block; }
 
-    /* METRICS ROW */
-    .det-metrics {
-        display: flex; flex-wrap: wrap; gap: 28px;
-        padding-bottom: 20px; border-bottom: 1px solid #f0f4f8; margin-bottom: 24px;
+    .metrics-row {
+        display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 24px;
+        padding: 16px; background: #f7fafc; border-radius: 10px;
     }
-    .det-metric {}
-    .dm-label { font-size: 10px; font-weight: 700; color: #a0aec0; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-    .dm-val { font-size: 15px; font-weight: 700; color: #2d3748; }
-    .dm-val.blue { color: #3182ce; }
-    .dm-val.neg { color: #e53e3e; }
+    .metric { display: flex; flex-direction: column; gap: 4px; min-width: 120px; }
+    .metric-label { font-size: 11px; font-weight: 600; color: #718096; text-transform: uppercase; }
+    .metric-val   { font-size: 15px; font-weight: 700; color: #2d3748; }
+    .metric-val.hours { color: #0066cc; }
+    .metric-val.pos   { color: #22543d; }
+    .metric-val.neg   { color: #742a2a; }
 
-    /* CHARTS */
-    .det-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .det-chart-box { padding: 4px 0; }
-    .det-chart-title { font-size: 13px; font-weight: 600; color: #4a5568; margin-bottom: 14px; }
-
-    .det-empty { padding: 40px; text-align: center; color: #a0aec0; }
+    .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .chart-box { background: #f7fafc; border-radius: 10px; padding: 16px; }
+    .chart-title { font-size: 13px; font-weight: 700; color: #4a5568; margin-bottom: 12px; }
+    .no-data { color: #a0aec0; font-size: 14px; padding: 20px 0; }
 
     @@media (max-width: 900px) {
-        .det-kpi-row { grid-template-columns: repeat(2,1fr); }
-        .det-charts { grid-template-columns: 1fr; }
+        .kpi-grid { grid-template-columns: repeat(2,1fr); }
+        .chart-row { grid-template-columns: 1fr; }
+        .tabs-nav { flex-direction: column; }
     }
     @@media (max-width: 600px) {
-        .det-page { padding: 12px; }
-        .det-header { flex-direction: column; gap: 14px; align-items: stretch; }
-        .det-kpi-row { grid-template-columns: 1fr 1fr; }
-        .det-tab { padding: 12px 14px; font-size: 12px; }
+        .kpi-grid { grid-template-columns: 1fr; }
+        .dash-header { flex-direction: column; gap: 12px; align-items: stretch; }
     }
 </style>
