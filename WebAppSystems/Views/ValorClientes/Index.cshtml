@@ -26,16 +26,23 @@
         </button>
     </div>
 
-    <!-- Legenda -->
+    <!-- Legenda + info paginação -->
     <div class="vc-legend">
         <span><span class="dot dot-green"></span> Valor cadastrado</span>
         <span><span class="dot dot-gray"></span> Sem valor</span>
         <span><span class="dot dot-yellow"></span> Alterado (não salvo)</span>
         <span><i class="bi bi-person-fill" style="color:#667eea;font-size:12px;"></i> Exceção por advogado</span>
+        <span id="vcPageInfo" style="margin-left:auto;color:#4a5568;font-weight:600;"></span>
+    </div>
+
+    <!-- Pesquisa -->
+    <div class="vc-search-bar">
+        <i class="bi bi-search"></i>
+        <input type="text" id="vcSearch" placeholder="Pesquisar cliente..." oninput="filterClients(this.value)" autocomplete="off" />
     </div>
 
     <!-- Lista de clientes -->
-    <div class="vc-list">
+    <div class="vc-list" id="vcList">
         @foreach (var client in clients)
         {
             var padrao = lookup.ContainsKey((client.Id, (int?)null)) ? lookup[(client.Id, (int?)null)] : null;
@@ -112,8 +119,12 @@
     </div>
 
     <div id="saveStatus" class="save-status" style="display:none;"></div>
+
+    <!-- Paginação -->
+    <div class="vc-pagination" id="vcPagination"></div>
 </div>
 
+@section Styles {
 <style>
     .vc-container { max-width: 860px; margin: 0 auto; padding: 20px; }
 
@@ -241,6 +252,36 @@
     .save-status.success { background: #c6f6d5; color: #22543d; }
     .save-status.error   { background: #fed7d7; color: #742a2a; }
 
+    /* Paginação */
+    .vc-pagination {
+        display: flex; justify-content: center; align-items: center;
+        gap: 6px; margin-top: 18px; flex-wrap: wrap;
+    }
+    .vc-pagination button {
+        min-width: 36px; height: 36px; padding: 0 10px;
+        border: 2px solid #e2e8f0; border-radius: 7px;
+        background: white; color: #4a5568; font-size: 13px; font-weight: 600;
+        cursor: pointer; transition: all 0.15s;
+    }
+    .vc-pagination button:hover { border-color: #667eea; color: #667eea; }
+    .vc-pagination button.active { background: #667eea; border-color: #667eea; color: white; }
+    .vc-pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+    .client-row.vc-hidden { display: none; }
+
+    .vc-search-bar {
+        display: flex; align-items: center; gap: 10px;
+        background: white; border: 2px solid #e2e8f0; border-radius: 9px;
+        padding: 9px 14px; margin-bottom: 14px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05); transition: border-color 0.2s;
+    }
+    .vc-search-bar:focus-within { border-color: #667eea; }
+    .vc-search-bar i { color: #a0aec0; font-size: 15px; flex-shrink: 0; }
+    .vc-search-bar input {
+        border: none; outline: none; font-size: 14px; color: #2d3748;
+        width: 100%; background: transparent;
+    }
+    .vc-search-bar input::placeholder { color: #a0aec0; }
+
     @@media (max-width: 640px) {
         .vc-container { padding: 12px; }
         .vc-header { flex-direction: column; gap: 12px; align-items: flex-start; }
@@ -250,6 +291,7 @@
         .value-input { width: 100%; }
     }
 </style>
+}
 
 <script>
     function toggleExcecoes(btn) {
@@ -340,4 +382,89 @@
         el.style.display = 'block';
         setTimeout(() => el.style.display = 'none', 3500);
     }
+
+    // --- Pesquisa ---
+    function filterClients(term) {
+        term = term.trim().toLowerCase();
+        const rows = Array.from(document.querySelectorAll('#vcList .client-row'));
+        rows.forEach(function(row) {
+            const name = row.querySelector('.client-name')?.textContent.toLowerCase() || '';
+            row.dataset.filtered = (!term || name.includes(term)) ? '' : 'hide';
+        });
+        currentPage = 1;
+        renderPage(1);
+    }
+
+    // --- Paginação ---
+    const PAGE_SIZE = 10;
+    let currentPage = 1;
+
+    function getRows() {
+        return Array.from(document.querySelectorAll('#vcList .client-row'))
+            .filter(r => r.dataset.filtered !== 'hide');
+    }
+
+    function getAllRows() {
+        return Array.from(document.querySelectorAll('#vcList .client-row'));
+    }
+
+    function renderPage(page) {
+        const rows = getRows();
+        const allRows = getAllRows();
+        const total = rows.length;
+        const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
+        currentPage = Math.max(1, Math.min(page, totalPages));
+
+        const start = (currentPage - 1) * PAGE_SIZE;
+        const end   = start + PAGE_SIZE;
+
+        // Esconde todos, depois mostra só os da página atual (que passaram no filtro)
+        allRows.forEach(function(row) {
+            row.classList.add('vc-hidden');
+        });
+        rows.forEach(function(row, i) {
+            row.classList.toggle('vc-hidden', i < start || i >= end);
+        });
+
+        // Info
+        const infoEl = document.getElementById('vcPageInfo');
+        if (total > PAGE_SIZE) {
+            const from = start + 1;
+            const to   = Math.min(end, total);
+            infoEl.textContent = from + '–' + to + ' de ' + total + ' clientes';
+        } else {
+            infoEl.textContent = total + ' cliente(s)';
+        }
+
+        // Botões
+        const pag = document.getElementById('vcPagination');
+        pag.innerHTML = '';
+        if (totalPages <= 1) return;
+
+        function btn(label, page, disabled, active) {
+            const b = document.createElement('button');
+            b.innerHTML = label;
+            if (disabled) b.disabled = true;
+            if (active)   b.classList.add('active');
+            b.onclick = function() { renderPage(page); window.scrollTo(0,0); };
+            pag.appendChild(b);
+        }
+
+        btn('&laquo;', 1, currentPage === 1, false);
+        btn('&lsaquo;', currentPage - 1, currentPage === 1, false);
+
+        // Janela de páginas
+        let pStart = Math.max(1, currentPage - 2);
+        let pEnd   = Math.min(totalPages, pStart + 4);
+        pStart = Math.max(1, pEnd - 4);
+
+        for (let p = pStart; p <= pEnd; p++) {
+            btn(p, p, false, p === currentPage);
+        }
+
+        btn('&rsaquo;', currentPage + 1, currentPage === totalPages, false);
+        btn('&raquo;', totalPages, currentPage === totalPages, false);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() { renderPage(1); });
 </script>
