@@ -294,8 +294,7 @@
                 body: JSON.stringify(items)
             });
 
-            if (resp.ok) {
-                const data = await resp.json();
+            if (resp.ok) {                const data = await resp.json();
                 // Atualiza record IDs e remove marcação de alterado
                 if (data && data.records) {
                     data.records.forEach(function(r) {
@@ -323,7 +322,8 @@
                 });
                 showStatus('Valores salvos com sucesso!', 'success');
             } else {
-                showStatus('Erro ao salvar. Tente novamente.', 'error');
+                const errMsg = await resp.text();
+                showStatus('Erro: ' + errMsg, 'error');
             }
         } catch(e) {
             showStatus('Falha na requisição.', 'error');

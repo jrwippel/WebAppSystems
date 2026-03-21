@@ -50,44 +50,50 @@ namespace WebAppSystems.Controllers
 
             var result = new List<object>();
 
-            foreach (var item in items)
+            try
             {
-                if (item.Id > 0)
+                foreach (var item in items)
                 {
-                    // Atualiza existente
-                    var existing = await _context.ValorCliente.FindAsync(item.Id);
-                    if (existing != null)
+                    if (item.Id > 0)
                     {
-                        if (item.Valor <= 0)
-                            _context.ValorCliente.Remove(existing);
+                        var existing = await _context.ValorCliente.FindAsync(item.Id);
+                        if (existing != null)
+                        {
+                            if (item.Valor <= 0)
+                                _context.ValorCliente.Remove(existing);
+                            else
+                            {
+                                existing.Valor = item.Valor;
+                                result.Add(new { id = existing.Id, clientId = existing.ClientId, attorneyId = existing.AttorneyId });
+                            }
+                        }
+                    }
+                    else if (item.Valor > 0)
+                    {
+                        var dup = await _context.ValorCliente
+                            .FirstOrDefaultAsync(v => v.ClientId == item.ClientId && v.AttorneyId == item.AttorneyId);
+                        if (dup != null)
+                        {
+                            dup.Valor = item.Valor;
+                            result.Add(new { id = dup.Id, clientId = dup.ClientId, attorneyId = dup.AttorneyId });
+                        }
                         else
                         {
-                            existing.Valor = item.Valor;
-                            result.Add(new { id = existing.Id, clientId = existing.ClientId, attorneyId = existing.AttorneyId });
+                            var novo = new ValorCliente { ClientId = item.ClientId, AttorneyId = item.AttorneyId, Valor = item.Valor };
+                            _context.ValorCliente.Add(novo);
+                            await _context.SaveChangesAsync();
+                            result.Add(new { id = novo.Id, clientId = novo.ClientId, attorneyId = novo.AttorneyId });
                         }
                     }
                 }
-                else if (item.Valor > 0)
-                {
-                    // Cria novo (verifica duplicata)
-                    var dup = await _context.ValorCliente
-                        .FirstOrDefaultAsync(v => v.ClientId == item.ClientId && v.AttorneyId == item.AttorneyId);
-                    if (dup != null)
-                    {
-                        dup.Valor = item.Valor;
-                        result.Add(new { id = dup.Id, clientId = dup.ClientId, attorneyId = dup.AttorneyId });
-                    }
-                    else
-                    {
-                        var novo = new ValorCliente { ClientId = item.ClientId, AttorneyId = item.AttorneyId, Valor = item.Valor };
-                        _context.ValorCliente.Add(novo);                        await _context.SaveChangesAsync();
-                        result.Add(new { id = novo.Id, clientId = novo.ClientId, attorneyId = novo.AttorneyId });
-                    }
-                }
-            }
 
-            await _context.SaveChangesAsync();
-            return Ok(new { records = result });
+                await _context.SaveChangesAsync();
+                return Ok(new { records = result });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.InnerException?.Message ?? ex.Message);
+            }
         }
 
         public class SaveGridItem
