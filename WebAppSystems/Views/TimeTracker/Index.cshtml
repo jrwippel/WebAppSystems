@@ -173,7 +173,7 @@
 
         .form-field {
             flex: 1;
-            min-width: 160px;
+            min-width: 180px;
             display: flex;
             flex-direction: column;
         }
@@ -191,6 +191,14 @@
             border-radius: 8px;
             font-size: 14px;
             transition: all 0.3s;
+            min-width: 0;
+            width: 100%;
+        }
+
+        select.form-control {
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
         }
 
         .form-control:focus {
