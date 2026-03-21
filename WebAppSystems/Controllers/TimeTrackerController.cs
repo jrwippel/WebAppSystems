@@ -99,19 +99,17 @@ namespace WebAppSystems.Controllers
                 return BadRequest("ProcessRecord ID is required.");
             }
 
-            var processRecord = await _processRecordsService.FindByIdAsync(request.ProcessRecordId);
+            var processRecord = await _context.ProcessRecord
+                .FirstOrDefaultAsync(p => p.Id == request.ProcessRecordId);
 
             if (processRecord == null)
             {
                 return NotFound();
             }
 
+            // Aplica TODOS os campos editados pelo usuário
             if (!string.IsNullOrEmpty(request.Description))
-            {
                 processRecord.Description = request.Description;
-            }
-
-            // Aplica os campos editados pelo usuário antes de parar
             if (request.ClientId > 0)
                 processRecord.ClientId = request.ClientId;
             if (request.DepartmentId > 0)
