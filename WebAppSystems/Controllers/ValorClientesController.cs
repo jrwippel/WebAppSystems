@@ -32,7 +32,7 @@ namespace WebAppSystems.Controllers
             ViewBag.LoggedUserId = usuario.Id;
             ViewBag.CurrentUserPerfil = usuario.Perfil;
             ViewBag.Clients   = await _context.Client.OrderBy(c => c.Name).ToListAsync();
-            ViewBag.Attorneys = await _context.Attorney.OrderBy(a => a.Name).ToListAsync();
+            ViewBag.Attorneys = await _context.Attorney.Where(a => !a.Inativo).OrderBy(a => a.Name).ToListAsync();
 
             var valores = await _context.ValorCliente
                 .Include(v => v.Attorney)
