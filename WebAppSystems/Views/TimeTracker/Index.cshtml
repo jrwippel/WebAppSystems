@@ -842,12 +842,21 @@
 
         async function stopTimer() {
             const description = document.getElementById("description").value;
+            const clientId = parseInt(document.querySelector('select[name="ProcessRecord.ClientId"]').value) || 0;
+            const departmentId = parseInt(document.querySelector('select[name="ProcessRecord.DepartmentId"]').value) || 0;
+            const solicitante = document.getElementById("solicitante").value;
+            const recordType = parseInt(document.querySelector('select[name="ProcessRecord.RecordType"]').value) || 0;
+
             const response = await fetch('/TimeTracker/StopTimer', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     processRecordId: processRecordId,
-                    description: description
+                    description: description,
+                    clientId: clientId,
+                    departmentId: departmentId,
+                    solicitante: solicitante,
+                    recordType: recordType
                 })
             });
 

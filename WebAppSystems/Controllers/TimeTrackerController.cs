@@ -111,6 +111,16 @@ namespace WebAppSystems.Controllers
                 processRecord.Description = request.Description;
             }
 
+            // Aplica os campos editados pelo usuário antes de parar
+            if (request.ClientId > 0)
+                processRecord.ClientId = request.ClientId;
+            if (request.DepartmentId > 0)
+                processRecord.DepartmentId = request.DepartmentId;
+            if (!string.IsNullOrEmpty(request.Solicitante))
+                processRecord.Solicitante = request.Solicitante;
+            if (Enum.IsDefined(typeof(RecordType), request.RecordType))
+                processRecord.RecordType = (RecordType)request.RecordType;
+
             var brasiliaTimeZone = TimeZoneInfo.FindSystemTimeZoneById("E. South America Standard Time");
             var nowInBrasilia = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, brasiliaTimeZone);
             var horaFinalAtual = new TimeSpan(nowInBrasilia.Hour, nowInBrasilia.Minute, nowInBrasilia.Second);
@@ -330,8 +340,11 @@ namespace WebAppSystems.Controllers
         public class StopTimerRequest
         {
             public int ProcessRecordId { get; set; }
-
             public string Description { get; set; }
+            public int ClientId { get; set; }
+            public int DepartmentId { get; set; }
+            public string Solicitante { get; set; }
+            public int RecordType { get; set; }
         }
 
         public class TestMidnightRequest
