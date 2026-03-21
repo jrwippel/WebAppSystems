@@ -7,6 +7,9 @@
         return $"{h:D2}:{m:D2}";
     }
     public static string FmtN2(decimal v) => v.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("pt-BR"));
+    // Para JS: sempre ponto decimal
+    public static string FmtJs(decimal v) => v.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
+    public static string FmtJs(double v) => v.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
 }
 
 @{
@@ -293,21 +296,21 @@
     }
 
     // Mês atual
-    makeBarChart('barChart', @((double)receitaArea), @((double)custoTec), @((double)resultLiq));
-    makeDonutChart('donutChart', @((double)receitaArea), @((double)tributos), @((double)comissoes));
+    makeBarChart('barChart', @Html.Raw(FmtJs(receitaArea)), @Html.Raw(FmtJs(custoTec)), @Html.Raw(FmtJs(resultLiq)));
+    makeDonutChart('donutChart', @Html.Raw(FmtJs(receitaArea)), @Html.Raw(FmtJs(tributos)), @Html.Raw(FmtJs(comissoes)));
 
     @if (media != null)
     {
         <text>
-    makeBarChart('barChartMedia', @((double)(media.ValorAreaLiquido)), @((double)(media.ValorHoraTecLiquida)), @((double)(media.ValorResultadoLiquido)));
-    makeDonutChart('donutChartMedia', @((double)(media.ValorAreaLiquido)), @((double)(media.Tributos)), @((double)((media.Mensalista.ComissaoParceiro + media.Mensalista.ComissaoSocio))));
+    makeBarChart('barChartMedia', @Html.Raw(FmtJs(media.ValorAreaLiquido)), @Html.Raw(FmtJs(media.ValorHoraTecLiquida)), @Html.Raw(FmtJs(media.ValorResultadoLiquido)));
+    makeDonutChart('donutChartMedia', @Html.Raw(FmtJs(media.ValorAreaLiquido)), @Html.Raw(FmtJs(media.Tributos)), @Html.Raw(FmtJs(media.Mensalista.ComissaoParceiro + media.Mensalista.ComissaoSocio)));
         </text>
     }
     @if (acum != null)
     {
         <text>
-    makeBarChart('barChartAcum', @((double)(acum.ValorAreaLiquido)), @((double)(acum.ValorHoraTecLiquida)), @((double)(acum.ValorResultadoLiquido)));
-    makeDonutChart('donutChartAcum', @((double)(acum.ValorAreaLiquido)), @((double)(acum.Tributos)), @((double)((acum.Mensalista.ComissaoParceiro + acum.Mensalista.ComissaoSocio))));
+    makeBarChart('barChartAcum', @Html.Raw(FmtJs(acum.ValorAreaLiquido)), @Html.Raw(FmtJs(acum.ValorHoraTecLiquida)), @Html.Raw(FmtJs(acum.ValorResultadoLiquido)));
+    makeDonutChart('donutChartAcum', @Html.Raw(FmtJs(acum.ValorAreaLiquido)), @Html.Raw(FmtJs(acum.Tributos)), @Html.Raw(FmtJs(acum.Mensalista.ComissaoParceiro + acum.Mensalista.ComissaoSocio)));
         </text>
     }
 </script>
