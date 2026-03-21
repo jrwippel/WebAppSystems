@@ -46,7 +46,14 @@
                         <option value="">Todos</option>
                         @foreach (var client in ViewBag.Clients)
                         {
-                            <option value="@client.Id" @(client.Id.ToString() == selectedClientId ? "selected" : "")>@client.Name</option>
+                            if (client.Id.ToString() == selectedClientId)
+                            {
+                                <option value="@client.Id" selected>@client.Name</option>
+                            }
+                            else
+                            {
+                                <option value="@client.Id">@client.Name</option>
+                            }
                         }
                     </select>
                 </div>
@@ -56,7 +63,14 @@
                         <option value="">Selecionar</option>
                         @foreach (var department in ViewBag.Department)
                         {
-                            <option value="@department.Id" @(department.Id.ToString() == selectedDepartmentId ? "selected" : "")>@department.Name</option>
+                            if (department.Id.ToString() == selectedDepartmentId)
+                            {
+                                <option value="@department.Id" selected>@department.Name</option>
+                            }
+                            else
+                            {
+                                <option value="@department.Id">@department.Name</option>
+                            }
                         }
                     </select>
                 </div>
