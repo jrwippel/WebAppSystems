@@ -10,12 +10,14 @@ namespace WebAppSystems.Controllers
         private readonly AttorneyService _attorneyService;
         private readonly ISessao _sessao;
         private readonly IEmail _email;
+        private readonly LoginAttemptService _loginAttemptService;
 
-        public LoginController(AttorneyService attorneyService, ISessao sessao, IEmail email)
+        public LoginController(AttorneyService attorneyService, ISessao sessao, IEmail email, LoginAttemptService loginAttemptService)
         {
             _attorneyService = attorneyService;
             _sessao = sessao;
             _email = email;
+            _loginAttemptService = loginAttemptService;
         }
 
         public IActionResult Index()
@@ -201,9 +203,18 @@ namespace WebAppSystems.Controllers
         {
             try
             {
-                // Verifica se o estado do modelo é válido
                 if (ModelState.IsValid)
                 {
+                    // Verifica bloqueio por tentativas excessivas
+                    if (_loginAttemptService.IsLockedOut(loginModel.Login))
+                    {
+                        var lockoutTime = _loginAttemptService.GetLockoutTimeRemaining(loginModel.Login);
+                        TempData["MensagemErro"] = lockoutTime.HasValue
+                            ? $"Conta bloqueada. Tente novamente em {lockoutTime.Value.Minutes}m {lockoutTime.Value.Seconds}s."
+                            : "Conta temporariamente bloqueada. Tente novamente mais tarde.";
+                        return View("Index");
+                    }
+
                     var usuario = _attorneyService.FindByLoginAsync(loginModel.Login);
 
                     if (usuario != null)
@@ -216,6 +227,8 @@ namespace WebAppSystems.Controllers
 
                         if (usuario.ValidaSenha(loginModel.Senha))
                         {
+                            _loginAttemptService.ResetAttempts(loginModel.Login);
+
                             // Upgrade automático de SHA1 → BCrypt na primeira vez que o usuário logar
                             if (usuario.NeedsPasswordUpgrade())
                             {
@@ -226,16 +239,23 @@ namespace WebAppSystems.Controllers
                             return RedirectToAction("Index", "Home");
                         }
 
-                        TempData["MensagemErro"] = "Senha do usuário é inválida.";
+                        _loginAttemptService.RecordFailedAttempt(loginModel.Login);
+                        var remaining = _loginAttemptService.GetRemainingAttempts(loginModel.Login);
+                        TempData["MensagemErro"] = remaining > 0
+                            ? $"Senha inválida. Você tem {remaining} tentativa(s) restante(s)."
+                            : "Senha inválida. Conta bloqueada por 15 minutos.";
                     }
                     else
                     {
-                        TempData["MensagemErro"] = "Usuário e/ou senha inválido(s).";
+                        _loginAttemptService.RecordFailedAttempt(loginModel.Login);
+                        var remaining = _loginAttemptService.GetRemainingAttempts(loginModel.Login);
+                        TempData["MensagemErro"] = remaining > 0
+                            ? $"Usuário e/ou senha inválido(s). Você tem {remaining} tentativa(s) restante(s)."
+                            : "Usuário e/ou senha inválido(s). Conta bloqueada por 15 minutos.";
                     }
                 }
                 else
                 {
-                    // Remove mensagens de erro desnecessárias caso a validação inicial falhe
                     TempData["MensagemErro"] = null;
                 }
 
@@ -246,9 +266,9 @@ namespace WebAppSystems.Controllers
                 TempData["MensagemErro"] = "A sessão expirou. Por favor, faça login novamente.";
                 return RedirectToAction("Index");
             }
-            catch (Exception erro)
+            catch (Exception)
             {
-                TempData["MensagemErro"] = $"Ops, não conseguimos realizar o seu login. Mais detalhes no erro: {erro.Message}";
+                TempData["MensagemErro"] = "Ops, não conseguimos realizar o seu login. Tente novamente.";
                 return RedirectToAction("Index");
             }
         }

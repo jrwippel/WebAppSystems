@@ -32,6 +32,7 @@ namespace WebAppSystems
             builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             builder.Services.AddScoped<SeedingService>();
             builder.Services.AddScoped<BasicAuthenticationFilterAttribute, BasicAuthenticationFilterAttribute>();
+            builder.Services.AddSingleton<LoginAttemptService>();
             builder.Services.AddScoped<AttorneyService>();
             builder.Services.AddScoped<DepartmentService>();
             builder.Services.AddScoped<ProcessRecordService>();
@@ -57,7 +58,8 @@ namespace WebAppSystems
             {
                 o.Cookie.HttpOnly = true;
                 o.Cookie.IsEssential = true;
-                o.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+                o.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                o.Cookie.SameSite = SameSiteMode.Strict;
                 o.IdleTimeout = TimeSpan.FromMinutes(60);
             });
 
