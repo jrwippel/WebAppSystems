@@ -50,44 +50,35 @@ namespace WebAppSystems.Controllers
 
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string monthYearString, int? clientId, int? departmentId)
         {
             await PopulateViewBag();
-            return View();
-        }
 
-        public async Task<IActionResult> SimpleSearch(string monthYearString, int? clientId, int? departmentId)
-        {
-            DateTime? monthYear = null;
+            if (string.IsNullOrEmpty(monthYearString) && !clientId.HasValue && !departmentId.HasValue)
+                return View(null);
 
+            DateTime monthYear = DateTime.Now;
             if (!string.IsNullOrEmpty(monthYearString) && monthYearString.Length == 6)
             {
                 int month = int.Parse(monthYearString.Substring(0, 2));
-                int year = int.Parse(monthYearString.Substring(2, 4));
-
+                int year  = int.Parse(monthYearString.Substring(2, 4));
                 monthYear = new DateTime(year, month, 1);
             }
 
-            if (!monthYear.HasValue)
-            {
-                monthYear = DateTime.Now;
-            }
-
-            ConvertMonthYearToRange(monthYear.Value, out DateTime minDate, out DateTime maxDate);
-
-            PopulateViewData(monthYear.Value, clientId, departmentId);
-            await PopulateViewBag();
+            ConvertMonthYearToRange(monthYear, out DateTime minDate, out DateTime maxDate);
+            PopulateViewData(monthYear, clientId, departmentId);
+            ViewData["inputMonthYear"] = monthYearString;
 
             var result = await _processRecordService.FindByDateMensalistaAsync(minDate, maxDate, clientId, departmentId);
-            // Ordena os resultados pelo valor líquido antes de criar a planilha
-            result.Sort((a, b) =>
-            {
-                return a.ValorResultadoLiquido.CompareTo(b.ValorResultadoLiquido);
-            });
-
-            ViewData["inputMonthYear"] = monthYearString; // Adicione esta linha
+            result.Sort((a, b) => a.ValorResultadoLiquido.CompareTo(b.ValorResultadoLiquido));
 
             return View(result);
+        }
+
+        // Mantido para compatibilidade com links antigos
+        public IActionResult SimpleSearch(string monthYearString, int? clientId, int? departmentId)
+        {
+            return RedirectToAction(nameof(Index), new { monthYearString, clientId, departmentId });
         }
 
 

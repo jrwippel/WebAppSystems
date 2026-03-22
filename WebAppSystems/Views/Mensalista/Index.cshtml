@@ -1,99 +1,141 @@
-﻿@model IEnumerable<WebAppSystems.Models.Mensalista>
+﻿@model IEnumerable<WebAppSystems.Models.ViewModels.MensalistaHoursViewModel>
 
-@{
-    ViewData["Title"] = "Resultado do Mês";
-    var selectedClientId = ViewData["clientId"]?.ToString();
-    var selectedDepartmentId = ViewData["departmentId"]?.ToString();
-    var todayFormatted = DateTime.Now.ToString("MM/yyyy");
+@functions {
+    public static string FormatHours(double hours)
+    {
+        int h = (int)hours; int m = (int)Math.Round((hours - h) * 60);
+        return $"{h:D2}:{m:D2}";
+    }
 }
 
-<div class="search-container">
+@{
+    ViewData["Title"] = "Resultados";
+    var selectedClientId    = ViewData["clientId"]?.ToString();
+    var selectedDepartmentId = ViewData["departmentId"]?.ToString();
+    var todayFormatted      = DateTime.Now.ToString("MM/yyyy");
+    var ptBR = System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
+    bool hasResults = Model != null && Model.Any();
+}
+
+<div class="results-container">
+
     <!-- Header -->
     <div class="page-header">
         <div class="header-content">
-            <div class="header-icon">
-                <i class="bi bi-graph-up-arrow"></i>
-            </div>
+            <div class="header-icon"><i class="bi bi-graph-up-arrow"></i></div>
             <div class="header-text">
-                <h1 class="page-title">Resultado do Mês</h1>
-                <p class="page-subtitle">Consulte os resultados mensais</p>
+                <h1 class="page-title">Resultados</h1>
+                <p class="page-subtitle">Análise detalhada de mensalistas</p>
             </div>
         </div>
     </div>
 
-    <!-- Search Form Card -->
+    <!-- Filtros -->
     <div class="search-card">
-        <form asp-controller="Mensalista" asp-action="SimpleSearch" method="get">
+        <form asp-controller="Mensalista" asp-action="Index" method="get">
             <div class="form-grid">
                 <div class="form-group">
-                    <label for="monthYear">
-                        <i class="bi bi-calendar3"></i>
-                        Mês/Ano
-                    </label>
-                    <input type="text" class="form-control" name="monthYearString" id="monthYear" 
-                           value="@(ViewData["inputMonthYear"] ?? todayFormatted)" 
-                           onblur="formatInput(this)" 
-                           placeholder="MM/YYYY" />
+                    <label><i class="bi bi-calendar3"></i> Mês/Ano</label>
+                    <input type="text" class="form-control" name="monthYearString" id="monthYear"
+                           value="@(ViewData["inputMonthYear"] ?? todayFormatted)"
+                           onblur="formatInput(this)" placeholder="MM/YYYY" />
                 </div>
-
                 <div class="form-group">
-                    <label for="clientId">
-                        <i class="bi bi-person-circle"></i>
-                        Cliente
-                    </label>
+                    <label><i class="bi bi-person-circle"></i> Cliente</label>
                     <select class="form-control" name="clientId" id="clientId">
                         <option value="">Todos</option>
                         @foreach (var client in ViewBag.Clients)
                         {
-                            <option value="@client.Id">@client.Name</option>
+                            <option value="@client.Id" @(client.Id.ToString() == selectedClientId ? "selected" : "")>@client.Name</option>
                         }
                     </select>
                 </div>
-
                 <div class="form-group">
-                    <label for="departmentId">
-                        <i class="bi bi-building"></i>
-                        Área
-                    </label>
+                    <label><i class="bi bi-building"></i> Área</label>
                     <select class="form-control" name="departmentId" id="departmentId" required>
                         <option value="">Selecionar</option>
                         @foreach (var department in ViewBag.Department)
                         {
-                            <option value="@department.Id">@department.Name</option>
+                            <option value="@department.Id" @(department.Id.ToString() == selectedDepartmentId ? "selected" : "")>@department.Name</option>
                         }
                     </select>
                 </div>
             </div>
-
             <div class="button-group">
-                <button type="submit" class="btn-primary" onclick="return validateForm()">
-                    <i class="bi bi-search"></i>
-                    Visualizar
+                <button type="submit" class="btn-visualizar" onclick="return validateForm()">
+                    <i class="bi bi-search"></i> Visualizar
                 </button>
-                <button type="submit" formaction="@Url.Action("DownloadReport")" class="btn-secondary">
-                    <i class="bi bi-file-earmark-spreadsheet"></i>
-                    Gerar CSV
+                <button type="submit" formaction="@Url.Action("DownloadReport")" class="btn-csv">
+                    <i class="bi bi-file-earmark-spreadsheet"></i> Gerar CSV
                 </button>
             </div>
         </form>
     </div>
+
+    <!-- Tabela de Resultados -->
+    @if (hasResults)
+    {
+        <div class="table-card">
+            <div class="table-responsive">
+                <table class="modern-table">
+                    <thead>
+                        <tr>
+                            <th>CLIENTE</th>
+                            <th>RECEITA ÁREA LÍQ</th>
+                            <th>CUSTO TÉCNICO</th>
+                            <th>RESULTADO LÍQ</th>
+                            <th>HORAS</th>
+                            <th>STATUS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            var isPositive = item.ValorResultadoLiquido >= 0;
+                            <tr class="clickable-row" onclick="window.location='@Url.Action("Detalhe", "Mensalista", new { id = item.Mensalista.Id, monthYear = ViewData["inputMonthYear"], clientId = ViewData["clientId"], departmentId = ViewData["departmentId"] })'">
+                                <td>
+                                    <div class="client-name">
+                                        <div class="client-avatar"><i class="bi bi-person-circle"></i></div>
+                                        <span>@item.Mensalista.Client.Name</span>
+                                    </div>
+                                </td>
+                                <td><span class="val-neutral">@item.ValorAreaLiquido.ToString("N2", ptBR)</span></td>
+                                <td><span class="val-neutral">@item.ValorHoraTecLiquida.ToString("N2", ptBR)</span></td>
+                                <td><span class="@(isPositive ? "val-positive" : "val-negative")">@item.ValorResultadoLiquido.ToString("N2", ptBR)</span></td>
+                                <td><span class="hours-badge"><i class="bi bi-clock"></i> @FormatHours(item.TotalHours)</span></td>
+                                <td>
+                                    @if (isPositive)
+                                    { <span class="status-badge status-ok"><i class="bi bi-check-lg"></i></span> }
+                                    else
+                                    { <span class="status-badge status-nok"><i class="bi bi-x-lg"></i></span> }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+    else if (Model != null)
+    {
+        <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <p>Nenhum resultado encontrado para os filtros selecionados.</p>
+        </div>
+    }
 </div>
 
 <script>
     function validateForm() {
-        var departmentValue = document.getElementById("departmentId").value;
-        if (departmentValue === "") {
+        if (!document.getElementById("departmentId").value) {
             alert("Por favor, selecione um departamento.");
             return false;
         }
         return true;
     }
-
     function formatInput(input) {
-        let value = input.value;
-        if (value.length == 6) {
-            input.value = value.substring(0, 2) + '/' + value.substring(2, 6);
-        }
+        let v = input.value;
+        if (v.length == 6) input.value = v.substring(0, 2) + '/' + v.substring(2, 6);
     }
 
     document.getElementById('clientId').addEventListener('change', function () {
@@ -106,8 +148,7 @@
             .then(data => {
                 data.forEach(d => {
                     const opt = document.createElement('option');
-                    opt.value = d.id;
-                    opt.textContent = d.name;
+                    opt.value = d.id; opt.textContent = d.name;
                     deptSelect.appendChild(opt);
                 });
                 if (data.length === 1) deptSelect.value = data[0].id;
@@ -116,183 +157,73 @@
 </script>
 
 <style>
-    .search-container {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 20px;
-    }
+    .results-container { max-width: 100%; margin: 0 auto; padding: 20px; }
 
     .page-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 12px;
-        padding: 32px;
-        margin-bottom: 24px;
-        box-shadow: 0 6px 25px rgba(102, 126, 234, 0.25);
+        border-radius: 12px; padding: 28px 32px; margin-bottom: 20px;
+        box-shadow: 0 6px 25px rgba(102,126,234,0.25);
     }
-
-    .header-content {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-    }
-
+    .header-content { display: flex; align-items: center; gap: 20px; }
     .header-icon {
-        width: 60px;
-        height: 60px;
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 28px;
-        color: white;
-        backdrop-filter: blur(10px);
+        width: 56px; height: 56px; background: rgba(255,255,255,0.2);
+        border-radius: 12px; display: flex; align-items: center;
+        justify-content: center; font-size: 26px; color: white;
     }
-
-    .page-title {
-        font-size: 28px;
-        font-weight: 700;
-        color: white;
-        margin: 0 0 6px 0;
-    }
-
-    .page-subtitle {
-        font-size: 15px;
-        color: rgba(255, 255, 255, 0.9);
-        margin: 0;
-    }
+    .page-title { font-size: 26px; font-weight: 700; color: white; margin: 0 0 4px 0; }
+    .page-subtitle { font-size: 14px; color: rgba(255,255,255,0.85); margin: 0; }
 
     .search-card {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
-        padding: 32px;
+        background: white; border-radius: 12px;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.05); padding: 28px; margin-bottom: 20px;
     }
-
-    .form-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 20px;
-        margin-bottom: 24px;
-    }
-
-    .form-group {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .form-group label {
-        font-size: 14px;
-        font-weight: 600;
-        color: #4a5568;
-        margin-bottom: 8px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .form-group label i {
-        color: #667eea;
-        font-size: 16px;
-    }
-
+    .form-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; margin-bottom: 20px; align-items: end; }
+    .form-group { display: flex; flex-direction: column; min-width: 0; }
+    .form-group label { font-size: 13px; font-weight: 600; color: #4a5568; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+    .form-group label i { color: #667eea; }
     .form-control {
-        padding: 12px 16px;
-        border: 2px solid #e2e8f0;
-        border-radius: 8px;
-        font-size: 14px;
-        transition: all 0.3s ease;
-        background: white;
-        min-height: 44px;
-        line-height: 1.5;
+        padding: 11px 14px; border: 2px solid #e2e8f0; border-radius: 8px;
+        font-size: 14px; transition: border-color 0.2s; background: white; width: 100%; box-sizing: border-box;
     }
+    .form-control:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.1); }
+    select.form-control { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667eea' d='M6 9L1 4h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
+    .button-group { display: flex; gap: 12px; padding-top: 20px; border-top: 2px solid #e2e8f0; }
+    .btn-visualizar, .btn-csv {
+        flex: 1; display: flex; align-items: center; justify-content: center;
+        gap: 8px; padding: 13px 24px; border-radius: 8px;
+        font-size: 15px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s;
+    }
+    .btn-visualizar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+    .btn-visualizar:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.4); }
+    .btn-csv { background: #f7fafc; color: #4a5568; border: 2px solid #e2e8f0; }
+    .btn-csv:hover { background: #e2e8f0; }
 
-    .form-control:focus {
-        outline: none;
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
+    .table-card { background: white; border-radius: 12px; box-shadow: 0 2px 15px rgba(0,0,0,0.05); overflow: hidden; }
+    .table-responsive { overflow-x: auto; }
+    .modern-table { width: 100%; border-collapse: collapse; }
+    .modern-table thead { background: #f8fafc; }
+    .modern-table th { padding: 14px 16px; text-align: left; font-size: 11px; font-weight: 700; color: #718096; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0; }
+    .modern-table td { padding: 14px 16px; font-size: 14px; color: #2d3748; border-bottom: 1px solid #f0f4f8; }
+    .clickable-row { cursor: pointer; transition: background 0.15s; }
+    .clickable-row:hover { background: #f7fafc; }
 
-    .form-control::placeholder {
-        color: #cbd5e0;
-    }
+    .client-name { display: flex; align-items: center; gap: 10px; }
+    .client-avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; color: white; font-size: 16px; flex-shrink: 0; }
 
-    select.form-control {
-        appearance: none;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667eea' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
-        background-repeat: no-repeat;
-        background-position: right 12px center;
-        padding-right: 36px;
-    }
+    .val-neutral  { display: inline-block; padding: 4px 10px; background: #edf2f7; color: #4a5568; border-radius: 6px; font-size: 13px; font-weight: 600; }
+    .val-positive { display: inline-block; padding: 4px 10px; background: #c6f6d5; color: #22543d; border-radius: 6px; font-size: 13px; font-weight: 600; }
+    .val-negative { display: inline-block; padding: 4px 10px; background: #fed7d7; color: #742a2a; border-radius: 6px; font-size: 13px; font-weight: 600; }
+    .hours-badge  { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; background: #ebf8ff; color: #2b6cb0; border-radius: 6px; font-size: 13px; font-weight: 600; }
+    .status-badge { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; font-size: 14px; font-weight: 700; }
+    .status-ok  { background: #c6f6d5; color: #22543d; border: 2px solid #68d391; }
+    .status-nok { background: #fed7d7; color: #742a2a; border: 2px solid #fc8181; }
 
-    .button-group {
-        display: flex;
-        gap: 12px;
-        padding-top: 24px;
-        border-top: 2px solid #e2e8f0;
-    }
-
-    .btn-primary,
-    .btn-secondary {
-        flex: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 14px 24px;
-        border-radius: 8px;
-        font-size: 15px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        border: none;
-    }
-
-    .btn-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-    }
-
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-    }
-
-    .btn-secondary {
-        background: #f7fafc;
-        color: #4a5568;
-        border: 2px solid #e2e8f0;
-    }
-
-    .btn-secondary:hover {
-        background: #e2e8f0;
-        color: #2d3748;
-    }
-
-    .btn-primary i,
-    .btn-secondary i {
-        font-size: 18px;
-    }
+    .empty-state { text-align: center; padding: 60px 20px; color: #a0aec0; }
+    .empty-state i { font-size: 48px; display: block; margin-bottom: 12px; }
 
     @@media (max-width: 768px) {
-        .search-container {
-            padding: 12px;
-        }
-
-        .page-header {
-            padding: 24px;
-        }
-
-        .search-card {
-            padding: 20px;
-        }
-
-        .form-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .button-group {
-            flex-direction: column;
-        }
+        .results-container { padding: 12px; }
+        .form-grid { grid-template-columns: 1fr; }
+        .button-group { flex-direction: column; }
     }
 </style>
