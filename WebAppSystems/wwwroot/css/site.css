@@ -63,13 +63,13 @@ body {
     margin: 0;
     font-size: 22px;
     font-weight: 700;
-    color: #2d3748;
+    color: white;
 }
 
 .page-header p {
     margin: 2px 0 0;
     font-size: 13px;
-    color: #718096;
+    color: rgba(255, 255, 255, 0.85);
 }
 
 .form-card {
