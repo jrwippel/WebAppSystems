@@ -26,7 +26,55 @@ namespace WebAppSystems.Controllers
         public async Task<IActionResult> Index()
         {
             var webAppSystemsContext = _context.PercentualArea.Include(p => p.Client).Include(p => p.Department);
+            var clients = await _context.Client.OrderBy(c => c.Name).ToListAsync();
+            var departments = await _context.Department.OrderBy(d => d.Name).ToListAsync();
+            ViewBag.Clients = clients;
+            ViewBag.Departments = departments;
             return View(await webAppSystemsContext.ToListAsync());
+        }
+
+        // POST: PercentualAreas/SaveGrid
+        [HttpPost]
+        public async Task<IActionResult> SaveGrid([FromBody] List<PercentualAreaGridItem> items)
+        {
+            if (items == null || !items.Any())
+                return Ok(new { success = true });
+
+            var clientId = items.First().ClientId;
+
+            var total = items.Where(i => i.Percentual > 0).Sum(i => i.Percentual);
+            if (total > 100)
+                return BadRequest($"A soma dos percentuais ({total}%) excede 100%.");
+
+            var existing = await _context.PercentualArea
+                .Where(p => p.ClientId == clientId)
+                .ToListAsync();
+
+            foreach (var item in items)
+            {
+                var record = existing.FirstOrDefault(e => e.DepartmentId == item.DepartmentId);
+                if (item.Percentual > 0)
+                {
+                    if (record == null)
+                        _context.PercentualArea.Add(new PercentualArea { ClientId = item.ClientId, DepartmentId = item.DepartmentId, Percentual = item.Percentual });
+                    else
+                        record.Percentual = item.Percentual;
+                }
+                else if (record != null)
+                {
+                    _context.PercentualArea.Remove(record);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(new { success = true });
+        }
+
+        public class PercentualAreaGridItem
+        {
+            public int ClientId { get; set; }
+            public int DepartmentId { get; set; }
+            public decimal Percentual { get; set; }
         }
 
         // GET: PercentualAreas/Details/5
