@@ -269,5 +269,17 @@ namespace WebAppSystems.Controllers
         {
             return (_context.PercentualArea?.Any(e => e.Id == id)).GetValueOrDefault();
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetDepartmentsByClient(int clientId)
+        {
+            var departments = await _context.PercentualArea
+                .Where(p => p.ClientId == clientId && p.Percentual > 0)
+                .Include(p => p.Department)
+                .Select(p => new { id = p.DepartmentId, name = p.Department.Name })
+                .OrderBy(p => p.name)
+                .ToListAsync();
+            return Json(departments);
+        }
     }
 }

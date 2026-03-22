@@ -95,6 +95,24 @@
             input.value = value.substring(0, 2) + '/' + value.substring(2, 6);
         }
     }
+
+    document.getElementById('clientId').addEventListener('change', function () {
+        const clientId = this.value;
+        const deptSelect = document.getElementById('departmentId');
+        deptSelect.innerHTML = '<option value="">Selecionar</option>';
+        if (!clientId) return;
+        fetch('/PercentualAreas/GetDepartmentsByClient?clientId=' + clientId)
+            .then(r => r.json())
+            .then(data => {
+                data.forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d.id;
+                    opt.textContent = d.name;
+                    deptSelect.appendChild(opt);
+                });
+                if (data.length === 1) deptSelect.value = data[0].id;
+            });
+    });
 </script>
 
 <style>
