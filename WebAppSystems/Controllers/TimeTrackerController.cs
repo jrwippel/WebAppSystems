@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Win32;
@@ -272,9 +272,9 @@ namespace WebAppSystems.Controllers
                 {
                     Value = d.Id.ToString(),
                     Text = d.Name,
-                    Selected = d.Id == usuario.DepartmentId // Marcar a �rea do usu�rio como selecionada
+                    Selected = d.Id == usuario.DepartmentId // Marcar a area do usuario como selecionada
                 })
-                .Prepend(new SelectListItem { Value = "0", Text = "Selecione a �rea" })
+                .Prepend(new SelectListItem { Value = "0", Text = "Selecione a Area" })
                 .ToList();
 
             var recordTypeOptions = Enum.GetValues(typeof(RecordType))
