@@ -25,7 +25,28 @@ namespace WebAppSystems.Helper
 
         public void CriarSessaoDoUsuario(Attorney attorney)
         {
-            string valor = JsonConvert.SerializeObject(attorney);
+            // Não serializar o hash da senha na sessão por segurança
+            var settings = new JsonSerializerSettings
+            {
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+            };
+            var sessionData = new
+            {
+                attorney.Id,
+                attorney.Name,
+                attorney.Email,
+                attorney.Login,
+                attorney.Phone,
+                attorney.BirthDate,
+                attorney.DepartmentId,
+                attorney.Perfil,
+                attorney.RegisterDate,
+                attorney.UpdateDate,
+                attorney.UseBorder,
+                attorney.UseCronometroAlwaysOnTop,
+                attorney.Inativo
+            };
+            string valor = JsonConvert.SerializeObject(sessionData, settings);
             _httpContext.HttpContext.Session.SetString("sessaoUsuarioLogado", valor);
         }
 
