@@ -26,5 +26,10 @@ namespace WebAppSystems.Services
             return await _context.Mensalista.FirstOrDefaultAsync(mensalista => mensalista.Id == id);
         }
 
+        public async Task<List<int>> FindClientIdsAsync()
+        {
+            return await _context.Mensalista.Select(m => m.ClientId).Distinct().ToListAsync();
+        }
+
     }
 }

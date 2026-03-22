@@ -278,10 +278,12 @@
     .tab-content.active { display: block; }
 
     .metrics-row {
-        display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 24px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 12px; margin-bottom: 24px;
         padding: 16px; background: #f7fafc; border-radius: 10px;
     }
-    .metric { display: flex; flex-direction: column; gap: 4px; min-width: 120px; }
+    .metric { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
     .metric-label { font-size: 11px; font-weight: 600; color: #718096; text-transform: uppercase; }
     .metric-val   { font-size: 15px; font-weight: 700; color: #2d3748; }
     .metric-val.hours { color: #0066cc; }

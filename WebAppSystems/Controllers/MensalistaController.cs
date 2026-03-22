@@ -122,7 +122,9 @@ namespace WebAppSystems.Controllers
 
         private async Task PopulateViewBag()
         {
-            ViewBag.Clients = await _clientService.FindAllAsync();
+            var mensalistaClientIds = await _mensalistaService.FindClientIdsAsync();
+            var allClients = await _clientService.FindAllAsync();
+            ViewBag.Clients = allClients.Where(c => mensalistaClientIds.Contains(c.Id)).OrderBy(c => c.Name).ToList();
             ViewBag.Attorneys = await _attorneyService.FindAllAsync();
             ViewBag.Department = await _departmentService.FindAllAsync();
         }
