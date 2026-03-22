@@ -88,28 +88,55 @@
                 </div>
 
                 <!-- Painel de exceções (colapsável) -->
-                <div class="excecoes-panel" style="display:none;">
+                <div class="excecoes-panel" style="display:none;" data-client-id="@client.Id">
                     <div class="excecoes-header">
                         <i class="bi bi-info-circle"></i>
                         Se um advogado tiver valor cadastrado aqui, ele prevalece sobre o valor padrão acima.
                     </div>
-                    <div class="excecoes-grid">
-                        @foreach (var exc in excecoes)
+
+                    <!-- Formulário para adicionar exceção -->
+                    <div class="excecao-add-form">
+                        <select class="excecao-select" onchange="updateAddBtn(this)">
+                            <option value="">Selecionar advogado...</option>
+                            @foreach (var a in attorneys)
+                            {
+                                <option value="@a.Id" data-name="@a.Name">@a.Name</option>
+                            }
+                        </select>
+                        <input type="number" class="excecao-valor-input" placeholder="R$/h" step="0.01" min="0" />
+                        <button class="btn-add-excecao" onclick="addExcecao(this)" disabled>
+                            <i class="bi bi-plus-lg"></i> Adicionar
+                        </button>
+                    </div>
+
+                    <!-- Lista de exceções já cadastradas -->
+                    <div class="excecoes-lista">
+                        @foreach (var exc in excecoes.Where(e => e.Record != null && e.Record.Valor > 0))
                         {
-                            var valorExc = exc.Record?.Valor ?? 0;
-                            var temExc = exc.Record != null && exc.Record.Valor > 0;
-                            <div class="excecao-item">
-                                <span class="atty-name"><i class="bi bi-person-circle"></i> @exc.Attorney.Name</span>
+                            var valorExc = exc.Record!.Valor;
+                            <div class="excecao-tag"
+                                 data-client-id="@client.Id"
+                                 data-attorney-id="@exc.Attorney.Id"
+                                 data-record-id="@exc.Record.Id"
+                                 data-original="@valorExc.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)">
+                                <i class="bi bi-person-circle"></i>
+                                <span class="excecao-tag-name">@exc.Attorney.Name</span>
                                 <input type="number"
-                                       class="value-input value-input-sm @(temExc ? "filled" : "")"
+                                       class="value-input value-input-sm filled excecao-hidden-input"
                                        data-client-id="@client.Id"
                                        data-attorney-id="@exc.Attorney.Id"
-                                       data-record-id="@(exc.Record?.Id ?? 0)"
+                                       data-record-id="@exc.Record.Id"
                                        data-original="@valorExc.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)"
-                                       value="@(valorExc > 0 ? valorExc.ToString("F2", System.Globalization.CultureInfo.InvariantCulture) : "")"
-                                       placeholder="Usa padrão"
+                                       value="@valorExc.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)"
                                        step="0.01" min="0"
+                                       style="display:none;"
                                        oninput="markChanged(this)" />
+                                <span class="excecao-tag-valor" onclick="editExcecaoTag(this)">
+                                    R$ @valorExc.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)/h
+                                </span>
+                                <button class="btn-remove-excecao" onclick="removeExcecao(this)" title="Remover exceção">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
                             </div>
                         }
                     </div>
@@ -229,6 +256,68 @@
     }
     .excecoes-header i { color: #667eea; }
 
+    /* Formulário de adicionar exceção */
+    .excecao-add-form {
+        display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+        margin-bottom: 12px;
+    }
+    .excecao-select {
+        flex: 1; min-width: 180px; padding: 7px 10px;
+        border: 2px solid #e2e8f0; border-radius: 7px;
+        font-size: 13px; color: #2d3748; background: white; outline: none;
+        transition: border-color 0.2s;
+    }
+    .excecao-select:focus { border-color: #667eea; }
+    .excecao-valor-input {
+        width: 100px; padding: 7px 10px;
+        border: 2px solid #e2e8f0; border-radius: 7px;
+        font-size: 13px; font-weight: 600; text-align: right;
+        background: white; color: #2d3748; outline: none;
+        transition: border-color 0.2s;
+    }
+    .excecao-valor-input:focus { border-color: #667eea; }
+    .btn-add-excecao {
+        display: flex; align-items: center; gap: 5px;
+        padding: 7px 14px; background: #667eea; color: white;
+        border: none; border-radius: 7px; font-size: 13px; font-weight: 600;
+        cursor: pointer; transition: all 0.2s; white-space: nowrap;
+    }
+    .btn-add-excecao:hover:not(:disabled) { background: #5a6fd6; }
+    .btn-add-excecao:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* Lista de exceções cadastradas */
+    .excecoes-lista {
+        display: flex; flex-wrap: wrap; gap: 8px;
+    }
+    .excecao-tag {
+        display: inline-flex; align-items: center; gap: 7px;
+        background: white; border: 1.5px solid #c3dafe; border-radius: 20px;
+        padding: 5px 10px 5px 12px; font-size: 13px; color: #2d3748;
+        transition: border-color 0.2s;
+    }
+    .excecao-tag i { color: #667eea; font-size: 14px; flex-shrink: 0; }
+    .excecao-tag-name { font-weight: 600; }
+    .excecao-tag-valor {
+        background: #ebf4ff; color: #3182ce; border-radius: 10px;
+        padding: 2px 8px; font-size: 12px; font-weight: 700;
+        cursor: pointer; transition: background 0.15s;
+    }
+    .excecao-tag-valor:hover { background: #bee3f8; }
+    .excecao-tag.editing { border-color: #667eea; }
+    .excecao-tag-edit-input {
+        width: 80px; padding: 2px 6px;
+        border: 1.5px solid #667eea; border-radius: 6px;
+        font-size: 12px; font-weight: 700; text-align: right;
+        color: #2d3748; outline: none;
+    }
+    .btn-remove-excecao {
+        background: none; border: none; cursor: pointer;
+        color: #a0aec0; font-size: 11px; padding: 2px 4px;
+        border-radius: 50%; transition: all 0.15s; line-height: 1;
+        display: flex; align-items: center;
+    }
+    .btn-remove-excecao:hover { background: #fed7d7; color: #e53e3e; }
+
     .excecoes-grid {
         display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
         gap: 10px;
@@ -298,6 +387,132 @@
         btn.classList.toggle('open');
         const panel = btn.closest('.client-row').querySelector('.excecoes-panel');
         panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        if (panel.style.display === 'block') refreshSelectOptions(panel);
+    }
+
+    function refreshSelectOptions(panel) {
+        const select = panel.querySelector('.excecao-select');
+        if (!select) return;
+        const usedIds = Array.from(panel.querySelectorAll('.excecao-tag')).map(t => t.dataset.attorneyId);
+        Array.from(select.options).forEach(function(opt) {
+            if (!opt.value) return;
+            opt.hidden = usedIds.includes(opt.value);
+        });
+    }
+
+    function updateAddBtn(select) {
+        const btn = select.closest('.excecao-add-form').querySelector('.btn-add-excecao');
+        btn.disabled = !select.value;
+    }
+
+    function addExcecao(btn) {
+        const form = btn.closest('.excecao-add-form');
+        const panel = btn.closest('.excecoes-panel');
+        const select = form.querySelector('.excecao-select');
+        const valorInput = form.querySelector('.excecao-valor-input');
+        const clientId = panel.dataset.clientId;
+        const attorneyId = select.value;
+        const attorneyName = select.options[select.selectedIndex].dataset.name;
+        const valor = parseFloat(valorInput.value) || 0;
+        if (!attorneyId) return;
+
+        const lista = panel.querySelector('.excecoes-lista');
+        const tag = document.createElement('div');
+        tag.className = 'excecao-tag';
+        tag.dataset.clientId = clientId;
+        tag.dataset.attorneyId = attorneyId;
+        tag.dataset.recordId = '0';
+        tag.innerHTML = `
+            <i class="bi bi-person-circle"></i>
+            <span class="excecao-tag-name">${attorneyName}</span>
+            <input type="number" class="value-input value-input-sm filled excecao-hidden-input"
+                   data-client-id="${clientId}" data-attorney-id="${attorneyId}"
+                   data-record-id="0" data-original="0.00"
+                   value="${valor > 0 ? valor.toFixed(2) : ''}"
+                   step="0.01" min="0" style="display:none;" oninput="markChanged(this)" />
+            <span class="excecao-tag-valor" onclick="editExcecaoTag(this)">
+                R$ ${valor > 0 ? valor.toFixed(2) : '0.00'}/h
+            </span>
+            <button class="btn-remove-excecao" onclick="removeExcecao(this)" title="Remover exceção">
+                <i class="bi bi-x-lg"></i>
+            </button>`;
+        lista.appendChild(tag);
+
+        const hiddenInput = tag.querySelector('.excecao-hidden-input');
+        if (valor > 0) hiddenInput.classList.add('changed');
+
+        updateExcecoesBadge(panel);
+        select.value = '';
+        valorInput.value = '';
+        btn.disabled = true;
+        refreshSelectOptions(panel);
+    }
+
+    function editExcecaoTag(span) {
+        const tag = span.closest('.excecao-tag');
+        const hiddenInput = tag.querySelector('.excecao-hidden-input');
+        const currentVal = parseFloat(hiddenInput.value) || 0;
+        tag.classList.add('editing');
+
+        const editInput = document.createElement('input');
+        editInput.type = 'number';
+        editInput.className = 'excecao-tag-edit-input';
+        editInput.value = currentVal > 0 ? currentVal.toFixed(2) : '';
+        editInput.placeholder = '0.00';
+        editInput.step = '0.01';
+        editInput.min = '0';
+        span.replaceWith(editInput);
+        editInput.focus();
+        editInput.select();
+
+        function commit() {
+            const newVal = parseFloat(editInput.value) || 0;
+            hiddenInput.value = newVal > 0 ? newVal.toFixed(2) : '';
+            markChanged(hiddenInput);
+            const newSpan = document.createElement('span');
+            newSpan.className = 'excecao-tag-valor';
+            newSpan.onclick = function() { editExcecaoTag(newSpan); };
+            newSpan.textContent = `R$ ${newVal > 0 ? newVal.toFixed(2) : '0.00'}/h`;
+            editInput.replaceWith(newSpan);
+            tag.classList.remove('editing');
+        }
+        editInput.addEventListener('blur', commit);
+        editInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') { e.preventDefault(); commit(); }
+            if (e.key === 'Escape') { editInput.value = currentVal; commit(); }
+        });
+    }
+
+    function removeExcecao(btn) {
+        const tag = btn.closest('.excecao-tag');
+        const panel = tag.closest('.excecoes-panel');
+        const hiddenInput = tag.querySelector('.excecao-hidden-input');
+        const recordId = parseInt(hiddenInput.dataset.recordId) || 0;
+        if (recordId > 0) {
+            hiddenInput.value = '0';
+            hiddenInput.dataset.original = '0.00';
+            hiddenInput.classList.add('changed');
+            document.querySelector('.vc-list').appendChild(hiddenInput);
+        }
+        tag.remove();
+        updateExcecoesBadge(panel);
+        refreshSelectOptions(panel);
+    }
+
+    function updateExcecoesBadge(panel) {
+        const row = panel.closest('.client-row');
+        const count = panel.querySelectorAll('.excecao-tag').length;
+        let badge = row.querySelector('.badge-excecoes');
+        if (count > 0) {
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'badge-excecoes';
+                row.querySelector('.client-info').appendChild(badge);
+            }
+            badge.textContent = count + ' exceção(ões)';
+        } else if (badge) {
+            badge.remove();
+        }
     }
 
     function markChanged(input) {
