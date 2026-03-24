@@ -109,7 +109,7 @@
                             <select asp-for="ProcessRecord.ClientId" class="modern-select" asp-items="Model.ClientsOptions"></select>
                             @if (isAdmin == true)
                             {
-                                <button type="button" class="btn-add-client" data-toggle="modal" data-target="#createClientModal">
+                                <button type="button" class="btn-add-client" data-bs-toggle="modal" data-bs-target="#createClientModal">
                                     <i class="bi bi-plus-circle"></i>
                                     <span data-i18n="activity.btn.newclient">Novo</span>
                                 </button>
@@ -178,12 +178,10 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="createClientModalLabel">Cadastrar Novo Cliente</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="createClientForm" method="post" enctype="multipart/form-data">
+                <form id="createClientForm" method="post" enctype="multipart/form-data" data-no-loader="true">
                     <div class="form-group">
                         <label for="Name">Nome</label>
                         <input type="text" id="Name" name="Name" class="form-control" required />
@@ -213,8 +211,8 @@
                         <label for="ClienteInterno" class="form-check-label">Cliente Interno</label>
                     </div>
                     <div class="mt-3">
-                        <button type="submit" class="btn btn-primary">Salvar</button>
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        <button type="button" id="btnSalvarCliente" class="btn btn-primary">Salvar</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     </div>
                 </form>
                 <div id="clientCreationMessage" class="mt-3"></div>
@@ -895,6 +893,10 @@
             });
 
             // Submissão do formulário de cadastro de cliente
+            $("#btnSalvarCliente").on("click", function () {
+                $("#createClientForm").trigger("submit");
+            });
+
             $("#createClientForm").on("submit", function (event) {
                 event.preventDefault();
 
