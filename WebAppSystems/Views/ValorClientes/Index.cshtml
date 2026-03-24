@@ -69,16 +69,23 @@
                     </div>
                     <div class="client-default-value">
                         <label class="value-label">Valor padrão (R$/h)</label>
-                        <input type="number"
-                               class="value-input @(temPadrao ? "filled" : "")"
-                               data-client-id="@client.Id"
-                               data-attorney-id=""
-                               data-record-id="@(padrao?.Id ?? 0)"
-                               data-original="@valorPadrao.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)"
-                               value="@(valorPadrao > 0 ? valorPadrao.ToString("F2", System.Globalization.CultureInfo.InvariantCulture) : "")"
-                               placeholder="0,00"
-                               step="0.01" min="0"
-                               oninput="markChanged(this)" />
+                        <div class="value-reveal-wrap">
+                            <span class="value-mask">••••</span>
+                            <input type="number"
+                                   class="value-input @(temPadrao ? "filled" : "")"
+                                   data-client-id="@client.Id"
+                                   data-attorney-id=""
+                                   data-record-id="@(padrao?.Id ?? 0)"
+                                   data-original="@valorPadrao.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)"
+                                   value="@(valorPadrao > 0 ? valorPadrao.ToString("F2", System.Globalization.CultureInfo.InvariantCulture) : "")"
+                                   placeholder="0,00"
+                                   step="0.01" min="0"
+                                   style="display:none;"
+                                   oninput="markChanged(this)" />
+                            <button class="btn-reveal" onclick="toggleReveal(this)" title="Revelar valor" type="button">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
                     </div>
                     <button class="btn-toggle-excecoes" onclick="toggleExcecoes(this)" title="Ver/editar exceções por advogado">
                         <i class="bi bi-person-lines-fill"></i>
@@ -131,9 +138,8 @@
                                        step="0.01" min="0"
                                        style="display:none;"
                                        oninput="markChanged(this)" />
-                                <span class="excecao-tag-valor" onclick="editExcecaoTag(this)">
-                                    R$ @valorExc.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)/h
-                                </span>
+                                <span class="excecao-tag-valor excecao-masked" onclick="editExcecaoTag(this)">••••</span>
+                                <button class="btn-reveal-exc" onclick="toggleRevealExc(this)" title="Revelar" type="button"><i class="bi bi-eye"></i></button>
                                 <button class="btn-remove-excecao" onclick="removeExcecao(this)" title="Remover exceção">
                                     <i class="bi bi-x-lg"></i>
                                 </button>
@@ -371,6 +377,24 @@
     }
     .vc-search-bar input::placeholder { color: #a0aec0; }
 
+    /* Reveal */
+    .value-reveal-wrap { display: flex; align-items: center; gap: 6px; }
+    .value-mask { font-size: 16px; font-weight: 700; color: #a0aec0; letter-spacing: 3px; min-width: 60px; text-align: right; }
+    .btn-reveal {
+        background: none; border: none; cursor: pointer; padding: 4px 6px;
+        color: #a0aec0; border-radius: 6px; transition: all 0.15s; line-height: 1;
+        display: flex; align-items: center;
+    }
+    .btn-reveal:hover { color: #667eea; background: #ebf4ff; }
+    .btn-reveal.revealed { color: #667eea; }
+    .btn-reveal-exc {
+        background: none; border: none; cursor: pointer; padding: 2px 4px;
+        color: #a0aec0; border-radius: 4px; transition: all 0.15s; line-height: 1;
+        display: flex; align-items: center; font-size: 12px;
+    }
+    .btn-reveal-exc:hover { color: #667eea; }
+    .btn-reveal-exc.revealed { color: #667eea; }
+
     @@media (max-width: 640px) {
         .vc-container { padding: 12px; }
         .vc-header { flex-direction: column; gap: 12px; align-items: flex-start; }
@@ -383,6 +407,39 @@
 }
 
 <script>
+    function toggleReveal(btn) {
+        const wrap = btn.closest('.value-reveal-wrap');
+        const mask = wrap.querySelector('.value-mask');
+        const input = wrap.querySelector('.value-input');
+        const revealed = btn.classList.toggle('revealed');
+        if (revealed) {
+            mask.style.display = 'none';
+            input.style.display = '';
+            btn.querySelector('i').className = 'bi bi-eye-slash';
+        } else {
+            mask.style.display = '';
+            input.style.display = 'none';
+            btn.querySelector('i').className = 'bi bi-eye';
+        }
+    }
+
+    function toggleRevealExc(btn) {
+        const tag = btn.closest('.excecao-tag');
+        const span = tag.querySelector('.excecao-tag-valor');
+        const hiddenInput = tag.querySelector('.excecao-hidden-input');
+        const revealed = btn.classList.toggle('revealed');
+        if (revealed) {
+            const val = parseFloat(hiddenInput.value) || 0;
+            span.textContent = 'R$ ' + (val > 0 ? val.toFixed(2) : '0.00') + '/h';
+            span.classList.remove('excecao-masked');
+            btn.querySelector('i').className = 'bi bi-eye-slash';
+        } else {
+            span.textContent = '••••';
+            span.classList.add('excecao-masked');
+            btn.querySelector('i').className = 'bi bi-eye';
+        }
+    }
+
     function toggleExcecoes(btn) {
         btn.classList.toggle('open');
         const panel = btn.closest('.client-row').querySelector('.excecoes-panel');
@@ -430,9 +487,8 @@
                    data-record-id="0" data-original="0.00"
                    value="${valor > 0 ? valor.toFixed(2) : ''}"
                    step="0.01" min="0" style="display:none;" oninput="markChanged(this)" />
-            <span class="excecao-tag-valor" onclick="editExcecaoTag(this)">
-                R$ ${valor > 0 ? valor.toFixed(2) : '0.00'}/h
-            </span>
+            <span class="excecao-tag-valor excecao-masked" onclick="editExcecaoTag(this)">••••</span>
+            <button class="btn-reveal-exc" onclick="toggleRevealExc(this)" title="Revelar" type="button"><i class="bi bi-eye"></i></button>
             <button class="btn-remove-excecao" onclick="removeExcecao(this)" title="Remover exceção">
                 <i class="bi bi-x-lg"></i>
             </button>`;
