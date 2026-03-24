@@ -195,7 +195,7 @@
             var animFrame;
             var startTime;
             var showTimer;
-            var DELAY = 350;
+            var DELAY = 150;
 
             function animateClock(ts) {
                 if (!startTime) startTime = ts;
@@ -222,8 +222,13 @@
                 startTime = null;
             }
 
-            window.addEventListener('pageshow', hideLoader);
-            window.addEventListener('load', hideLoader);
+            window.addEventListener('pageshow', function() {
+                if (!isPollingDownload) hideLoader();
+            });
+            window.addEventListener('load', function() {
+                // Não fechar o loader se estiver aguardando download via cookie polling
+                if (!isPollingDownload) hideLoader();
+            });
 
             var lastSubmitButton = null;
             document.addEventListener('click', function (e) {
@@ -238,20 +243,51 @@
                 if (!href || href === '#' || href.startsWith('javascript') || href.startsWith('mailto')) return;
                 if (el.getAttribute('target') === '_blank') return;
                 if (el.hasAttribute('download')) return;
-                if (el.getAttribute('onclick')) return;
                 scheduleLoader();
             });
 
-            var downloadActions = ['DownloadReport', 'DownloadPdfReport', 'GerarPreFatura'];
+            // Ações que geram download (não navegam para outra página) — loader fecha via cookie polling
+            var downloadActions = ['PreFatura', 'DownloadReport', 'DownloadPdfReport'];
+            var isPollingDownload = false;
 
             document.addEventListener('submit', function (e) {
                 if (e.target.tagName !== 'FORM') return;
+                // Ignorar forms marcados como no-loader (AJAX forms)
+                if (e.target.getAttribute('data-no-loader') === 'true') return;
                 var formaction = lastSubmitButton ? lastSubmitButton.getAttribute('formaction') : null;
-                if (formaction) {
-                    var isDownload = downloadActions.some(function(a) { return formaction.indexOf(a) !== -1; });
-                    if (isDownload) { lastSubmitButton = null; return; }
+                var isDownloadAction = formaction && downloadActions.some(function(a) { return formaction.indexOf(a) !== -1; });
+
+                if (isDownloadAction) {
+                    // Download: mostra loader imediatamente e fecha via polling de cookie
+                    isPollingDownload = true;
+                    overlay.style.display = 'flex';
+                    startTime = null;
+                    animFrame = requestAnimationFrame(animateClock);
+                    var token = 'dl_' + new Date().getTime();
+                    // Seta cookie no cliente para o servidor saber qual token esperar
+                    document.cookie = 'fileDownloadToken=' + token + '; path=/';
+                    var tokenInput = document.createElement('input');
+                    tokenInput.type = 'hidden';
+                    tokenInput.name = 'fileDownloadToken';
+                    tokenInput.value = token;
+                    e.target.appendChild(tokenInput);
+                    var pollInterval = setInterval(function() {
+                        if (document.cookie.indexOf('fileDownloadReady=' + token) !== -1) {
+                            clearInterval(pollInterval);
+                            document.cookie = 'fileDownloadReady=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                            document.cookie = 'fileDownloadToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                            isPollingDownload = false;
+                            hideLoader();
+                        }
+                    }, 500);
+                    // Timeout de segurança: 60s
+                    setTimeout(function() { clearInterval(pollInterval); isPollingDownload = false; hideLoader(); }, 60000);
+                } else {
+                    // Navegação normal: mostra loader imediatamente (fecha quando nova página carregar)
+                    overlay.style.display = 'flex';
+                    startTime = null;
+                    animFrame = requestAnimationFrame(animateClock);
                 }
-                scheduleLoader();
                 lastSubmitButton = null;
             });
         })();

@@ -644,6 +644,17 @@ namespace WebAppSystems.Controllers
                     // Injetar gradiente horizontal (branco → azul) na célula mesclada do cabeçalho via OpenXML
                     content = InjectGradientFill(content);
 
+                    // Seta cookie para o JS fechar o loader
+                    var dlToken = Request.Cookies["fileDownloadToken"];
+                    if (!string.IsNullOrEmpty(dlToken))
+                    {
+                        Response.Cookies.Append("fileDownloadReady", dlToken, new Microsoft.AspNetCore.Http.CookieOptions
+                        {
+                            Expires = DateTimeOffset.UtcNow.AddMinutes(1),
+                            Path = "/"
+                        });
+                    }
+
                     return File(
                         content,
                         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -802,7 +813,18 @@ namespace WebAppSystems.Controllers
             var pdfBytes = document.GeneratePdf();
             
             string fileName = $"Relatorio_Horas_{clientName}_{DateTime.Now:yyyyMMdd}.pdf";
-            
+
+            // Seta cookie para o JS fechar o loader
+            var pdfToken = Request.Cookies["fileDownloadToken"];
+            if (!string.IsNullOrEmpty(pdfToken))
+            {
+                Response.Cookies.Append("fileDownloadReady", pdfToken, new Microsoft.AspNetCore.Http.CookieOptions
+                {
+                    Expires = DateTimeOffset.UtcNow.AddMinutes(1),
+                    Path = "/"
+                });
+            }
+
             return File(pdfBytes, "application/pdf", fileName);
         }
 
@@ -1073,6 +1095,18 @@ namespace WebAppSystems.Controllers
 
             var pdfBytes = document.GeneratePdf();
             string fileName = $"PreFatura_{minDate:yyyyMMdd}_{maxDate:yyyyMMdd}.pdf";
+
+            // Seta cookie para o JS saber que o download está pronto e fechar o loader
+            var token = Request.Cookies["fileDownloadToken"];
+            if (!string.IsNullOrEmpty(token))
+            {
+                Response.Cookies.Append("fileDownloadReady", token, new Microsoft.AspNetCore.Http.CookieOptions
+                {
+                    Expires = DateTimeOffset.UtcNow.AddMinutes(1),
+                    Path = "/"
+                });
+            }
+
             return File(pdfBytes, "application/pdf", fileName);
         }
 
