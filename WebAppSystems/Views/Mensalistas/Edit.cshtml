@@ -68,7 +68,7 @@
                     <div class="form-group">
                         <label asp-for="ComissaoParceiro">
                             <i class="bi bi-person-check"></i>
-                            Comissão Parceiro
+                            Comissão Parceiro (R$)
                         </label>
                         @Html.TextBoxFor(model => model.ComissaoParceiro, "{0:N2}", new { @class = "form-control", data_val = "false", placeholder = "0,00" })
                         <span asp-validation-for="ComissaoParceiro" class="text-danger"></span>
@@ -77,7 +77,7 @@
                     <div class="form-group">
                         <label asp-for="ComissaoSocio">
                             <i class="bi bi-briefcase"></i>
-                            Comissão Sócio
+                            Comissão Sócio (R$)
                         </label>
                         @Html.TextBoxFor(model => model.ComissaoSocio, "{0:N2}", new { @class = "form-control", data_val = "false", placeholder = "0,00" })
                         <span asp-validation-for="ComissaoSocio" class="text-danger"></span>
