@@ -228,3 +228,92 @@ body {
     .form-grid, .details-grid { grid-template-columns: 1fr; }
     .detail-item.full-width { grid-column: span 1; }
 }
+
+/* ============================================================
+   MOBILE RESPONSIVENESS — sistema normal
+   ============================================================ */
+
+/* Container principal — full width no mobile, centralizado no desktop */
+.main-container {
+    width: 100%;
+    padding: 8px 16px 0;
+}
+@media (min-width: 768px) {
+    .main-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 8px 24px 0;
+    }
+}
+
+@media (max-width: 767px) {
+    /* Container sem padding excessivo */
+    .container {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+    }
+
+    /* Containers internos das views */
+    .dashboard-container,
+    .timetracker-container,
+    .clients-container,
+    .users-list-container,
+    .report-container,
+    [class$="-container"] {
+        padding: 10px !important;
+    }
+
+    /* Page headers */
+    .page-header {
+        border-radius: 8px !important;
+        padding: 16px !important;
+        margin-bottom: 16px !important;
+    }
+    .page-header .header-content {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+    }
+    .page-header .btn-new,
+    .page-header [class^="btn-new"] {
+        justify-content: center !important;
+        width: 100% !important;
+    }
+    .page-title { font-size: 20px !important; }
+
+    /* Cards */
+    .form-card { padding: 16px !important; }
+
+    /* Tabelas: scroll horizontal */
+    .table-responsive-mobile {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .table th, .table td {
+        padding: 10px 8px !important;
+        font-size: 13px !important;
+    }
+
+    /* Grids de formulário — 1 coluna no mobile */
+    .form-grid, .details-grid { grid-template-columns: 1fr !important; }
+    .detail-item.full-width { grid-column: span 1 !important; }
+
+    /* Modais — full screen no mobile */
+    .modal-dialog {
+        margin: 0 !important;
+        max-width: 100% !important;
+    }
+    .modal-content {
+        border-radius: 0 !important;
+        min-height: 100vh;
+    }
+
+    /* Botões de ação — empilhar no mobile */
+    .filter-actions {
+        flex-direction: column !important;
+    }
+    .filter-actions .btn {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+}
