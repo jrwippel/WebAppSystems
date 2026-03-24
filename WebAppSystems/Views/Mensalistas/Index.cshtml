@@ -58,22 +58,34 @@
                                 </div>
                             </td>
                             <td>
-                                <span class="value-badge value-primary">
-                                    @String.Format(new System.Globalization.CultureInfo("pt-BR"), "{0:C2}", item.ValorMensalBruto)
-                                </span>
+                                <div class="val-wrap">
+                                    <span class="val-mask">••••</span>
+                                    <span class="value-badge value-primary val-real" style="display:none;">
+                                        @String.Format(new System.Globalization.CultureInfo("pt-BR"), "{0:C2}", item.ValorMensalBruto)
+                                    </span>
+                                </div>
                             </td>
                             <td>
-                                <span class="value-badge value-success">
-                                    @String.Format(new System.Globalization.CultureInfo("pt-BR"), "{0:C2}", item.ComissaoParceiro)
-                                </span>
+                                <div class="val-wrap">
+                                    <span class="val-mask">••••</span>
+                                    <span class="value-badge value-success val-real" style="display:none;">
+                                        @String.Format(new System.Globalization.CultureInfo("pt-BR"), "{0:C2}", item.ComissaoParceiro)
+                                    </span>
+                                </div>
                             </td>
                             <td>
-                                <span class="value-badge value-info">
-                                    @String.Format(new System.Globalization.CultureInfo("pt-BR"), "{0:C2}", item.ComissaoSocio)
-                                </span>
+                                <div class="val-wrap">
+                                    <span class="val-mask">••••</span>
+                                    <span class="value-badge value-info val-real" style="display:none;">
+                                        @String.Format(new System.Globalization.CultureInfo("pt-BR"), "{0:C2}", item.ComissaoSocio)
+                                    </span>
+                                </div>
                             </td>
                             <td class="actions-column">
                                 <div class="action-buttons">
+                                    <button class="btn-action btn-reveal-row" onclick="toggleRowReveal(this)" title="Revelar valores" type="button">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
                                     <a asp-action="Details" asp-route-id="@item.Id" class="btn-action btn-info" title="Detalhes">
                                         <i class="bi bi-eye"></i>
                                     </a>
@@ -187,6 +199,14 @@
                 };
                 controls.appendChild(nextBtn);
             }
+
+        window.toggleRowReveal = function(btn) {
+            const row = btn.closest('tr');
+            const revealed = btn.classList.toggle('revealed');
+            row.querySelectorAll('.val-mask').forEach(m => m.style.display = revealed ? 'none' : '');
+            row.querySelectorAll('.val-real').forEach(v => v.style.display = revealed ? '' : 'none');
+            btn.querySelector('i').className = revealed ? 'bi bi-eye-slash' : 'bi bi-eye';
+        };
 
             searchInput.addEventListener('input', filterTable);
             renderTable();
@@ -506,6 +526,17 @@
         padding: 0 8px;
         color: #a0aec0;
     }
+
+    .val-wrap { display: flex; align-items: center; gap: 6px; }
+    .val-mask { font-size: 15px; font-weight: 700; color: #a0aec0; letter-spacing: 3px; }
+    .btn-reveal-row {
+        background: #f0f4ff; color: #667eea; border: none;
+        width: 36px; height: 36px; border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; transition: all 0.2s; font-size: 14px;
+    }
+    .btn-reveal-row:hover { background: #667eea; color: white; }
+    .btn-reveal-row.revealed { background: #667eea; color: white; }
 
     @@media (max-width: 768px) {
         .mensalistas-container {
