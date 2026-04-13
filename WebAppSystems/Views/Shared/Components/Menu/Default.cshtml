@@ -479,6 +479,11 @@
                         @if (isAdmin)
                         {
                             <div class="dd-divider"></div>
+                            <div class="gerenciar-section-label">Gestão</div>
+                            <a class="gerenciar-item" asp-controller="PainelGestao" asp-action="Index">
+                                <i class="bi bi-bar-chart-line-fill"></i><span>Painel de Gestão</span>
+                            </a>
+                            <div class="dd-divider"></div>
                             <div class="gerenciar-section-label">Financeiro</div>
                             <a class="gerenciar-item" asp-controller="ValorClientes" asp-action="Index">
                                 <i class="bi bi-cash-coin"></i><span data-i18n="menu.valores">Valores</span>

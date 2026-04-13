@@ -132,7 +132,7 @@
                             <i class="bi bi-building"></i>
                             <span data-i18n="activity.field.department">Área</span>
                         </label>
-                        <select asp-for="ProcessRecord.DepartmentId" asp-items="@(new SelectList(Model.Departments, "Id", "Name"))" class="modern-select"></select>
+                        <select asp-for="ProcessRecord.DepartmentId" asp-items="@(new SelectList(Model.Departments, "Id", "Name", Model.ProcessRecord.DepartmentId))" class="modern-select"></select>
                     </div>
                 </div>
             </div>

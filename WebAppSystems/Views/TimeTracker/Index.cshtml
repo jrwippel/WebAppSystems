@@ -437,6 +437,49 @@
             cursor: not-allowed;
         }
 
+        /* Edição inline de horário */
+        .time-cell {
+            cursor: pointer;
+            position: relative;
+        }
+
+        .time-cell:hover {
+            color: #667eea;
+            text-decoration: underline dotted;
+        }
+
+        .time-cell input[type="time"] {
+            width: 90px;
+            padding: 2px 6px;
+            border: 2px solid #667eea;
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+        }
+
+        /* Edição inline geral */
+        .editable-cell {
+            cursor: pointer;
+            position: relative;
+        }
+
+        .editable-cell:hover {
+            color: #667eea;
+            text-decoration: underline dotted;
+        }
+
+        .editable-cell input[type="text"],
+        .editable-cell select {
+            width: 100%;
+            padding: 2px 6px;
+            border: 2px solid #667eea;
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+        }
+
         @@media (max-width: 768px) {
             .timetracker-container {
                 padding: 16px;
@@ -513,6 +556,21 @@
             3: "Deslocamento"
         };
 
+        // Dados para selects inline
+        const clientesOptions = [
+            @foreach (var c in Model.ClientsOptions.Where(c => c.Value != "0"))
+            {
+                <text>{ value: @c.Value, text: "@Html.Raw(c.Text.Replace("\"", "\\\""))" },</text>
+            }
+        ];
+
+        const recordTypeOptions = [
+            @foreach (var rt in Model.RecordTypesOptions)
+            {
+                <text>{ value: @rt.Value, text: "@Html.Raw(rt.Text.Replace("\"", "\\\""))" },</text>
+            }
+        ];
+
         document.addEventListener("DOMContentLoaded", function () {
             const clientField = document.querySelector('select[name="ProcessRecord.ClientId"]');
             const solicitanteField = document.getElementById("solicitante");
@@ -576,6 +634,213 @@
             checkDescription();
             loadRecordsForToday(loggedUserId);
             checkActiveTimer();
+
+            // Edição inline de horário
+            document.querySelector("#recordsTable tbody").addEventListener("click", function (e) {
+                const cell = e.target.closest(".time-cell");
+                if (!cell || cell.querySelector("input")) return;
+
+                const currentValue = cell.dataset.value; // HH:MM:SS
+                const currentHHMM = currentValue.substring(0, 5); // HH:MM para o input
+                const currentSecs = currentValue.length >= 8 ? currentValue.substring(6, 8) : "00";
+
+                const input = document.createElement("input");
+                input.type = "time";
+                input.value = currentHHMM;
+                input.style.width = "90px";
+
+                cell.textContent = "";
+                cell.appendChild(input);
+                input.focus();
+
+                let saved = false;
+
+                async function saveTime() {
+                    if (saved) return;
+                    saved = true;
+
+                    const newHHMM = input.value; // HH:MM
+                    if (!newHHMM) {
+                        cell.textContent = currentHHMM;
+                        return;
+                    }
+
+                    const newFullValue = newHHMM + ":" + currentSecs; // HH:MM:SS
+
+                    if (newFullValue === currentValue) {
+                        cell.textContent = currentHHMM;
+                        return;
+                    }
+
+                    const id = parseInt(cell.dataset.id);
+                    const field = cell.dataset.field;
+                    const row = cell.closest("tr");
+
+                    // Pega o valor da outra célula diretamente do dataset (não do DOM que pode ter input)
+                    let horaInicial, horaFinal;
+                    if (field === "inicio") {
+                        horaInicial = newFullValue;
+                        const fimCell = row.querySelector(".time-cell[data-field='fim']");
+                        horaFinal = fimCell.dataset.value;
+                    } else {
+                        const inicioCell = row.querySelector(".time-cell[data-field='inicio']");
+                        horaInicial = inicioCell.dataset.value;
+                        horaFinal = newFullValue;
+                    }
+
+                    try {
+                        const response = await fetch("/TimeTracker/UpdateTime", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ processRecordId: id, horaInicial, horaFinal })
+                        });
+
+                        if (response.ok) {
+                            const result = await response.json();
+                            cell.textContent = newHHMM;
+                            cell.dataset.value = newFullValue;
+                            const durationBadge = row.querySelector(`#duration-${id}`);
+                            if (durationBadge) durationBadge.textContent = result.duration;
+                        } else {
+                            const msg = await response.text();
+                            alert(msg || "Erro ao salvar horário.");
+                            cell.textContent = currentHHMM;
+                        }
+                    } catch {
+                        alert("Erro ao salvar horário.");
+                        cell.textContent = currentHHMM;
+                    }
+                }
+
+                input.addEventListener("blur", saveTime);
+                input.addEventListener("keydown", function (e) {
+                    if (e.key === "Enter") input.blur();
+                    if (e.key === "Escape") {
+                        saved = true;
+                        cell.textContent = currentHHMM;
+                    }
+                });
+            });
+
+            // Edição inline dos demais campos
+            document.querySelector("#recordsTable tbody").addEventListener("click", function (e) {
+                const cell = e.target.closest(".editable-cell");
+                if (!cell || cell.querySelector("input, select")) return;
+
+                const id = parseInt(cell.dataset.id);
+                const field = cell.dataset.field;
+                const currentValue = cell.dataset.value;
+                const row = cell.closest("tr");
+
+                let editor;
+
+                if (field === "clientId") {
+                    editor = document.createElement("select");
+                    clientesOptions.forEach(opt => {
+                        const o = document.createElement("option");
+                        o.value = opt.value;
+                        o.text = opt.text;
+                        if (String(opt.value) === String(currentValue)) o.selected = true;
+                        editor.appendChild(o);
+                    });
+                } else if (field === "recordType") {
+                    editor = document.createElement("select");
+                    recordTypeOptions.forEach(opt => {
+                        const o = document.createElement("option");
+                        o.value = opt.value;
+                        o.text = opt.text;
+                        if (String(opt.value) === String(currentValue)) o.selected = true;
+                        editor.appendChild(o);
+                    });
+                } else {
+                    editor = document.createElement("input");
+                    editor.type = "text";
+                    editor.value = currentValue;
+                }
+
+                cell.innerHTML = "";
+                cell.appendChild(editor);
+                editor.focus();
+
+                let saved = false;
+
+                async function saveField() {
+                    if (saved) return;
+                    saved = true;
+
+                    const newValue = editor.value;
+
+                    // Monta o payload com os horários atuais da linha
+                    const inicioCell = row.querySelector(".time-cell[data-field='inicio']");
+                    const fimCell = row.querySelector(".time-cell[data-field='fim']");
+
+                    const payload = {
+                        processRecordId: id,
+                        horaInicial: inicioCell.dataset.value,
+                        horaFinal: fimCell.dataset.value
+                    };
+
+                    if (field === "description") payload.description = newValue;
+                    else if (field === "clientId") payload.clientId = parseInt(newValue);
+                    else if (field === "solicitante") payload.solicitante = newValue;
+                    else if (field === "recordType") payload.recordType = parseInt(newValue);
+
+                    try {
+                        const response = await fetch("/TimeTracker/UpdateTime", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if (response.ok) {
+                            cell.dataset.value = newValue;
+                            if (field === "clientId") {
+                                const opt = clientesOptions.find(o => String(o.value) === String(newValue));
+                                cell.textContent = opt ? opt.text : newValue;
+                            } else if (field === "recordType") {
+                                cell.innerHTML = `<span class="type-badge">${recordTypeMap[parseInt(newValue)]}</span>`;
+                            } else {
+                                cell.textContent = newValue;
+                                cell.title = newValue;
+                            }
+                        } else {
+                            const msg = await response.text();
+                            alert(msg || "Erro ao salvar.");
+                            restoreCell();
+                        }
+                    } catch {
+                        alert("Erro ao salvar.");
+                        restoreCell();
+                    }
+
+                    function restoreCell() {
+                        if (field === "clientId") {
+                            const opt = clientesOptions.find(o => String(o.value) === String(currentValue));
+                            cell.textContent = opt ? opt.text : currentValue;
+                        } else if (field === "recordType") {
+                            cell.innerHTML = `<span class="type-badge">${recordTypeMap[parseInt(currentValue)]}</span>`;
+                        } else {
+                            cell.textContent = currentValue;
+                        }
+                    }
+                }
+
+                editor.addEventListener("blur", saveField);
+                editor.addEventListener("keydown", function (e) {
+                    if (e.key === "Enter") editor.blur();
+                    if (e.key === "Escape") {
+                        saved = true;
+                        if (field === "clientId") {
+                            const opt = clientesOptions.find(o => String(o.value) === String(currentValue));
+                            cell.textContent = opt ? opt.text : currentValue;
+                        } else if (field === "recordType") {
+                            cell.innerHTML = `<span class="type-badge">${recordTypeMap[parseInt(currentValue)]}</span>`;
+                        } else {
+                            cell.textContent = currentValue;
+                        }
+                    }
+                });
+            });
         });
 
         async function checkActiveTimer() {
@@ -672,13 +937,13 @@
                             const row = document.createElement("tr");
                             row.innerHTML = `
                                 <td style="width: 100px;">${formattedDate}</td>
-                                <td style="width: 70px;">${startTimeFormatted}</td>
-                                <td style="width: 70px;">${endTimeFormatted}</td>
-                                <td style="width: 100px;"><span class="duration-badge">${duration}</span></td>
-                                <td class="description-cell" style="max-width: 250px;" title="${record.description}">${record.description}</td>
-                                <td style="width: 150px;" title="${record.clienteNome}">${record.clienteNome}</td>
-                                <td style="width: 120px;" title="${record.solicitante || ''}">${record.solicitante || ''}</td>
-                                <td style="width: 120px;"><span class="type-badge">${recordTypeMap[record.recordType]}</span></td>
+                                <td style="width: 70px;" class="time-cell" data-id="${record.id}" data-field="inicio" data-value="${record.horaInicial}">${startTimeFormatted}</td>
+                                <td style="width: 70px;" class="time-cell" data-id="${record.id}" data-field="fim" data-value="${record.horaFinal}">${endTimeFormatted}</td>
+                                <td style="width: 100px;"><span class="duration-badge" id="duration-${record.id}">${duration}</span></td>
+                                <td class="description-cell editable-cell" style="max-width: 250px;" data-id="${record.id}" data-field="description" data-value="${record.description.replace(/"/g,'&quot;')}" title="${record.description}">${record.description}</td>
+                                <td style="width: 150px;" class="editable-cell editable-select" data-id="${record.id}" data-field="clientId" data-value="${record.clientId}" title="${record.clienteNome}">${record.clienteNome}</td>
+                                <td style="width: 120px;" class="editable-cell" data-id="${record.id}" data-field="solicitante" data-value="${record.solicitante || ''}" title="${record.solicitante || ''}">${record.solicitante || ''}</td>
+                                <td style="width: 120px;" class="editable-cell editable-select" data-id="${record.id}" data-field="recordType" data-value="${record.recordType}"><span class="type-badge">${recordTypeMap[record.recordType]}</span></td>
                                 <td style="width: 60px; text-align: center; white-space: nowrap;">
                                     <button class="btn-play" onclick="startTimerFromRecord(${record.id})" ${isRunning ? 'disabled' : ''}>
                                         <i class="fa fa-play"></i>

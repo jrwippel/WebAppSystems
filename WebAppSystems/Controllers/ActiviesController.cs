@@ -37,11 +37,20 @@ namespace WebAppSystems.Controllers
         [HttpGet]
         public async Task<IActionResult> GetProcessRecords()
         {
-            var records = await _context.ProcessRecord
+            var usuarioLogado = _isessao.BuscarSessaoDoUsuario();
+
+            var query = _context.ProcessRecord
                 .Include(pr => pr.Attorney)
                 .Include(pr => pr.Client)
                 .Include(pr => pr.Department)
-                .ToListAsync();
+                .AsQueryable();
+
+            if (usuarioLogado.Perfil != Models.Enums.ProfileEnum.Admin)
+            {
+                query = query.Where(pr => pr.AttorneyId == usuarioLogado.Id);
+            }
+
+            var records = await query.ToListAsync();
 
             return Json(records);
         }

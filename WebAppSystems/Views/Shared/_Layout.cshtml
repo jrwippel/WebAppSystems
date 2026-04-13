@@ -126,6 +126,81 @@
         </main>
     </div>
 
+    <!-- Notificação de lançamento pendente -->
+    @if (TempData["NotificacaoLancamento"] != null)
+    {
+        var dias = (int)TempData["NotificacaoLancamento"];
+        var msg = dias >= 999
+            ? "Você ainda não registrou nenhum lançamento. Regularize seus lançamentos."
+            : $"Você está há {dias} dia{(dias > 1 ? "s" : "")} sem registrar lançamentos. Regularize seus lançamentos.";
+        <div id="notifLancamento" class="notif-lancamento" role="alert" aria-live="polite">
+            <div class="notif-lancamento-inner">
+                <span class="notif-lancamento-icon"><i class="bi bi-clock-history"></i></span>
+                <span class="notif-lancamento-msg">@msg</span>
+                <button class="notif-lancamento-close" onclick="document.getElementById('notifLancamento').remove()" aria-label="Fechar">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+        </div>
+        <style>
+            .notif-lancamento {
+                position: fixed;
+                top: 72px;
+                right: 20px;
+                z-index: 99998;
+                animation: notifSlideIn 0.4s cubic-bezier(.16,1,.3,1);
+                max-width: 380px;
+            }
+            .notif-lancamento-inner {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                background: #fff;
+                border-left: 4px solid #f6ad55;
+                border-radius: 10px;
+                padding: 14px 16px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+            }
+            .notif-lancamento-icon {
+                color: #dd6b20;
+                font-size: 20px;
+                flex-shrink: 0;
+            }
+            .notif-lancamento-msg {
+                font-size: 13px;
+                color: #2d3748;
+                line-height: 1.4;
+                flex: 1;
+            }
+            .notif-lancamento-close {
+                background: none;
+                border: none;
+                color: #a0aec0;
+                font-size: 18px;
+                cursor: pointer;
+                padding: 0 2px;
+                line-height: 1;
+                flex-shrink: 0;
+            }
+            .notif-lancamento-close:hover { color: #4a5568; }
+            @@keyframes notifSlideIn {
+                from { opacity: 0; transform: translateX(40px); }
+                to   { opacity: 1; transform: translateX(0); }
+            }
+        </style>
+        <script>
+            // Auto-dismiss após 8 segundos
+            setTimeout(function () {
+                var el = document.getElementById('notifLancamento');
+                if (el) {
+                    el.style.transition = 'opacity 0.5s';
+                    el.style.opacity = '0';
+                    setTimeout(function () { if (el) el.remove(); }, 500);
+                }
+            }, 8000);
+        </script>
+    }
+
     <!-- Timer Widget Flutuante Global -->
     <div id="floatingTimer" class="floating-timer" style="display: none;">
         <div class="floating-timer-content">

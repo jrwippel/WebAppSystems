@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using WebAppSystems.Data;
 using WebAppSystems.Helper;
 using WebAppSystems.Models;
 using WebAppSystems.Services;
@@ -11,13 +13,15 @@ namespace WebAppSystems.Controllers
         private readonly ISessao _sessao;
         private readonly IEmail _email;
         private readonly LoginAttemptService _loginAttemptService;
+        private readonly WebAppSystemsContext _context;
 
-        public LoginController(AttorneyService attorneyService, ISessao sessao, IEmail email, LoginAttemptService loginAttemptService)
+        public LoginController(AttorneyService attorneyService, ISessao sessao, IEmail email, LoginAttemptService loginAttemptService, WebAppSystemsContext context)
         {
             _attorneyService = attorneyService;
             _sessao = sessao;
             _email = email;
             _loginAttemptService = loginAttemptService;
+            _context = context;
         }
 
         public IActionResult Index()
@@ -236,6 +240,12 @@ namespace WebAppSystems.Controllers
                                 await _attorneyService.AtualizarSenhaHashAsync(usuario);
                             }
                             _sessao.CriarSessaoDoUsuario(usuario);
+
+                            // Verifica dias sem lançamento para notificação discreta
+                            var diasSemLancamento = await ObterDiasSemLancamentoAsync(usuario.Id);
+                            if (diasSemLancamento >= 3)
+                                TempData["NotificacaoLancamento"] = diasSemLancamento;
+
                             return RedirectToAction("Index", "Home");
                         }
 
@@ -274,5 +284,18 @@ namespace WebAppSystems.Controllers
         }
 
 
+        private async Task<int> ObterDiasSemLancamentoAsync(int attorneyId)
+        {
+            var ultimoLancamento = await _context.ProcessRecord
+                .Where(p => p.AttorneyId == attorneyId && p.HoraFinal != TimeSpan.Zero)
+                .OrderByDescending(p => p.Date)
+                .Select(p => p.Date)
+                .FirstOrDefaultAsync();
+
+            if (ultimoLancamento == default)
+                return 999; // nunca lançou
+
+            return (int)(DateTime.Today - ultimoLancamento.Date).TotalDays;
+        }
     }
 }

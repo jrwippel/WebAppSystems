@@ -67,7 +67,12 @@ namespace WebAppSystems
             builder.Services.AddControllers();
 
             // Configurar autenticação JWT
-            var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"]);
+            var jwtKey = builder.Configuration["Jwt:Key"];
+            if (string.IsNullOrEmpty(jwtKey))
+            {
+                throw new InvalidOperationException($"Jwt:Key não encontrado. ASPNETCORE_ENVIRONMENT={builder.Environment.EnvironmentName}. Verifique o appsettings.json.");
+            }
+            var key = Encoding.ASCII.GetBytes(jwtKey);
             builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
