@@ -13,7 +13,7 @@ using static WebAppSystems.Helper.Sessao;
 
 namespace WebAppSystems.Controllers
 {
-    [PaginaRestritaSomenteAdmin]
+    [PaginaParaAdminOuControladoria]
     public class AttorneysController : Controller
     {
         private readonly AttorneyService _attorneyService;

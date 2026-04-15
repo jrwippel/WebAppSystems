@@ -16,8 +16,7 @@ using static WebAppSystems.Helper.Sessao;
 
 namespace WebAppSystems.Controllers
 {
-    [PaginaParaUsuarioLogado]
-    [PaginaRestritaSomenteAdmin]
+    [PaginaParaAdminOuControladoria]
     public class DepartmentsController : Controller
     {
         private readonly WebAppSystemsContext _context;

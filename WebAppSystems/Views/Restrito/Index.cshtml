@@ -1,8 +1,81 @@
 ﻿@{
-    Layout = "_LayoutDeslogado";
-    ViewData["Title"] = "Página Restrita";
+    Layout = "_Layout";
+    ViewData["Title"] = "Acesso Restrito";
 }
 
-<p>
-    Você não tem permissão para acessar essa funcionalidade <a asp-controller="Home" asp-action="Index">clique aqui para voltar para a home</a>
-</p>
+<style>
+    .restrito-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 60vh;
+        padding: 24px;
+    }
+    .restrito-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+        padding: 48px 40px;
+        text-align: center;
+        max-width: 480px;
+        width: 100%;
+    }
+    .restrito-icon {
+        width: 72px;
+        height: 72px;
+        background: linear-gradient(135deg, #fed7d7, #feb2b2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 24px;
+        font-size: 32px;
+        color: #c53030;
+    }
+    .restrito-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: #1a202c;
+        margin-bottom: 12px;
+    }
+    .restrito-msg {
+        font-size: 14px;
+        color: #718096;
+        line-height: 1.6;
+        margin-bottom: 32px;
+    }
+    .restrito-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 24px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: opacity 0.2s;
+    }
+    .restrito-btn:hover {
+        opacity: 0.9;
+        color: white;
+        text-decoration: none;
+    }
+</style>
+
+<div class="restrito-container">
+    <div class="restrito-card">
+        <div class="restrito-icon">
+            <i class="bi bi-lock-fill"></i>
+        </div>
+        <div class="restrito-title">Acesso não permitido</div>
+        <p class="restrito-msg">
+            Você não tem permissão para acessar essa funcionalidade.<br>
+            Caso precise de acesso, entre em contato com o administrador do sistema.
+        </p>
+        <a asp-controller="Home" asp-action="Index" class="restrito-btn">
+            <i class="bi bi-house-fill"></i> Voltar para a Home
+        </a>
+    </div>
+</div>

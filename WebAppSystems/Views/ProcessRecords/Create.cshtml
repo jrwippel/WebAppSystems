@@ -149,7 +149,12 @@
                         <i class="bi bi-pencil-square"></i>
                         <span data-i18n="activity.field.description">Descreva a atividade realizada</span>
                     </label>
-                    <textarea asp-for="ProcessRecord.Description" class="modern-textarea" rows="5" placeholder="Digite aqui os detalhes da atividade..."></textarea>
+                    <div class="description-ia-wrap">
+                        <textarea asp-for="ProcessRecord.Description" class="modern-textarea" rows="5" placeholder="Digite aqui os detalhes da atividade..." id="descriptionTextarea"></textarea>
+                        <button type="button" class="btn-ia-sugerir-create" id="btnSugerirIACreate" onclick="sugerirDescricaoIACreate()" title="Melhorar descrição com IA">
+                            <i class="bi bi-stars" id="iaIconCreate"></i> Melhorar com IA
+                        </button>
+                    </div>
                     <span asp-validation-for="ProcessRecord.Description" class="field-error"></span>
                     <div class="char-counter">
                         <span id="charCount">0</span> caracteres
@@ -800,6 +805,28 @@
         color: #22543d;
         border-left: 3px solid #48bb78;
     }
+
+    /* Botão IA na tela de atividades */
+    .description-ia-wrap { position: relative; }
+    .btn-ia-sugerir-create {
+        margin-top: 8px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 16px;
+        border: none;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity 0.2s, transform 0.2s;
+    }
+    .btn-ia-sugerir-create:hover { opacity: 0.85; transform: scale(1.03); }
+    .btn-ia-sugerir-create:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn-ia-sugerir-create .spin { animation: ia-spin2 0.8s linear infinite; display: inline-block; }
+    @@keyframes ia-spin2 { to { transform: rotate(360deg); } }
 </style>
 
 @section Scripts {
@@ -939,5 +966,48 @@
                 $(target).modal('show');
             });
         });
+
+        async function sugerirDescricaoIACreate() {
+            const textarea = document.getElementById('descriptionTextarea');
+            const descricao = textarea ? textarea.value.trim() : '';
+            if (!descricao) {
+                alert('Digite uma descrição antes de usar a sugestão de IA.');
+                return;
+            }
+
+            const btn = document.getElementById('btnSugerirIACreate');
+            const icon = document.getElementById('iaIconCreate');
+            btn.disabled = true;
+            icon.className = 'bi bi-arrow-repeat spin';
+
+            const tipoSel = document.querySelector('select[id$="ProcessRecord_RecordType"]');
+            const clienteSel = document.querySelector('select[id$="ProcessRecord_ClientId"]');
+            const areaSel = document.querySelector('select[id$="ProcessRecord_DepartmentId"]');
+
+            const tipo = tipoSel ? tipoSel.options[tipoSel.selectedIndex]?.text : '';
+            const cliente = clienteSel ? clienteSel.options[clienteSel.selectedIndex]?.text : '';
+            const area = areaSel ? areaSel.options[areaSel.selectedIndex]?.text : '';
+
+            try {
+                const resp = await fetch('/TimeTracker/SugerirDescricao', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ descricao, tipo, cliente, area })
+                });
+
+                const data = await resp.json();
+                if (!resp.ok) { alert(data.erro || 'Erro ao gerar sugestão.'); return; }
+
+                if (data.sugestao && textarea) {
+                    textarea.value = data.sugestao;
+                    document.getElementById('charCount').textContent = data.sugestao.length;
+                }
+            } catch (e) {
+                alert('Não foi possível conectar ao serviço de IA.');
+            } finally {
+                btn.disabled = false;
+                icon.className = 'bi bi-stars';
+            }
+        }
     </script>
 }

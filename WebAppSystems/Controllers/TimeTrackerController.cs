@@ -8,6 +8,8 @@ using WebAppSystems.Models;
 using WebAppSystems.Models.Enums;
 using WebAppSystems.Models.ViewModels;
 using WebAppSystems.Services;
+using System.Text;
+using System.Text.Json;
 
 //teste
 
@@ -20,14 +22,18 @@ namespace WebAppSystems.Controllers
         private readonly ISessao _isessao;
         private readonly ClientService _clientService;
         private readonly DepartmentService _departmentService;
+        private readonly IConfiguration _configuration;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public TimeTrackerController(WebAppSystemsContext context, ProcessRecordsService processRecordsService, ISessao isessao, ClientService clientService, DepartmentService departmentService)
+        public TimeTrackerController(WebAppSystemsContext context, ProcessRecordsService processRecordsService, ISessao isessao, ClientService clientService, DepartmentService departmentService, IConfiguration configuration, IHttpClientFactory httpClientFactory)
         {
             _context = context;
             _processRecordsService = processRecordsService;
             _isessao = isessao;
             _clientService = clientService;
             _departmentService = departmentService;
+            _configuration = configuration;
+            _httpClientFactory = httpClientFactory;
         }
 
         [HttpPost]
@@ -566,10 +572,78 @@ namespace WebAppSystems.Controllers
             public int? RecordType { get; set; }
         }
 
+        [HttpPost]
+        public async Task<IActionResult> SugerirDescricao([FromBody] SugerirDescricaoRequest request)
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.Descricao))
+                return BadRequest(new { erro = "Informe uma descrição para melhorar." });
+
+            var apiKey = _configuration["GoogleAI:ApiKey"];
+            if (string.IsNullOrEmpty(apiKey) || apiKey.Contains("COLE_SUA"))
+                return StatusCode(503, new { erro = "API de IA não configurada." });
+
+            var tipo = string.IsNullOrWhiteSpace(request.Tipo) ? "não informado" : request.Tipo;
+            var cliente = string.IsNullOrWhiteSpace(request.Cliente) ? "não informado" : request.Cliente;
+            var area = string.IsNullOrWhiteSpace(request.Area) ? "não informada" : request.Area;
+
+            var prompt = $@"Você é um assistente jurídico especializado em registros de horas para escritórios de advocacia brasileiros.
+
+Melhore a descrição abaixo para um lançamento de horas profissional, formal e adequado para faturamento ao cliente.
+A descrição deve ser objetiva, em português, entre 1 e 2 frases, sem inventar informações que não estejam no contexto.
+
+Contexto:
+- Tipo de atividade: {tipo}
+- Cliente: {cliente}
+- Área jurídica: {area}
+- Descrição original: {request.Descricao}
+
+Retorne APENAS a descrição melhorada, completa, sem aspas, sem explicações, sem prefixos. Máximo de 2 frases curtas.";
+
+            try
+            {
+                var http = _httpClientFactory.CreateClient();
+                var body = new
+                {
+                    contents = new[] { new { parts = new[] { new { text = prompt } } } },
+                    generationConfig = new { temperature = 0.3, maxOutputTokens = 1024 }
+                };
+                var json = JsonSerializer.Serialize(body);
+                var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key={apiKey}";
+                var response = await http.PostAsync(url, new StringContent(json, Encoding.UTF8, "application/json"));
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errBody = await response.Content.ReadAsStringAsync();
+                    return StatusCode(502, new { erro = $"Erro na API: {response.StatusCode} - {errBody}" });
+                }
+
+                var result = JsonSerializer.Deserialize<JsonElement>(await response.Content.ReadAsStringAsync());
+                var sugestao = result
+                    .GetProperty("candidates")[0]
+                    .GetProperty("content")
+                    .GetProperty("parts")[0]
+                    .GetProperty("text")
+                    .GetString()?.Trim();
+
+                return Ok(new { sugestao });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(502, new { erro = $"Exceção: {ex.Message}" });
+            }
+        }
+
+        public class SugerirDescricaoRequest
+        {
+            public string Descricao { get; set; }
+            public string Tipo { get; set; }
+            public string Cliente { get; set; }
+            public string Area { get; set; }
+        }
+
         // Action para retornar o solicitante baseado no cliente
         [HttpGet]
-        public async Task<IActionResult> GetSolicitanteByClientId(int clientId)
-        {
+        public async Task<IActionResult> GetSolicitanteByClientId(int clientId)        {
             try
             {
                 var solicitante = await _clientService.GetSolicitanteByClientIdAsync(clientId);
