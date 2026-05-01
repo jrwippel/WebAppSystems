@@ -40,6 +40,10 @@ namespace WebAppSystems.Data
         public DbSet<WebAppSystems.Models.Parametros>? Parametros { get; set; }
 
         public DbSet<WebAppSystems.Models.DocumentAnalysis> DocumentAnalysis { get; set; } = default!;
+
+        public DbSet<WebAppSystems.Models.AIConfiguration> AIConfiguration { get; set; } = default!;
+
+        public DbSet<WebAppSystems.Models.AIUsageLimit> AIUsageLimit { get; set; } = default!;
     }
 }
 

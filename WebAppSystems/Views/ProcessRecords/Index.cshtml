@@ -30,7 +30,11 @@
     <div class="search-card">
         <div class="search-wrapper">
             <i class="bi bi-search"></i>
-            <input type="text" id="searchInput" class="search-input" placeholder="Buscar por descrição, cliente, usuário ou departamento...">
+            <input type="text" id="searchInput" class="search-input" placeholder="Filtrar por descrição, cliente, usuário, área, tipo..." autocomplete="off">
+            <span id="searchCount" class="search-count-badge"></span>
+            <button type="button" id="btnClearSearch" class="btn-clear-inline" title="Limpar" style="display:none;" onclick="limparBusca()">
+                <i class="bi bi-x-lg"></i>
+            </button>
         </div>
         <div class="filter-buttons">
             <button class="filter-btn @(ViewBag.StatusFilter == "all" ? "active" : "")" onclick="filterStatus('all')">
@@ -57,6 +61,7 @@
                         <th data-i18n="activities.table.endtime">Hora Final</th>
                         <th data-i18n="activities.table.hours">Horas</th>
                         <th data-i18n="activities.table.client">Cliente</th>
+                        <th data-i18n="activities.table.area">Área</th>
                         <th data-i18n="activities.table.user">Usuário</th>
                         <th data-i18n="activities.table.type">Tipo</th>
                         <th class="actions-column" data-i18n="common.actions">Ações</th>
@@ -69,14 +74,17 @@
                         {
                             var isRunning = item.HoraFinal == null || item.HoraFinal == TimeSpan.Zero;
                             var rowClass = isRunning ? "running-timer" : "";
+                            var canEdit = item.Attorney.Id == ViewBag.LoggedUserId;
+                            var editableClass = canEdit ? "editable-cell" : "";
+                            var timeEditableClass = canEdit ? "time-editable" : "";
                             
-                            <tr data-description="@item.Description" title="@item.Description" class="@rowClass">
+                            <tr data-description="@item.Description" title="@item.Description" class="@rowClass" data-search="@($"{item.Date:dd/MM/yyyy} {item.Attorney.Name} {item.Department.Name} {item.Client.Name} {item.Solicitante} {item.RecordType} {item.Description}".ToLower())">
                                 <td class="date-cell">
                                     <i class="bi bi-calendar3"></i>
                                     @item.Date.ToString("dd/MM/yyyy")
                                 </td>
-                                <td class="time-cell">@item.HoraInicial</td>
-                                <td class="time-cell">
+                                <td class="time-cell @timeEditableClass" data-id="@item.Id" data-field="horaInicial" data-value="@item.HoraInicial">@item.HoraInicial</td>
+                                <td class="time-cell @timeEditableClass" data-id="@item.Id" data-field="horaFinal" data-value="@item.HoraFinal">
                                     @if (isRunning)
                                     {
                                         <span class="running-indicator">
@@ -102,12 +110,15 @@
                                         <span class="hours-badge">@item.CalculoHoras()</span>
                                     }
                                 </td>
-                                <td class="client-cell">
+                                <td class="client-cell @editableClass editable-select" data-id="@item.Id" data-field="clientId" data-value="@item.ClientId">
                                     <i class="bi bi-briefcase"></i>
                                     @item.Client.Name
                                 </td>
+                                <td class="@editableClass editable-select" data-id="@item.Id" data-field="departmentId" data-value="@item.DepartmentId">
+                                    @item.Department.Name
+                                </td>
                                 <td class="user-cell">@item.Attorney.Name</td>
-                                <td class="type-cell">
+                                <td class="type-cell @editableClass editable-select" data-id="@item.Id" data-field="recordType" data-value="@((int)item.RecordType)">
                                     <span class="type-badge">@item.RecordType</span>
                                 </td>
                                 <td class="actions-cell">
@@ -149,7 +160,7 @@
                     else
                     {
                         <tr>
-                            <td colspan="8" style="text-align: center; padding: 40px; color: #718096;">
+                            <td colspan="9" style="text-align: center; padding: 40px; color: #718096;">
                                 <i class="bi bi-inbox" style="font-size: 48px; display: block; margin-bottom: 16px; opacity: 0.5;"></i>
                                 <strong>Nenhuma atividade encontrada</strong>
                                 <p style="margin: 8px 0 0 0; font-size: 13px;">Clique em "Novo Registro" para adicionar uma atividade</p>
@@ -287,6 +298,37 @@
         outline: none;
         border-color: #667eea;
         box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .search-count-badge {
+        position: absolute;
+        right: 44px;
+        font-size: 12px;
+        color: #718096;
+        white-space: nowrap;
+        pointer-events: none;
+    }
+    .btn-clear-inline {
+        position: absolute;
+        right: 12px;
+        background: none;
+        border: none;
+        color: #a0aec0;
+        cursor: pointer;
+        padding: 4px 6px;
+        border-radius: 4px;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+    }
+    .btn-clear-inline:hover { color: #e53e3e; background: #fff5f5; }
+
+    /* Highlight do termo buscado */
+    mark.hl {
+        background: #fef08a;
+        color: inherit;
+        border-radius: 2px;
+        padding: 0 1px;
     }
 
     .filter-buttons {
@@ -524,6 +566,29 @@
         font-weight: 500;
     }
 
+    /* Células editáveis */
+    .editable-cell, .time-editable {
+        cursor: pointer;
+        position: relative;
+        transition: background-color 0.2s;
+    }
+
+    .editable-cell:hover, .time-editable:hover {
+        background-color: #f7fafc !important;
+        outline: 1px dashed #667eea;
+    }
+
+    .editable-cell:hover::after, .time-editable:hover::after {
+        content: "✎";
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #667eea;
+        font-size: 14px;
+        opacity: 0.6;
+    }
+
     .actions-column {
         text-align: center;
         width: 140px;
@@ -750,17 +815,46 @@
         setInterval(updateRunningTimers, 1000);
 
         const searchInput = document.getElementById('searchInput');
+        const searchCount = document.getElementById('searchCount');
+        const clearBtn = document.getElementById('btnClearSearch');
         let searchTimeout;
 
-        // Busca com debounce (aguarda 500ms após parar de digitar)
-        searchInput.addEventListener('input', function() {
+        // Pré-preenche o campo se veio da URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlSearch = urlParams.get('search') || '';
+        if (urlSearch) { searchInput.value = urlSearch; clearBtn.style.display = 'flex'; }
+
+        searchInput.addEventListener('input', function () {
+            const term = this.value.trim();
+            clearBtn.style.display = term ? 'flex' : 'none';
             clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                const searchTerm = searchInput.value;
+
+            if (!term) {
+                // Sem filtro: volta para a URL limpa
                 const status = '@ViewBag.StatusFilter';
-                window.location.href = `@Url.Action("Index")?search=${encodeURIComponent(searchTerm)}&status=${status}`;
-            }, 500);
+                window.location.href = `@Url.Action("Index")?status=${status}`;
+                return;
+            }
+
+            // Debounce de 350ms — depois faz reload com o termo (server-side busca em tudo)
+            searchTimeout = setTimeout(() => {
+                const status = '@ViewBag.StatusFilter';
+                window.location.href = `@Url.Action("Index")?search=${encodeURIComponent(term)}&status=${status}`;
+            }, 350);
         });
+
+        window.limparBusca = function() {
+            searchInput.value = '';
+            const status = '@ViewBag.StatusFilter';
+            window.location.href = `@Url.Action("Index")?status=${status}`;
+        };
+
+        // Atualiza contador com o total da página atual
+        const totalItems = @ViewBag.TotalItems;
+        const currentCount = @Model.Count();
+        if (urlSearch) {
+            searchCount.textContent = `${totalItems} resultado${totalItems !== 1 ? 's' : ''} em todos os registros`;
+        }
 
         // Renderizar controles de paginação
         const currentPage = @ViewBag.CurrentPage;
@@ -821,4 +915,147 @@
         const searchParam = searchTerm ? `&search=${encodeURIComponent(searchTerm)}` : '';
         window.location.href = `@Url.Action("Index")?status=${status}${searchParam}`;
     }
+
+    // Dados para edição inline
+    const clientesOptions = [@foreach (var c in ViewBag.Clients) { <text>{ value: @c.Id, text: "@Html.Raw(c.Name.Replace("\"", "\\\""))" },</text> }];
+    const departmentsOptions = [@foreach (var d in ViewBag.Departments) { <text>{ value: @d.Id, text: "@Html.Raw(d.Name.Replace("\"", "\\\""))" },</text> }];
+    const recordTypeOptions = [@foreach (var rt in Enum.GetValues(typeof(WebAppSystems.Models.Enums.RecordType))) { <text>{ value: @((int)rt), text: "@rt" },</text> }];
+    const recordTypeMap = {@foreach (var rt in Enum.GetValues(typeof(WebAppSystems.Models.Enums.RecordType))) { <text>@((int)rt): "@rt",</text> }};
+
+    // Edição inline
+    document.querySelector("#activitiesTable tbody").addEventListener("click", function (e) {
+        const cell = e.target.closest(".editable-cell, .time-editable");
+        if (!cell || cell.querySelector("input, select")) return;
+
+        const id = parseInt(cell.dataset.id);
+        const field = cell.dataset.field;
+        const currentValue = cell.dataset.value;
+        const row = cell.closest("tr");
+
+        let editor;
+
+        if (field === "clientId") {
+            editor = document.createElement("select");
+            clientesOptions.forEach(opt => {
+                const o = document.createElement("option");
+                o.value = opt.value;
+                o.text = opt.text;
+                if (String(opt.value) === String(currentValue)) o.selected = true;
+                editor.appendChild(o);
+            });
+        } else if (field === "departmentId") {
+            editor = document.createElement("select");
+            departmentsOptions.forEach(opt => {
+                const o = document.createElement("option");
+                o.value = opt.value;
+                o.text = opt.text;
+                if (String(opt.value) === String(currentValue)) o.selected = true;
+                editor.appendChild(o);
+            });
+        } else if (field === "recordType") {
+            editor = document.createElement("select");
+            recordTypeOptions.forEach(opt => {
+                const o = document.createElement("option");
+                o.value = opt.value;
+                o.text = opt.text;
+                if (String(opt.value) === String(currentValue)) o.selected = true;
+                editor.appendChild(o);
+            });
+        } else {
+            editor = document.createElement("input");
+            editor.type = "text";
+            editor.value = currentValue;
+        }
+
+        editor.style.width = "100%";
+        editor.style.padding = "4px";
+        editor.style.border = "2px solid #667eea";
+        editor.style.borderRadius = "4px";
+
+        cell.innerHTML = "";
+        cell.appendChild(editor);
+        editor.focus();
+
+        let saved = false;
+
+        async function saveField() {
+            if (saved) return;
+            saved = true;
+
+            const newValue = editor.value;
+            const payload = { processRecordId: id };
+
+            if (field === "horaInicial" || field === "horaFinal") {
+                const inicioCell = row.querySelector(".time-editable[data-field='horaInicial']");
+                const fimCell = row.querySelector(".time-editable[data-field='horaFinal']");
+                payload.horaInicial = field === "horaInicial" ? newValue : inicioCell.dataset.value;
+                payload.horaFinal = field === "horaFinal" ? newValue : fimCell.dataset.value;
+            } else if (field === "clientId") payload.clientId = parseInt(newValue);
+            else if (field === "departmentId") payload.departmentId = parseInt(newValue);
+            else if (field === "recordType") payload.recordType = parseInt(newValue);
+
+            try {
+                const response = await fetch("/ProcessRecords/UpdateField", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    cell.dataset.value = newValue;
+                    if (field === "clientId") {
+                        const opt = clientesOptions.find(o => String(o.value) === String(newValue));
+                        cell.innerHTML = `<i class="bi bi-briefcase"></i> ${opt ? opt.text : newValue}`;
+                    } else if (field === "departmentId") {
+                        const opt = departmentsOptions.find(o => String(o.value) === String(newValue));
+                        cell.textContent = opt ? opt.text : newValue;
+                    } else if (field === "recordType") {
+                        cell.innerHTML = `<span class="type-badge">${recordTypeMap[parseInt(newValue)]}</span>`;
+                    } else {
+                        cell.textContent = newValue;
+                    }
+                    if (field === "horaInicial" || field === "horaFinal") location.reload();
+                } else {
+                    alert("Erro ao salvar.");
+                    restoreCell();
+                }
+            } catch {
+                alert("Erro ao salvar.");
+                restoreCell();
+            }
+
+            function restoreCell() {
+                if (field === "clientId") {
+                    const opt = clientesOptions.find(o => String(o.value) === String(currentValue));
+                    cell.innerHTML = `<i class="bi bi-briefcase"></i> ${opt ? opt.text : currentValue}`;
+                } else if (field === "departmentId") {
+                    const opt = departmentsOptions.find(o => String(o.value) === String(currentValue));
+                    cell.textContent = opt ? opt.text : currentValue;
+                } else if (field === "recordType") {
+                    cell.innerHTML = `<span class="type-badge">${recordTypeMap[parseInt(currentValue)]}</span>`;
+                } else {
+                    cell.textContent = currentValue;
+                }
+            }
+        }
+
+        editor.addEventListener("blur", saveField);
+        editor.addEventListener("keydown", function (e) {
+            if (e.key === "Enter") editor.blur();
+            if (e.key === "Escape") {
+                saved = true;
+                if (field === "clientId") {
+                    const opt = clientesOptions.find(o => String(o.value) === String(currentValue));
+                    cell.innerHTML = `<i class="bi bi-briefcase"></i> ${opt ? opt.text : currentValue}`;
+                } else if (field === "departmentId") {
+                    const opt = departmentsOptions.find(o => String(o.value) === String(currentValue));
+                    cell.textContent = opt ? opt.text : currentValue;
+                } else if (field === "recordType") {
+                    cell.innerHTML = `<span class="type-badge">${recordTypeMap[parseInt(currentValue)]}</span>`;
+                } else {
+                    cell.textContent = currentValue;
+                }
+            }
+        });
+    });
 </script>

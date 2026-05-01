@@ -299,6 +299,9 @@
     <p class="page-subtitle">Análise inteligente de petições e documentos jurídicos</p>
 </div>
 
+<!-- Indicador de Uso da IA -->
+<div id="aiUsageIndicator"></div>
+
 <div class="upload-card">
     <div class="upload-zone" id="uploadZone">
         <div class="upload-icon">
@@ -478,7 +481,33 @@
                     pollAnalysisStatus(result.documentId);
                 } else {
                     console.log('Erro no upload:', result.message);
-                    alert('Erro: ' + result.message);
+                    
+                    // Mostrar mensagem específica baseada no tipo de erro
+                    if (result.message && result.message.includes('Limite diário')) {
+                        // Erro de limite de IA
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Limite de IA Atingido!',
+                                html: `
+                                    <p>${result.message}</p>
+                                    <hr>
+                                    <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 1rem; margin: 1rem 0; text-align: left;">
+                                        <strong>💡 Para continuar:</strong><br>
+                                        • Aguarde até amanhã (limite reseta automaticamente)<br>
+                                        • Ou entre em contato com o administrador para upgrade do plano
+                                    </div>
+                                `,
+                                confirmButtonText: 'Entendi',
+                                confirmButtonColor: '#667eea'
+                            });
+                        } else {
+                            alert('🚫 ' + result.message);
+                        }
+                    } else {
+                        // Outros erros
+                        alert('Erro: ' + result.message);
+                    }
                     resetUpload();
                 }
             } catch (error) {
@@ -524,5 +553,27 @@
             analysisProgress.classList.remove('show');
             btnUpload.disabled = true;
         }
+    </script>
+
+    <!-- Scripts do Indicador de Uso da IA -->
+    <script src="~/js/ai-usage-indicator.js"></script>
+    <script>
+        // Inicializar o indicador de uso da IA
+        document.addEventListener('DOMContentLoaded', function() {
+            window.aiUsageIndicator = initAIUsageIndicator('aiUsageIndicator');
+        });
+
+        // Modificar a função de upload para verificar limite antes de enviar
+        const originalHandleFile = handleFile;
+        handleFile = async function(file) {
+            // Verificar se pode usar IA antes de processar o arquivo
+            const canUse = await canUseAI();
+            if (!canUse) {
+                return; // A função canUseAI já mostra a mensagem de erro
+            }
+            
+            // Chamar a função original se pode usar
+            originalHandleFile(file);
+        };
     </script>
 }

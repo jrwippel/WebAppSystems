@@ -7,6 +7,8 @@ using WebAppSystems.Models.Dto;
 using WebAppSystems.Models.Enums;
 using WebAppSystems.Services;
 using static WebAppSystems.Helper.Sessao;
+using System.Text;
+using System.Text.Json;
 
 namespace WebAppSystems.Controllers
 {
@@ -16,20 +18,30 @@ namespace WebAppSystems.Controllers
         private readonly ProcessRecordsService _service;
         private readonly ISessao _isessao;
         private readonly WebAppSystemsContext _context;
+        private readonly IConfiguration _configuration;
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly AIService _aiService;
+        private readonly AIUsageLimitService _aiUsageLimitService;
 
-        public PainelGestaoController(ProcessRecordsService service, ISessao isessao, WebAppSystemsContext context)
+        public PainelGestaoController(ProcessRecordsService service, ISessao isessao, WebAppSystemsContext context, IConfiguration configuration, IHttpClientFactory httpClientFactory, AIService aiService, AIUsageLimitService aiUsageLimitService)
         {
             _service = service;
             _isessao = isessao;
             _context = context;
+            _configuration = configuration;
+            _httpClientFactory = httpClientFactory;
+            _aiService = aiService;
+            _aiUsageLimitService = aiUsageLimitService;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
             try
             {
                 var usuario = _isessao.BuscarSessaoDoUsuario();
                 ViewBag.LoggedUserId = usuario.Id;
+                var aiConfig = await _context.AIConfiguration.FirstOrDefaultAsync();
+                ViewBag.AIAtivo = aiConfig != null && aiConfig.IsActive;
                 return View();
             }
             catch (SessionExpiredException)
@@ -106,5 +118,97 @@ namespace WebAppSystems.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
+        [HttpPost]
+        public async Task<IActionResult> AnalisarGrafico([FromBody] AnalisarGraficoRequest request)
+        {
+            if (request == null)
+                return BadRequest(new { erro = "Requisição inválida." });
+
+            try
+            {
+                var usuario = _isessao.BuscarSessaoDoUsuario();
+
+                // Verificar limite de uso de IA
+                var (canUse, remainingUses, limitMessage) = await _aiUsageLimitService.CanUseAIAsync(usuario.Id);
+                if (!canUse)
+                {
+                    return StatusCode(429, new { erro = limitMessage });
+                }
+
+                // Verificar se a IA está configurada
+                var (isConfigured, errorMessage) = await _aiService.IsConfiguredAsync();
+                if (!isConfigured)
+                    return StatusCode(503, new { erro = errorMessage });
+
+                var prompt = ConstruirPromptAnalise(request);
+
+                var insight = await _aiService.GenerateContentAsync(prompt, maxTokens: 1024, temperature: 0.7);
+                
+                // Registrar o uso da IA
+                await _aiUsageLimitService.RegisterAIUsageAsync(usuario.Id);
+                
+                return Ok(new { insight, remainingUses = remainingUses - 1 });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(502, new { erro = $"Erro ao gerar análise: {ex.Message}" });
+            }
+        }
+
+        private string ConstruirPromptAnalise(AnalisarGraficoRequest request)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine($"Você é um consultor de gestão jurídica. Analise os dados do gráfico '{request.TituloGrafico}' e forneça insights executivos concisos:");
+            sb.AppendLine();
+            sb.AppendLine($"Período: {request.PeriodoInicio} até {request.PeriodoFim}");
+            sb.AppendLine();
+            sb.AppendLine("Dados:");
+            sb.AppendLine(JsonSerializer.Serialize(request.Dados, new JsonSerializerOptions { WriteIndented = true }));
+            sb.AppendLine();
+            sb.AppendLine("Forneça uma análise executiva em formato de bullet points:");
+            sb.AppendLine("• **O que chama atenção:** 1-2 observações mais importantes dos dados");
+            sb.AppendLine("• **Como melhorar:** 1-2 sugestões práticas para otimizar resultados");
+            sb.AppendLine("• **Ponto de atenção:** 1 aspecto que merece cuidado (se houver)");
+            sb.AppendLine();
+            sb.AppendLine("DIRETRIZES IMPORTANTES:");
+            sb.AppendLine("- Máximo 6 linhas no total");
+            sb.AppendLine("- Use números e percentuais específicos");
+            sb.AppendLine("- SEMPRE analise a relação entre horas trabalhadas e quantidade de registros");
+            sb.AppendLine("- Calcule a média de horas por registro para identificar padrões de eficiência");
+            sb.AppendLine("- Muitos registros com poucas horas = tarefas fragmentadas");
+            sb.AppendLine("- Poucos registros com muitas horas = tarefas concentradas");
+            sb.AppendLine("- Use linguagem natural e direta");
+
+            return sb.ToString();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAIUsageStats()
+        {
+            try
+            {
+                var usuario = _isessao.BuscarSessaoDoUsuario();
+                var stats = await _aiUsageLimitService.GetUsageStatsAsync(usuario.Id);
+                
+                // Log para debug
+                Console.WriteLine($"[DEBUG] GetAIUsageStats para usuário {usuario.Id}: {System.Text.Json.JsonSerializer.Serialize(stats)}");
+                
+                return Ok(stats);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] GetAIUsageStats: {ex.Message}");
+                return StatusCode(500, new { erro = ex.Message });
+            }
+        }
+    }
+
+    public class AnalisarGraficoRequest
+    {
+        public string TituloGrafico { get; set; } = string.Empty;
+        public string PeriodoInicio { get; set; } = string.Empty;
+        public string PeriodoFim { get; set; } = string.Empty;
+        public object Dados { get; set; } = new { };
     }
 }

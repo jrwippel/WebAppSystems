@@ -1,0 +1,485 @@
+@model WebAppSystems.Models.AIConfiguration
+
+@{
+    ViewData["Title"] = "Configurações de IA";
+}
+
+@if (Model != null)
+{
+}
+
+<div class="ai-config-container">
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-left">
+                <div class="header-icon">
+                    <i class="bi bi-robot"></i>
+                </div>
+                <div class="header-text">
+                    <h1 class="page-title">Configurações de IA</h1>
+                    <p class="page-subtitle">Configure o provedor de inteligência artificial para análises e sugestões</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="config-card">
+        <form asp-action="Save" method="post">
+            @if (TempData["MensagemSucesso"] != null)
+            {
+                <div class="alert alert-success">
+                    <i class="bi bi-check-circle"></i> @TempData["MensagemSucesso"]
+                </div>
+            }
+
+            @if (TempData["MensagemErro"] != null)
+            {
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-circle"></i> @TempData["MensagemErro"]
+                </div>
+            }
+
+            <div class="form-section">
+                <h3><i class="bi bi-gear-fill"></i> Provedor de IA</h3>
+
+                <div class="form-group">
+                    <label for="Provider">Provedor</label>
+                    <select name="Provider" id="providerSelect" class="form-control">
+                        <option value="GoogleGemini" selected="@(Model.Provider == "GoogleGemini" ? "selected" : null)">Google Gemini</option>
+                        <option value="OpenAI" selected="@(Model.Provider == "OpenAI" ? "selected" : null)">OpenAI (ChatGPT)</option>
+                        <option value="Anthropic" selected="@(Model.Provider == "Anthropic" ? "selected" : null)">Anthropic (Claude)</option>
+                        <option value="Groq" selected="@(Model.Provider == "Groq" ? "selected" : null)">Groq (Grátis e Rápido)</option>
+                    </select>
+                    <small class="form-text">Escolha o provedor de IA que deseja utilizar</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="Model">Modelo</label>
+                    <select name="Model" id="modelSelect" class="form-control">
+                        <optgroup label="Google Gemini" id="gemini-models">
+                            <option value="gemini-2.0-flash" selected="@(Model.Model == "gemini-2.0-flash" || Model.Model == "gemini-1.5-flash-latest" || Model.Model == "gemini-1.5-flash" || Model.Model == "gemini-pro" ? "selected" : null)">Gemini 2.0 Flash (Recomendado)</option>
+                            <option value="gemini-2.5-flash" selected="@(Model.Model == "gemini-2.5-flash" ? "selected" : null)">Gemini 2.5 Flash (Mais Recente)</option>
+                            <option value="gemini-2.5-pro" selected="@(Model.Model == "gemini-2.5-pro" || Model.Model == "gemini-1.5-pro-latest" || Model.Model == "gemini-1.5-pro" ? "selected" : null)">Gemini 2.5 Pro (Avançado)</option>
+                        </optgroup>
+                        <optgroup label="OpenAI" id="openai-models" style="display:none;">
+                            <option value="gpt-4">GPT-4 (Mais Avançado)</option>
+                            <option value="gpt-4-turbo">GPT-4 Turbo (Rápido)</option>
+                            <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Econômico)</option>
+                        </optgroup>
+                        <optgroup label="Anthropic" id="anthropic-models" style="display:none;">
+                            <option value="claude-3-opus">Claude 3 Opus (Mais Avançado)</option>
+                            <option value="claude-3-sonnet">Claude 3 Sonnet (Balanceado)</option>
+                            <option value="claude-3-haiku">Claude 3 Haiku (Rápido)</option>
+                        </optgroup>
+                        <optgroup label="Groq" id="groq-models" style="display:none;">
+                            <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Recomendado)</option>
+                            <option value="llama-3.1-70b-versatile">Llama 3.1 70B</option>
+                            <option value="mixtral-8x7b-32768">Mixtral 8x7B (Rápido)</option>
+                            <option value="gemma2-9b-it">Gemma 2 9B (Leve)</option>
+                        </optgroup>
+                    </select>
+                    <small class="form-text">Selecione o modelo específico do provedor</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="ApiKey">Chave da API</label>
+                    <div class="input-group">
+                        <input name="ApiKey" type="password" class="form-control" id="apiKeyInput" placeholder="Cole sua chave da API aqui" value="@Model.ApiKey" />
+                        <button type="button" class="btn-toggle-password" onclick="toggleApiKeyVisibility()">
+                            <i class="bi bi-eye" id="toggleIcon"></i>
+                        </button>
+                    </div>
+                    <small class="form-text" id="apiKeyHelp">
+                        Obtenha sua chave em: <a href="https://aistudio.google.com/app/apikey" target="_blank" id="apiKeyLink">Google AI Studio</a>
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <div class="form-check">
+                        <input name="IsActive" class="form-check-input" type="checkbox" id="isActiveCheck" value="true" @(Model.IsActive ? "checked" : "") />
+                        <input type="hidden" name="IsActive" value="false" />
+                        <label for="isActiveCheck" class="form-check-label">Ativar funcionalidades de IA</label>
+                    </div>
+                    <small class="form-text">Quando desativado, os botões de IA não estarão disponíveis</small>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn-test" onclick="testarConexao()">
+                    <i class="bi bi-lightning-charge"></i> Testar Conexão
+                </button>
+                <button type="button" class="btn-save" onclick="validarESalvar()">
+                    <i class="bi bi-check-circle"></i> Salvar Configurações
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="info-card">
+        <h3><i class="bi bi-info-circle-fill"></i> Informações Importantes</h3>
+        <ul>
+            <li><strong>Google Gemini:</strong> Oferece plano gratuito com limites. Ideal para começar.</li>
+            <li><strong>OpenAI:</strong> Requer conta paga. Modelos GPT-4 são mais avançados mas custam mais.</li>
+            <li><strong>Anthropic:</strong> Claude é conhecido por respostas mais detalhadas e contextuais.</li>
+            <li><strong>Groq:</strong> Grátis e extremamente rápido. Usa modelos open-source como Llama 3.3.</li>
+            <li><strong>Segurança:</strong> Sua chave da API é armazenada de forma segura no banco de dados.</li>
+            <li><strong>Custos:</strong> Cada provedor tem sua própria política de preços.</li>
+        </ul>
+    </div>
+</div>
+
+<style>
+    .ai-config-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 24px;
+        min-height: 100vh;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        padding: 24px 28px;
+        margin-bottom: 24px;
+        box-shadow: 0 6px 25px rgba(102, 126, 234, 0.25);
+    }
+
+    .header-content {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .header-icon {
+        width: 60px;
+        height: 60px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        color: white;
+        backdrop-filter: blur(10px);
+    }
+
+    .page-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: white;
+        margin: 0 0 6px 0;
+    }
+
+    .page-subtitle {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.9);
+        margin: 0;
+    }
+
+    .config-card, .info-card {
+        background: white;
+        border-radius: 12px;
+        padding: 28px;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .form-section h3 {
+        font-size: 18px;
+        font-weight: 600;
+        color: #2d3748;
+        margin: 0 0 20px 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .form-section h3 i {
+            color: #667eea;
+        }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 8px;
+        }
+
+    /* CORREÇÃO DOS CAMPOS CORTADOS */
+    .form-control {
+        width: 100%;
+        padding: 10px 12px;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        display: block;
+        background-color: #fff;
+        color: #2d3748;
+        box-sizing: border-box;
+    }
+
+    select.form-control {
+        appearance: none;
+        -webkit-appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%234a5568' class='bi bi-chevron-down' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        padding-right: 40px;
+        height: 42px;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .input-group {
+        display: flex;
+        gap: 8px;
+    }
+
+        .input-group .form-control {
+            flex: 1;
+        }
+
+    .btn-toggle-password {
+        padding: 0 16px;
+        background: #f7fafc;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        cursor: pointer;
+        color: #4a5568;
+    }
+
+    .form-actions {
+        display: flex;
+        flex-wrap: wrap; /* Permite quebrar linha se não couber */
+        gap: 12px;
+        margin-top: 28px;
+        padding-top: 24px;
+        border-top: 2px solid #f7fafc;
+    }
+
+    .btn-test, .btn-save {
+        flex: 1;
+        min-width: 160px; /* Largura mínima para não esmagar o texto */
+        padding: 12px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .btn-test {
+        background: #f7fafc;
+        color: #4a5568;
+        border: 2px solid #e2e8f0;
+    }
+
+    .secondary-btn {
+        background: #e2e8f0;
+        border: none;
+    }
+
+    .warning-btn {
+        background: #fef3c7;
+        border: none;
+    }
+
+    .btn-save {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+        .btn-test:hover, .btn-save:hover {
+            transform: translateY(-2px);
+        }
+
+    .alert {
+        margin-bottom: 20px;
+        padding: 12px 16px;
+        border-radius: 8px;
+    }
+
+    .alert-success {
+        background: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+    }
+
+    .alert-danger {
+        background: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+    }
+
+    .info-card li {
+        padding: 10px 0;
+        border-bottom: 1px solid #f7fafc;
+        font-size: 13px;
+        color: #4a5568;
+    }
+
+    @@keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
+    }
+</style>
+
+<script>
+    // Gerenciamento de Provedores e Modelos
+    document.getElementById('providerSelect').addEventListener('change', function (e) {
+        const provider = this.value;
+        const apiKeyLink = document.getElementById('apiKeyLink');
+
+        document.querySelectorAll('#modelSelect optgroup').forEach(g => g.style.display = 'none');
+
+        if (provider === 'GoogleGemini') {
+            document.getElementById('gemini-models').style.display = 'block';
+            apiKeyLink.href = 'https://aistudio.google.com/app/apikey';
+            apiKeyLink.textContent = 'Google AI Studio';
+        } else if (provider === 'OpenAI') {
+            document.getElementById('openai-models').style.display = 'block';
+            apiKeyLink.href = 'https://platform.openai.com/api-keys';
+            apiKeyLink.textContent = 'OpenAI Platform';
+        } else if (provider === 'Anthropic') {
+            document.getElementById('anthropic-models').style.display = 'block';
+            apiKeyLink.href = 'https://console.anthropic.com/';
+            apiKeyLink.textContent = 'Anthropic Console';
+        } else if (provider === 'Groq') {
+            document.getElementById('groq-models').style.display = 'block';
+            apiKeyLink.href = 'https://console.groq.com/keys';
+            apiKeyLink.textContent = 'Groq Console';
+        }
+
+        // Sempre selecionar o primeiro modelo do provedor escolhido
+        const modelSelect = document.getElementById('modelSelect');
+        const firstVisible = modelSelect.querySelector('optgroup[style*="block"] option');
+        if (firstVisible) modelSelect.value = firstVisible.value;
+    });
+
+    // Toggle de visibilidade da senha
+    function toggleApiKeyVisibility() {
+        const input = document.getElementById('apiKeyInput');
+        const icon = document.getElementById('toggleIcon');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.className = 'bi bi-eye-slash';
+        } else {
+            input.type = 'password';
+            icon.className = 'bi bi-eye';
+        }
+    }
+
+    // Validar antes de salvar
+    function validarESalvar() {
+        const provider = document.getElementById('providerSelect').value;
+        const model = document.getElementById('modelSelect').value;
+        
+        // Validar se o modelo é compatível com o provedor
+        const modelosGemini = ['gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-2.5-pro'];
+        const modelosOpenAI = ['gpt-4', 'gpt-4-turbo', 'gpt-3.5-turbo'];
+        const modelosAnthropic = ['claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku'];
+        const modelosGroq = ['llama-3.3-70b-versatile', 'llama-3.1-70b-versatile', 'mixtral-8x7b-32768', 'gemma2-9b-it'];
+        
+        let valido = false;
+        if (provider === 'GoogleGemini' && modelosGemini.includes(model)) valido = true;
+        if (provider === 'OpenAI' && modelosOpenAI.includes(model)) valido = true;
+        if (provider === 'Anthropic' && modelosAnthropic.includes(model)) valido = true;
+        if (provider === 'Groq' && modelosGroq.includes(model)) valido = true;
+        
+        if (!valido) {
+            alert(`ERRO: O modelo "${model}" não é compatível com o provedor "${provider}".\n\nPor favor, selecione um modelo correto antes de salvar.`);
+            return;
+        }
+        
+        console.log('Salvando configuração:', { provider, model });
+        document.querySelector('form').submit();
+    }
+
+    // Inicializar ao carregar a página
+    window.addEventListener('DOMContentLoaded', function() {
+        const providerSelect = document.getElementById('providerSelect');
+        const modelSelect = document.getElementById('modelSelect');
+        const provider = providerSelect.value;
+        const savedModel = modelSelect.value;
+
+        // Esconder todos os optgroups
+        document.querySelectorAll('#modelSelect optgroup').forEach(g => g.style.display = 'none');
+
+        // Mostrar o optgroup correto baseado no provider salvo
+        if (provider === 'GoogleGemini') {
+            document.getElementById('gemini-models').style.display = 'block';
+        } else if (provider === 'OpenAI') {
+            document.getElementById('openai-models').style.display = 'block';
+        } else if (provider === 'Anthropic') {
+            document.getElementById('anthropic-models').style.display = 'block';
+        } else if (provider === 'Groq') {
+            document.getElementById('groq-models').style.display = 'block';
+        }
+
+        // Verificar se o modelo salvo pertence ao provedor atual
+        const visibleGroup = document.querySelector('#modelSelect optgroup[style*="block"]');
+        if (visibleGroup) {
+            const modelExists = Array.from(visibleGroup.querySelectorAll('option')).some(opt => opt.value === savedModel);
+            
+            // Se o modelo salvo não existe no provedor atual, selecionar o primeiro
+            if (!modelExists) {
+                const firstOption = visibleGroup.querySelector('option');
+                if (firstOption) modelSelect.value = firstOption.value;
+            }
+        }
+    });
+
+    // Ajax de Teste
+    async function testarConexao() {
+        const provider = document.getElementById('providerSelect').value;
+        const apiKey = document.getElementById('apiKeyInput').value;
+        const model = document.getElementById('modelSelect').value;
+
+        if (!apiKey) {
+            alert('Por favor, informe a chave da API antes de testar.');
+            return;
+        }
+
+        const btn = event.target.closest('button');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-arrow-repeat" style="display:inline-block; animation: spin 1s linear infinite;"></i> Testando...';
+        btn.disabled = true;
+
+        try {
+            const response = await fetch('/AIConfiguration/TestConnection', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ Provider: provider, ApiKey: apiKey, Model: model })
+            });
+
+            const result = await response.json();
+            alert(response.ok ? '✓ ' + result.mensagem : '✗ ' + result.erro);
+        } catch (e) {
+            alert('✗ Erro ao testar conexão: ' + e.message);
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+</script>

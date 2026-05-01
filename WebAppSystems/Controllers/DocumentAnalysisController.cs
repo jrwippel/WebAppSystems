@@ -21,19 +21,21 @@ namespace WebAppSystems.Controllers
         private readonly WebAppSystemsContext _context;
         private readonly ISessao _sessao;
         private readonly DocumentTextExtractorService _textExtractor;
-        private readonly AIDocumentAnalysisService _aiService;
+        private readonly DocumentAIAnalysisService _aiService;
         private readonly AttorneyRecommendationService _recommendationService;
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<DocumentAnalysisController> _logger;
+        private readonly AIUsageLimitService _aiUsageLimitService;
 
         public DocumentAnalysisController(
             WebAppSystemsContext context,
             ISessao sessao,
             DocumentTextExtractorService textExtractor,
-            AIDocumentAnalysisService aiService,
+            DocumentAIAnalysisService aiService,
             AttorneyRecommendationService recommendationService,
             IServiceProvider serviceProvider,
-            ILogger<DocumentAnalysisController> logger)
+            ILogger<DocumentAnalysisController> logger,
+            AIUsageLimitService aiUsageLimitService)
         {
             _context = context;
             _sessao = sessao;
@@ -42,6 +44,7 @@ namespace WebAppSystems.Controllers
             _recommendationService = recommendationService;
             _serviceProvider = serviceProvider;
             _logger = logger;
+            _aiUsageLimitService = aiUsageLimitService;
         }
 
         public async Task<IActionResult> Index()
@@ -97,6 +100,14 @@ namespace WebAppSystems.Controllers
                 _logger.LogInformation("=== INÍCIO DO UPLOAD ===");
                 Attorney usuario = _sessao.BuscarSessaoDoUsuario();
                 _logger.LogInformation($"Usuário: {usuario.Name} (ID: {usuario.Id})");
+
+                // Verificar limite de uso de IA
+                var (canUse, remainingUses, limitMessage) = await _aiUsageLimitService.CanUseAIAsync(usuario.Id);
+                if (!canUse)
+                {
+                    _logger.LogWarning($"LIMITE DE IA ATINGIDO para usuário {usuario.Id}");
+                    return Json(new { success = false, message = limitMessage });
+                }
 
                 if (file == null || file.Length == 0)
                 {
@@ -154,6 +165,10 @@ namespace WebAppSystems.Controllers
                 await _context.SaveChangesAsync();
                 _logger.LogInformation($"Registro criado com ID: {documentAnalysis.Id}");
 
+                // Registrar o uso da IA
+                await _aiUsageLimitService.RegisterAIUsageAsync(usuario.Id);
+                _logger.LogInformation($"Uso de IA registrado para usuário {usuario.Id}");
+
                 // TESTE: Processar de forma SÍNCRONA para debug
                 _logger.LogInformation("=== PROCESSANDO DE FORMA SÍNCRONA (TESTE) ===");
                 try
@@ -187,7 +202,7 @@ namespace WebAppSystems.Controllers
                 
                 var context = scope.ServiceProvider.GetRequiredService<WebAppSystemsContext>();
                 var textExtractor = scope.ServiceProvider.GetRequiredService<DocumentTextExtractorService>();
-                var aiService = scope.ServiceProvider.GetRequiredService<AIDocumentAnalysisService>();
+                var aiService = scope.ServiceProvider.GetRequiredService<DocumentAIAnalysisService>();
                 var recommendationService = scope.ServiceProvider.GetRequiredService<AttorneyRecommendationService>();
                 var logger = scope.ServiceProvider.GetRequiredService<ILogger<DocumentAnalysisController>>();
 
@@ -517,6 +532,21 @@ namespace WebAppSystems.Controllers
                 viewModel.RecommendedAttorneys = JsonSerializer.Deserialize<List<AttorneyRecommendation>>(document.RecommendedAttorneys);
 
             return viewModel;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAIUsageStats()
+        {
+            try
+            {
+                Attorney usuario = _sessao.BuscarSessaoDoUsuario();
+                var stats = await _aiUsageLimitService.GetUsageStatsAsync(usuario.Id);
+                return Json(new { success = true, data = stats });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
         }
     }
 }

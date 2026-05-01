@@ -2,6 +2,7 @@
 using ClosedXML.Excel.Drawings;
 using DocumentFormat.OpenXml.Drawing;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using NPOI.HSSF.UserModel;
 using NPOI.HSSF.Util;
 using NPOI.SS.UserModel;
@@ -14,6 +15,8 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Globalization;
 using System.Text;
+using System.Text.Json;
+using WebAppSystems.Data;
 using WebAppSystems.Filters;
 using WebAppSystems.Helper;
 using WebAppSystems.Models;
@@ -35,29 +38,37 @@ namespace WebAppSystems.Controllers
     public class ProcessRecordController : Controller
     {
         private readonly ProcessRecordService _processRecordService;
-
         private readonly ClientService _clientService;
-
         private readonly AttorneyService _attorneyService;
-
         private readonly ValorClienteService _valorClienteService;
-
         private readonly IWebHostEnvironment _env;
-
         private readonly ISessao _isessao;
-
         private readonly ParametroService _parametroService;
-
         private readonly DepartmentService _departmentService;
-
+        private readonly IConfiguration _configuration;
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly WebAppSystems.Data.WebAppSystemsContext _context;
+        private readonly AIUsageLimitService _aiUsageLimitService;
+        private readonly AIService _aiService;
 
         public ProcessRecordController(ProcessRecordService processRecordService, ClientService clientService, AttorneyService attorneyService, IWebHostEnvironment env, ISessao isessao, 
-            ValorClienteService valorClienteService, ParametroService parametroService, DepartmentService departmentService)
+            ValorClienteService valorClienteService, ParametroService parametroService, DepartmentService departmentService,
+            IConfiguration configuration, IHttpClientFactory httpClientFactory,
+            WebAppSystems.Data.WebAppSystemsContext context, AIUsageLimitService aiUsageLimitService, AIService aiService)
         {
             _processRecordService = processRecordService;
             _clientService = clientService;
             _attorneyService = attorneyService;
             _valorClienteService = valorClienteService;
+            _env = env;
+            _isessao = isessao;
+            _parametroService = parametroService;
+            _departmentService = departmentService;
+            _configuration = configuration;
+            _httpClientFactory = httpClientFactory;
+            _context = context;
+            _aiUsageLimitService = aiUsageLimitService;
+            _aiService = aiService;
             _env = env;
             _isessao = isessao;
             _parametroService = parametroService;
@@ -71,18 +82,21 @@ namespace WebAppSystems.Controllers
         {
             try
             {
-                await PopulateViewBag();
-                return View();
+                return RedirectToAction("SimpleSearch");
             }
             catch (SessionExpiredException)
             {
-                // Redirecione para a página de login se a sessão expirou
                 TempData["MensagemAviso"] = "A sessão expirou. Por favor, faça login novamente.";
                 return RedirectToAction("Index", "Login");
             }
         }
+
         public async Task<IActionResult> SimpleSearch(DateTime? minDate, DateTime? maxDate, string clientIds, int? attorneyId, int? departmentId, string recordType)
         {
+            bool primeiraVisita = !minDate.HasValue && !maxDate.HasValue &&
+                                  string.IsNullOrEmpty(clientIds) && !attorneyId.HasValue &&
+                                  !departmentId.HasValue && string.IsNullOrEmpty(recordType);
+
             SetDefaultDateValues(ref minDate, ref maxDate);
 
             RecordType? recordTypeEnum = null;
@@ -104,14 +118,16 @@ namespace WebAppSystems.Controllers
             PopulateViewData(minDate, maxDate, clientIdList, attorneyId, recordTypeEnum?.ToString());
             await PopulateViewBag();
 
+            if (primeiraVisita)
+                return View(Enumerable.Empty<ProcessRecord>());
+
             var result = await _processRecordService.FindByDateAsync(minDate, maxDate, clientIdList, attorneyId, departmentId, recordTypeEnum);
             return View(result);
-
         }
 
         // Ação para gerar e baixar o arquivo CSV
 
-        public async Task<IActionResult> DownloadReport(DateTime? minDate, DateTime? maxDate, string clientIds, int? attorneyId, int? departmentId, string recordType = null, string format = "xlsx")
+        public async Task<IActionResult> DownloadReport(DateTime? minDate, DateTime? maxDate, string clientIds, int? attorneyId, int? departmentId, string recordType = null, string format = "xlsx", string ignoredIds = null)
         {
 
             RecordType? recordTypeEnum = null;
@@ -130,8 +146,19 @@ namespace WebAppSystems.Controllers
                     .ToList();
             }
 
+            // IDs a ignorar
+            var ignoredIdList = new HashSet<int>();
+            if (!string.IsNullOrEmpty(ignoredIds))
+            {
+                foreach (var idStr in ignoredIds.Split(',').Where(s => !string.IsNullOrWhiteSpace(s)))
+                    if (int.TryParse(idStr.Trim(), out var pid)) ignoredIdList.Add(pid);
+            }
+
             // Obter os registros filtrados usando a função FindByDateAsync
-            var filteredRecords = await _processRecordService.FindByDateAsync(minDate, maxDate, clientIdList, attorneyId, departmentId, recordTypeEnum);
+            var allRecords = await _processRecordService.FindByDateAsync(minDate, maxDate, clientIdList, attorneyId, departmentId, recordTypeEnum);
+            var filteredRecords = ignoredIdList.Count > 0
+                ? allRecords.Where(r => !ignoredIdList.Contains(r.Id)).ToList()
+                : allRecords;
 
             string clientName = null;
             if (clientIdList != null && clientIdList.Count == 1)
@@ -905,7 +932,7 @@ namespace WebAppSystems.Controllers
 
 
         // Ação para gerar Pré-Fatura em PDF
-        public async Task<IActionResult> PreFatura(DateTime? minDate, DateTime? maxDate, string clientIds, int? attorneyId, int? departmentId, string recordType = null)
+        public async Task<IActionResult> PreFatura(DateTime? minDate, DateTime? maxDate, string clientIds, int? attorneyId, int? departmentId, string recordType = null, string ignoredIds = null)
         {
             SetDefaultDateValues(ref minDate, ref maxDate);
 
@@ -922,7 +949,18 @@ namespace WebAppSystems.Controllers
                     .ToList();
             }
 
-            var filteredRecords = await _processRecordService.FindByDateAsync(minDate, maxDate, clientIdList, attorneyId, departmentId, recordTypeEnum);
+            // IDs a ignorar
+            var ignoredIdList = new HashSet<int>();
+            if (!string.IsNullOrEmpty(ignoredIds))
+            {
+                foreach (var idStr in ignoredIds.Split(',').Where(s => !string.IsNullOrWhiteSpace(s)))
+                    if (int.TryParse(idStr.Trim(), out var pid)) ignoredIdList.Add(pid);
+            }
+
+            var allRecords = await _processRecordService.FindByDateAsync(minDate, maxDate, clientIdList, attorneyId, departmentId, recordTypeEnum);
+            var filteredRecords = ignoredIdList.Count > 0
+                ? allRecords.Where(r => !ignoredIdList.Contains(r.Id)).ToList()
+                : allRecords;
 
             // Buscar logo da empresa
             byte[] logoData = null;
@@ -1146,6 +1184,293 @@ namespace WebAppSystems.Controllers
         }
 
         #endregion
+
+        // ── IA: Resumo Executivo ────────────────────────────────────────────
+
+        [HttpPost]
+        public async Task<IActionResult> GerarResumoExecutivo([FromBody] ResumoExecutivoRequest request)
+        {
+            try
+            {
+                var usuario = _isessao.BuscarSessaoDoUsuario();
+
+                var (canUse, remainingUses, limitMessage) = await _aiUsageLimitService.CanUseAIAsync(usuario.Id);
+                if (!canUse) return StatusCode(429, new { erro = limitMessage });
+
+                var (isConfigured, errorMessage) = await _aiService.IsConfiguredAsync();
+                if (!isConfigured) return StatusCode(503, new { erro = errorMessage });
+
+                if (request?.Registros == null || !request.Registros.Any())
+                    return BadRequest(new { erro = "Nenhum registro para resumir." });
+
+                var linhas = request.Registros.Select(r =>
+                    $"- {r.Data}: {r.Advogado} — {r.Descricao} ({r.Horas}) [{r.Tipo}]");
+
+                var prompt =
+                    $"Você é um advogado sênior de um escritório de advocacia brasileiro.\n\n" +
+                    $"Abaixo estão os lançamentos detalhados de horas dos serviços jurídicos prestados ao cliente {request.Cliente} no período de {request.Periodo}, totalizando {request.TotalHoras} de trabalho.\n\n" +
+                    $"LANÇAMENTOS:\n{string.Join("\n", linhas)}\n\n" +
+                    "Com base EXCLUSIVAMENTE nas descrições acima, elabore um RESUMO EXECUTIVO profissional e narrativo.\n\n" +
+                    "INSTRUÇÕES:\n" +
+                    "- Leia atentamente cada descrição e identifique os temas, fases e contextos do trabalho jurídico realizado\n" +
+                    "- Conecte os pontos: se há análise de contrato seguida de negociação, narre como uma sequência lógica\n" +
+                    "- Agrupe atividades relacionadas em blocos temáticos\n" +
+                    "- Escreva em português formal, como um relatório profissional enviado ao cliente\n" +
+                    "- Use texto corrido em parágrafos — sem bullet points, sem listas, sem markdown\n" +
+                    "- Mencione os profissionais envolvidos quando enriquecer a narrativa\n" +
+                    "- Inclua o total de horas ao final\n" +
+                    "- Entre 4 e 6 parágrafos bem desenvolvidos\n" +
+                    "- NÃO invente fatos além do que está nas descrições\n\n" +
+                    "Retorne APENAS o texto do resumo, sem título, sem cabeçalho, sem markdown.";
+
+                var resumo = await _aiService.GenerateContentAsync(prompt, maxTokens: 1500, temperature: 0.5);
+                await _aiUsageLimitService.RegisterAIUsageAsync(usuario.Id);
+
+                return Ok(new { resumo = resumo?.Trim(), remainingUses = remainingUses - 1 });
+            }
+            catch (SessionExpiredException) { return StatusCode(401, new { erro = "Sessão expirada." }); }
+            catch (Exception ex) { return StatusCode(502, new { erro = $"Erro: {ex.Message}" }); }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> GerarResumoExecutivoPDF([FromBody] ResumoExecutivoRequest request)
+        {
+            try
+            {
+                _isessao.BuscarSessaoDoUsuario();
+
+                // Logo do escritório
+                byte[] logoEscritorioBytes = null;
+                try
+                {
+                    var parametros = await _context.Parametros.FirstOrDefaultAsync();
+                    if (parametros?.LogoData != null) logoEscritorioBytes = parametros.LogoData;
+                }
+                catch { }
+                if (logoEscritorioBytes == null)
+                {
+                    var logoPath = System.IO.Path.Combine(_env.WebRootPath, "Logo");
+                    if (System.IO.Directory.Exists(logoPath))
+                    {
+                        var lf = System.IO.Directory.GetFiles(logoPath)
+                            .FirstOrDefault(f => f.EndsWith(".png") || f.EndsWith(".jpg") || f.EndsWith(".jpeg"));
+                        if (lf != null) logoEscritorioBytes = System.IO.File.ReadAllBytes(lf);
+                    }
+                }
+
+                // Logo do cliente
+                byte[] logoClienteBytes = null;
+                try
+                {
+                    if (request.ClienteId > 0)
+                    {
+                        var cli = await _context.Client.FindAsync(request.ClienteId);
+                        if (cli?.ImageData != null) logoClienteBytes = cli.ImageData;
+                    }
+                }
+                catch { }
+
+                var corPrimaria     = "#4a3f8f";
+                var corSecundaria   = "#667eea";
+                var corTexto        = "#1a202c";
+                var corSubtexto     = "#4a5568";
+                var corCinza        = "#718096";
+                var corLinha        = "#e2e8f0";
+                var corHeaderTabela = "#4a3f8f";
+
+                var pdf = Document.Create(container =>
+                {
+                    container.Page(page =>
+                    {
+                        page.Size(PageSizes.A4);
+                        page.Margin(2.5f, Unit.Centimetre);
+                        page.DefaultTextStyle(x => x.FontFamily("Arial").FontSize(10).FontColor(corTexto));
+
+                        // ── CABEÇALHO ──────────────────────────────────────────
+                        page.Header().Column(col =>
+                        {
+                            // Linha roxa no topo
+                            col.Item().PaddingBottom(12).Row(row =>
+                            {
+                                row.RelativeItem().Column(c =>
+                                {
+                                    // Logo do escritório
+                                    if (logoEscritorioBytes != null)
+                                        c.Item().MaxHeight(45).MaxWidth(120).Image(logoEscritorioBytes).FitArea();
+
+                                    c.Item().PaddingTop(logoEscritorioBytes != null ? 8 : 0)
+                                        .Text("RESUMO EXECUTIVO")
+                                        .FontSize(20).Bold().FontColor(corPrimaria);
+                                    c.Item().Text("Serviços Jurídicos Prestados")
+                                        .FontSize(9).FontColor(corSecundaria);
+                                });
+
+                                // Box direito: logo cliente + horas
+                                row.ConstantItem(100).Column(c =>
+                                {
+                                    if (logoClienteBytes != null)
+                                    {
+                                        c.Item().AlignCenter().MaxHeight(35).MaxWidth(90).Image(logoClienteBytes).FitArea();
+                                        c.Item().Height(6);
+                                    }
+                                    c.Item().Border(1.5f).BorderColor(corSecundaria).Padding(8).Column(box =>
+                                    {
+                                        box.Item().AlignCenter().Text(request.TotalHoras)
+                                            .FontSize(16).Bold().FontColor(corPrimaria);
+                                        box.Item().AlignCenter().Text("horas dedicadas")
+                                            .FontSize(7).FontColor(corCinza);
+                                        box.Item().PaddingTop(2).AlignCenter()
+                                            .Text($"{request.Registros?.Count ?? 0} lançamentos")
+                                            .FontSize(7).FontColor(corSecundaria);
+                                    });
+                                });
+                            });
+
+                            // Info do cliente
+                            col.Item().PaddingBottom(4).Text(request.Cliente)
+                                .FontSize(13).Bold().FontColor(corTexto);
+                            col.Item().PaddingBottom(10).Row(r =>
+                            {
+                                r.AutoItem().Text("Período: ").FontSize(8.5f).FontColor(corCinza);
+                                r.AutoItem().Text(request.Periodo).FontSize(8.5f).Bold().FontColor(corSubtexto);
+                                r.ConstantItem(16);
+                                r.AutoItem().Text("Total: ").FontSize(8.5f).FontColor(corCinza);
+                                r.AutoItem().Text(request.TotalHoras).FontSize(8.5f).Bold().FontColor(corPrimaria);
+                            });
+
+                            // Linha separadora
+                            col.Item().Height(3).Background(corPrimaria);
+                            col.Item().Height(1).Background(corSecundaria);
+                            col.Item().Height(8);
+                        });
+
+                        // ── CONTEÚDO ───────────────────────────────────────────
+                        page.Content().Column(col =>
+                        {
+                            if (!string.IsNullOrWhiteSpace(request.Resumo))
+                            {
+                                col.Item().Row(r =>
+                                {
+                                    r.ConstantItem(4).Background(corSecundaria);
+                                    r.ConstantItem(8);
+                                    r.RelativeItem().Text("ANÁLISE DO PERÍODO")
+                                        .FontSize(8.5f).Bold().FontColor(corPrimaria).LetterSpacing(0.06f);
+                                });
+                                col.Item().PaddingTop(6).LineHorizontal(0.5f).LineColor(corLinha);
+                                col.Item().PaddingTop(10).Text(request.Resumo)
+                                    .FontSize(10.5f).LineHeight(1.85f).FontColor(corTexto).Justify();
+                            }
+
+                            if (request.Registros != null && request.Registros.Any())
+                            {
+                                col.Item().PaddingTop(24).Row(r =>
+                                {
+                                    r.ConstantItem(4).Background(corSecundaria);
+                                    r.ConstantItem(8);
+                                    r.RelativeItem().Text("DETALHAMENTO DOS LANÇAMENTOS")
+                                        .FontSize(8.5f).Bold().FontColor(corPrimaria).LetterSpacing(0.06f);
+                                });
+                                col.Item().PaddingTop(6).LineHorizontal(0.5f).LineColor(corLinha);
+                                col.Item().PaddingTop(10).Table(table =>
+                                {
+                                    table.ColumnsDefinition(cols =>
+                                    {
+                                        cols.ConstantColumn(55);
+                                        cols.RelativeColumn(1.8f);
+                                        cols.RelativeColumn(4.5f);
+                                        cols.ConstantColumn(40);
+                                        cols.RelativeColumn(1.4f);
+                                    });
+
+                                    IContainer HC(IContainer c) =>
+                                        c.Background(corHeaderTabela).PaddingVertical(6).PaddingHorizontal(5);
+
+                                    table.Header(h =>
+                                    {
+                                        h.Cell().Element(HC).Text("DATA").FontSize(7).Bold().FontColor("#ffffff");
+                                        h.Cell().Element(HC).Text("PROFISSIONAL").FontSize(7).Bold().FontColor("#ffffff");
+                                        h.Cell().Element(HC).Text("DESCRIÇÃO").FontSize(7).Bold().FontColor("#ffffff");
+                                        h.Cell().Element(HC).Text("HORAS").FontSize(7).Bold().FontColor("#ffffff");
+                                        h.Cell().Element(HC).Text("TIPO").FontSize(7).Bold().FontColor("#ffffff");
+                                    });
+
+                                    bool alt = false;
+                                    foreach (var reg in request.Registros)
+                                    {
+                                        var bg = alt ? "#f0f2ff" : "#ffffff";
+                                        alt = !alt;
+                                        IContainer DC(IContainer c) =>
+                                            c.Background(bg).BorderBottom(0.5f).BorderColor(corLinha)
+                                             .PaddingVertical(5).PaddingHorizontal(5);
+
+                                        table.Cell().Element(DC).Text(reg.Data ?? "").FontSize(7.5f).FontColor(corSubtexto);
+                                        table.Cell().Element(DC).Text(reg.Advogado ?? "").FontSize(7.5f).FontColor(corSubtexto);
+                                        table.Cell().Element(DC).Text(reg.Descricao ?? "").FontSize(7.5f).FontColor(corTexto);
+                                        table.Cell().Element(DC).Text(reg.Horas ?? "").FontSize(7.5f).Bold().FontColor(corPrimaria);
+                                        table.Cell().Element(DC).Text(reg.Tipo ?? "").FontSize(7).FontColor(corCinza);
+                                    }
+                                });
+                            }
+                        });
+
+                        // ── RODAPÉ ─────────────────────────────────────────────
+                        page.Footer().Column(col =>
+                        {
+                            col.Item().LineHorizontal(0.5f).LineColor(corLinha);
+                            col.Item().PaddingTop(6).Row(row =>
+                            {
+                                if (logoEscritorioBytes != null)
+                                    row.ConstantItem(40).AlignMiddle().Image(logoEscritorioBytes).FitArea();
+
+                                row.RelativeItem().PaddingLeft(logoEscritorioBytes != null ? 8 : 0).AlignMiddle().Column(c =>
+                                {
+                                    c.Item().Text("Eberhardt, Carrascoza, BSM & CB Advogados")
+                                        .FontSize(7.5f).Bold().FontColor(corPrimaria);
+                                    c.Item().Text("Assessoria e Consultoria Jurídica")
+                                        .FontSize(7).FontColor(corCinza);
+                                    c.Item().PaddingTop(1)
+                                        .Text($"Gerado em {DateTime.Now:dd/MM/yyyy} às {DateTime.Now:HH:mm}")
+                                        .FontSize(6.5f).FontColor("#a0aec0");
+                                });
+
+                                row.ConstantItem(50).AlignMiddle().AlignRight().Text(x =>
+                                {
+                                    x.Span("Pág. ").FontSize(7).FontColor(corCinza);
+                                    x.CurrentPageNumber().FontSize(7.5f).Bold().FontColor(corPrimaria);
+                                    x.Span(" / ").FontSize(7).FontColor(corCinza);
+                                    x.TotalPages().FontSize(7.5f).Bold().FontColor(corPrimaria);
+                                });
+                            });
+                        });
+                    });
+                });
+
+                var bytes = pdf.GeneratePdf();
+                var fileName = $"Resumo_Executivo_{request.Cliente.Replace(" ", "_")}_{DateTime.Now:yyyyMMdd}.pdf";
+                return File(bytes, "application/pdf", fileName);
+            }
+            catch (SessionExpiredException) { return StatusCode(401, new { erro = "Sessão expirada." }); }
+            catch (Exception ex) { return StatusCode(500, new { erro = $"Erro ao gerar PDF: {ex.Message} | {ex.InnerException?.Message}" }); }
+        }
+
+        public class ResumoExecutivoRequest
+        {
+            public int ClienteId { get; set; }
+            public string Cliente { get; set; }
+            public string Periodo { get; set; }
+            public string TotalHoras { get; set; }
+            public string Resumo { get; set; }
+            public List<ResumoRegistroItem> Registros { get; set; }
+        }
+
+        public class ResumoRegistroItem
+        {
+            public string Data { get; set; }
+            public string Advogado { get; set; }
+            public string Descricao { get; set; }
+            public string Horas { get; set; }
+            public string Tipo { get; set; }
+        }
     }
 }
 

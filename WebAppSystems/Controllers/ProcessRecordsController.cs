@@ -106,6 +106,10 @@ namespace WebAppSystems.Controllers
                 ViewBag.SearchTerm = search;
                 ViewBag.StatusFilter = status;
                 
+                // Passar dados para edição inline
+                ViewBag.Clients = await _clientService.FindAllAsync();
+                ViewBag.Departments = await _departmentService.FindAllAsync();
+                
                 return View(processRecords);
             }
             catch (SessionExpiredException)
@@ -483,8 +487,61 @@ namespace WebAppSystems.Controllers
             }
         }
 
+        [HttpPost]
+        public async Task<IActionResult> UpdateField([FromBody] UpdateFieldRequest request)
+        {
+            if (request == null || request.ProcessRecordId == 0)
+                return BadRequest("ID inválido.");
 
+            var record = await _context.ProcessRecord.FindAsync(request.ProcessRecordId);
+            if (record == null)
+                return NotFound();
 
+            // Verificar se o usuário logado é o dono do registro
+            Attorney usuario = _isessao.BuscarSessaoDoUsuario();
+            if (record.AttorneyId != usuario.Id)
+                return Forbid(); // 403 Forbidden
+
+            // Atualizar horários se fornecidos
+            if (!string.IsNullOrWhiteSpace(request.HoraInicial) && !string.IsNullOrWhiteSpace(request.HoraFinal))
+            {
+                if (!TimeSpan.TryParse(request.HoraInicial, out var horaInicial) ||
+                    !TimeSpan.TryParse(request.HoraFinal, out var horaFinal))
+                    return BadRequest("Formato de hora inválido.");
+
+                if (horaInicial >= horaFinal)
+                    return BadRequest("A hora inicial deve ser menor que a hora final.");
+
+                record.HoraInicial = horaInicial;
+                record.HoraFinal = horaFinal;
+            }
+
+            // Atualizar cliente se fornecido
+            if (request.ClientId.HasValue && request.ClientId > 0)
+                record.ClientId = request.ClientId.Value;
+
+            // Atualizar departamento se fornecido
+            if (request.DepartmentId.HasValue && request.DepartmentId > 0)
+                record.DepartmentId = request.DepartmentId.Value;
+
+            // Atualizar tipo de registro se fornecido
+            if (request.RecordType.HasValue && Enum.IsDefined(typeof(RecordType), request.RecordType.Value))
+                record.RecordType = (RecordType)request.RecordType.Value;
+
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
+
+        public class UpdateFieldRequest
+        {
+            public int ProcessRecordId { get; set; }
+            public string HoraInicial { get; set; }
+            public string HoraFinal { get; set; }
+            public int? ClientId { get; set; }
+            public int? DepartmentId { get; set; }
+            public int? RecordType { get; set; }
+        }
 
     }
 }

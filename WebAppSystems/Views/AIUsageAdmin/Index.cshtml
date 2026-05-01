@@ -1,0 +1,304 @@
+@model IEnumerable<dynamic>
+@{
+    ViewData["Title"] = "Administração de Limites de IA";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-robot mr-2"></i>
+                        Administração de Limites de IA
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <!-- Estatísticas Gerais -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-info"><i class="fas fa-users"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Usuários com IA</span>
+                                    <span class="info-box-number" id="totalUsers">-</span>
+                                    <span class="info-box-text">últimos 30 dias</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-success"><i class="fas fa-calendar-day"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Uso Hoje</span>
+                                    <span class="info-box-number" id="todayUsage">-</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-warning"><i class="fas fa-calendar-week"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Últimos 7 Dias</span>
+                                    <span class="info-box-number" id="last7DaysUsage">-</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-danger"><i class="fas fa-exclamation-triangle"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">No Limite</span>
+                                    <span class="info-box-number" id="usersAtLimit">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabela de Usuários -->
+                    @if (ViewBag.NoUsageData == true)
+                    {
+                        <div class="alert alert-info">
+                            <h4><i class="fas fa-info-circle"></i> Nenhum Uso Registrado</h4>
+                            <p>Ainda não há registros de uso da IA. Os usuários aparecerão aqui após começarem a usar as funcionalidades de IA.</p>
+                            <hr>
+                            <p class="mb-0">
+                                <strong>Funcionalidades que consomem cota:</strong><br>
+                                • Análise de documentos jurídicos<br>
+                                • Análise de gráficos no Painel de Gestão
+                            </p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped" id="usersTable">
+                                <thead>
+                                    <tr>
+                                        <th>Usuário</th>
+                                        <th>Uso Hoje</th>
+                                        <th>Limite Diário</th>
+                                        <th>Restante</th>
+                                        <th>Último Uso</th>
+                                        <th>Total Usado</th>
+                                        <th>Status</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var user in Model)
+                                    {
+                                        <tr data-attorney-id="@user.AttorneyId">
+                                            <td>
+                                                @user.AttorneyName
+                                                <small class="text-muted d-block">@user.Email</small>
+                                            </td>
+                                            <td>
+                                                <span class="badge badge-info">@user.UsageCount</span>
+                                            </td>
+                                            <td>
+                                                <input type="number" class="form-control form-control-sm limit-input" 
+                                                       value="@user.DailyLimit" min="0" max="1000" style="width: 80px;">
+                                            </td>
+                                            <td>
+                                                <span class="badge @(user.Remaining <= 0 ? "badge-danger" : user.Remaining <= 2 ? "badge-warning" : "badge-success")">
+                                                    @user.Remaining
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">@user.LastUsed.ToString("dd/MM/yyyy")</small>
+                                            </td>
+                                            <td>
+                                                <span class="badge badge-secondary">@user.TotalUsage</span>
+                                            </td>
+                                            <td>
+                                                @if (user.Remaining <= 0)
+                                                {
+                                                    <span class="badge badge-danger">Limite Atingido</span>
+                                                }
+                                                else if (user.Remaining <= 2)
+                                                {
+                                                    <span class="badge badge-warning">Próximo do Limite</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge badge-success">Normal</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <button class="btn btn-primary btn-update-limit" data-attorney-id="@user.AttorneyId">
+                                                        <i class="fas fa-save"></i> Salvar
+                                                    </button>
+                                                    <button class="btn btn-warning btn-reset-usage" data-attorney-id="@user.AttorneyId">
+                                                        <i class="fas fa-undo"></i> Reset
+                                                    </button>
+                                                    <button class="btn btn-info btn-view-history" data-attorney-id="@user.AttorneyId" data-attorney-name="@user.AttorneyName">
+                                                        <i class="fas fa-history"></i> Histórico
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Histórico -->
+<div class="modal fade" id="historyModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Histórico de Uso - <span id="historyUserName"></span></h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Uso</th>
+                                <th>Limite</th>
+                                <th>Restante</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+$(document).ready(function() {
+    // Carregar estatísticas gerais
+    loadOverallStats();
+    
+    // Atualizar limite
+    $('.btn-update-limit').click(function() {
+        const attorneyId = $(this).data('attorney-id');
+        const newLimit = $(this).closest('tr').find('.limit-input').val();
+        
+        if (confirm('Deseja atualizar o limite diário para este usuário?')) {
+            updateLimit(attorneyId, newLimit);
+        }
+    });
+    
+    // Reset de uso diário
+    $('.btn-reset-usage').click(function() {
+        const attorneyId = $(this).data('attorney-id');
+        
+        if (confirm('Deseja resetar o uso diário para este usuário? Ele poderá usar a IA novamente hoje.')) {
+            resetDailyUsage(attorneyId);
+        }
+    });
+    
+    // Ver histórico
+    $('.btn-view-history').click(function() {
+        const attorneyId = $(this).data('attorney-id');
+        const attorneyName = $(this).data('attorney-name');
+        
+        $('#historyUserName').text(attorneyName);
+        loadUsageHistory(attorneyId);
+        $('#historyModal').modal('show');
+    });
+});
+
+function loadOverallStats() {
+    $.get('/AIUsageAdmin/GetOverallStats')
+        .done(function(response) {
+            if (response.success) {
+                $('#totalUsers').text(response.data.totalUsersWithAI);
+                $('#todayUsage').text(response.data.todayUsage);
+                $('#last7DaysUsage').text(response.data.last7DaysUsage);
+                $('#usersAtLimit').text(response.data.usersAtLimit);
+            }
+        })
+        .fail(function() {
+            console.error('Erro ao carregar estatísticas gerais');
+        });
+}
+
+function updateLimit(attorneyId, newLimit) {
+    $.post('/AIUsageAdmin/UpdateLimit', {
+        attorneyId: attorneyId,
+        newLimit: newLimit
+    })
+    .done(function(response) {
+        if (response.success) {
+            toastr.success(response.message);
+            location.reload();
+        } else {
+            toastr.error(response.message);
+        }
+    })
+    .fail(function() {
+        toastr.error('Erro ao atualizar limite');
+    });
+}
+
+function resetDailyUsage(attorneyId) {
+    $.post('/AIUsageAdmin/ResetDailyUsage', {
+        attorneyId: attorneyId
+    })
+    .done(function(response) {
+        if (response.success) {
+            toastr.success(response.message);
+            location.reload();
+        } else {
+            toastr.error(response.message);
+        }
+    })
+    .fail(function() {
+        toastr.error('Erro ao resetar uso diário');
+    });
+}
+
+function loadUsageHistory(attorneyId) {
+    $('#historyTableBody').html('<tr><td colspan="4" class="text-center">Carregando...</td></tr>');
+    
+    $.get('/AIUsageAdmin/GetUsageHistory', {
+        attorneyId: attorneyId,
+        days: 30
+    })
+    .done(function(response) {
+        if (response.success) {
+            let html = '';
+            if (response.data.length === 0) {
+                html = '<tr><td colspan="4" class="text-center">Nenhum registro encontrado</td></tr>';
+            } else {
+                response.data.forEach(function(item) {
+                    const statusClass = item.remaining <= 0 ? 'badge-danger' : 
+                                       item.remaining <= 2 ? 'badge-warning' : 'badge-success';
+                    
+                    html += `
+                        <tr>
+                            <td>${item.date}</td>
+                            <td><span class="badge badge-info">${item.usageCount}</span></td>
+                            <td>${item.dailyLimit}</td>
+                            <td><span class="badge ${statusClass}">${item.remaining}</span></td>
+                        </tr>
+                    `;
+                });
+            }
+            $('#historyTableBody').html(html);
+        } else {
+            $('#historyTableBody').html('<tr><td colspan="4" class="text-center text-danger">Erro ao carregar histórico</td></tr>');
+        }
+    })
+    .fail(function() {
+        $('#historyTableBody').html('<tr><td colspan="4" class="text-center text-danger">Erro ao carregar histórico</td></tr>');
+    });
+}
+</script>
+}

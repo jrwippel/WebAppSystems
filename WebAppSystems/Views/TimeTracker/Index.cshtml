@@ -60,9 +60,10 @@
                         <th style="width: 70px;" data-i18n="timetracker.table.start">Start</th>
                         <th style="width: 70px;" data-i18n="timetracker.table.end">End</th>
                         <th style="width: 100px;" data-i18n="timetracker.table.duration">Duration</th>
-                        <th style="max-width: 250px;" data-i18n="timetracker.table.description">Description</th>
-                        <th style="width: 150px;" data-i18n="timetracker.table.client">Client</th>
-                        <th style="width: 120px;" data-i18n="timetracker.table.requester">Requester</th>
+                        <th style="max-width: 125px;" data-i18n="timetracker.table.description">Description</th>
+                        <th style="width: 120px;" data-i18n="timetracker.table.client">Client</th>
+                        <th style="width: 100px;" data-i18n="timetracker.table.area">Area</th>
+                        <th style="width: 100px;" data-i18n="timetracker.table.requester">Requester</th>
                         <th style="width: 120px;" data-i18n="timetracker.table.type">Type</th>
                         <th style="width: 60px;"></th>
                     </tr>
@@ -599,6 +600,13 @@
             }
         ];
 
+        const departmentsOptions = [
+            @foreach (var d in Model.DepartmentsOptions.Where(d => d.Value != "0"))
+            {
+                <text>{ value: @d.Value, text: "@Html.Raw(d.Text.Replace("\"", "\\\""))" },</text>
+            }
+        ];
+
         const recordTypeOptions = [
             @foreach (var rt in Model.RecordTypesOptions)
             {
@@ -778,6 +786,15 @@
                         if (String(opt.value) === String(currentValue)) o.selected = true;
                         editor.appendChild(o);
                     });
+                } else if (field === "departmentId") {
+                    editor = document.createElement("select");
+                    departmentsOptions.forEach(opt => {
+                        const o = document.createElement("option");
+                        o.value = opt.value;
+                        o.text = opt.text;
+                        if (String(opt.value) === String(currentValue)) o.selected = true;
+                        editor.appendChild(o);
+                    });
                 } else if (field === "recordType") {
                     editor = document.createElement("select");
                     recordTypeOptions.forEach(opt => {
@@ -817,6 +834,7 @@
 
                     if (field === "description") payload.description = newValue;
                     else if (field === "clientId") payload.clientId = parseInt(newValue);
+                    else if (field === "departmentId") payload.departmentId = parseInt(newValue) || null;
                     else if (field === "solicitante") payload.solicitante = newValue;
                     else if (field === "recordType") payload.recordType = parseInt(newValue);
 
@@ -831,6 +849,9 @@
                             cell.dataset.value = newValue;
                             if (field === "clientId") {
                                 const opt = clientesOptions.find(o => String(o.value) === String(newValue));
+                                cell.textContent = opt ? opt.text : newValue;
+                            } else if (field === "departmentId") {
+                                const opt = departmentsOptions.find(o => String(o.value) === String(newValue));
                                 cell.textContent = opt ? opt.text : newValue;
                             } else if (field === "recordType") {
                                 cell.innerHTML = `<span class="type-badge">${recordTypeMap[parseInt(newValue)]}</span>`;
@@ -852,6 +873,9 @@
                         if (field === "clientId") {
                             const opt = clientesOptions.find(o => String(o.value) === String(currentValue));
                             cell.textContent = opt ? opt.text : currentValue;
+                        } else if (field === "departmentId") {
+                            const opt = departmentsOptions.find(o => String(o.value) === String(currentValue));
+                            cell.textContent = opt ? opt.text : currentValue;
                         } else if (field === "recordType") {
                             cell.innerHTML = `<span class="type-badge">${recordTypeMap[parseInt(currentValue)]}</span>`;
                         } else {
@@ -867,6 +891,9 @@
                         saved = true;
                         if (field === "clientId") {
                             const opt = clientesOptions.find(o => String(o.value) === String(currentValue));
+                            cell.textContent = opt ? opt.text : currentValue;
+                        } else if (field === "departmentId") {
+                            const opt = departmentsOptions.find(o => String(o.value) === String(currentValue));
                             cell.textContent = opt ? opt.text : currentValue;
                         } else if (field === "recordType") {
                             cell.innerHTML = `<span class="type-badge">${recordTypeMap[parseInt(currentValue)]}</span>`;
@@ -957,7 +984,7 @@
                     tableBody.innerHTML = "";
 
                     if (!records || records.length === 0) {
-                        tableBody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: #718096;">No records found</td></tr>';
+                        tableBody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 40px; color: #718096;">No records found</td></tr>';
                     } else {
                         records.forEach(record => {
                             const startTime = new Date(`1970-01-01T${record.horaInicial}Z`);
@@ -975,9 +1002,10 @@
                                 <td style="width: 70px;" class="time-cell" data-id="${record.id}" data-field="inicio" data-value="${record.horaInicial}">${startTimeFormatted}</td>
                                 <td style="width: 70px;" class="time-cell" data-id="${record.id}" data-field="fim" data-value="${record.horaFinal}">${endTimeFormatted}</td>
                                 <td style="width: 100px;"><span class="duration-badge" id="duration-${record.id}">${duration}</span></td>
-                                <td class="description-cell editable-cell" style="max-width: 250px;" data-id="${record.id}" data-field="description" data-value="${record.description.replace(/"/g,'&quot;')}" title="${record.description}">${record.description}</td>
-                                <td style="width: 150px;" class="editable-cell editable-select" data-id="${record.id}" data-field="clientId" data-value="${record.clientId}" title="${record.clienteNome}">${record.clienteNome}</td>
-                                <td style="width: 120px;" class="editable-cell" data-id="${record.id}" data-field="solicitante" data-value="${record.solicitante || ''}" title="${record.solicitante || ''}">${record.solicitante || ''}</td>
+                                <td class="description-cell editable-cell" style="max-width: 125px;" data-id="${record.id}" data-field="description" data-value="${record.description.replace(/"/g,'&quot;')}" title="${record.description}">${record.description}</td>
+                                <td style="width: 120px;" class="editable-cell editable-select" data-id="${record.id}" data-field="clientId" data-value="${record.clientId}" title="${record.clienteNome}">${record.clienteNome}</td>
+                                <td style="width: 100px;" class="editable-cell editable-select" data-id="${record.id}" data-field="departmentId" data-value="${record.departmentId || ''}" title="${record.areaNome || ''}">${record.areaNome || ''}</td>
+                                <td style="width: 100px;" class="editable-cell" data-id="${record.id}" data-field="solicitante" data-value="${record.solicitante || ''}" title="${record.solicitante || ''}">${record.solicitante || ''}</td>
                                 <td style="width: 120px;" class="editable-cell editable-select" data-id="${record.id}" data-field="recordType" data-value="${record.recordType}"><span class="type-badge">${recordTypeMap[record.recordType]}</span></td>
                                 <td style="width: 60px; text-align: center; white-space: nowrap;">
                                     <button class="btn-play" onclick="startTimerFromRecord(${record.id})" ${isRunning ? 'disabled' : ''}>
@@ -999,12 +1027,12 @@
                 } else {
                     console.error('Response not OK:', response.status, response.statusText);
                     const tableBody = document.querySelector("#recordsTable tbody");
-                    tableBody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: #e53e3e;">Error loading records. Please refresh the page.</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 40px; color: #e53e3e;">Error loading records. Please refresh the page.</td></tr>';
                 }
             } catch (error) {
                 console.error('Erro ao carregar registros:', error);
                 const tableBody = document.querySelector("#recordsTable tbody");
-                tableBody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: #e53e3e;">Error loading records. Please refresh the page.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 40px; color: #e53e3e;">Error loading records. Please refresh the page.</td></tr>';
             }
         }
 

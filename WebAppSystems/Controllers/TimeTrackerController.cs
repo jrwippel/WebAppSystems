@@ -11,8 +11,6 @@ using WebAppSystems.Services;
 using System.Text;
 using System.Text.Json;
 
-//teste
-
 namespace WebAppSystems.Controllers
 {
     public class TimeTrackerController : Controller
@@ -24,8 +22,10 @@ namespace WebAppSystems.Controllers
         private readonly DepartmentService _departmentService;
         private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly AIService _aiService;
+        private readonly AIUsageLimitService _aiUsageLimitService;
 
-        public TimeTrackerController(WebAppSystemsContext context, ProcessRecordsService processRecordsService, ISessao isessao, ClientService clientService, DepartmentService departmentService, IConfiguration configuration, IHttpClientFactory httpClientFactory)
+        public TimeTrackerController(WebAppSystemsContext context, ProcessRecordsService processRecordsService, ISessao isessao, ClientService clientService, DepartmentService departmentService, IConfiguration configuration, IHttpClientFactory httpClientFactory, AIService aiService, AIUsageLimitService aiUsageLimitService)
         {
             _context = context;
             _processRecordsService = processRecordsService;
@@ -34,6 +34,8 @@ namespace WebAppSystems.Controllers
             _departmentService = departmentService;
             _configuration = configuration;
             _httpClientFactory = httpClientFactory;
+            _aiService = aiService;
+            _aiUsageLimitService = aiUsageLimitService;
         }
 
         [HttpPost]
@@ -402,6 +404,7 @@ namespace WebAppSystems.Controllers
                            r.HoraFinal != null && 
                            r.HoraFinal != TimeSpan.Zero)
                 .Include(r => r.Client)
+                .Include(r => r.Department)
                 .AsQueryable();
 
             // Aplicar filtro de busca
@@ -432,6 +435,8 @@ namespace WebAppSystems.Controllers
                     r.Description,
                     ClienteNome = r.Client.Name,
                     ClientId = r.ClientId,
+                    AreaNome = r.Department?.Name ?? "",
+                    DepartmentId = r.DepartmentId,
                     HoraInicial = r.HoraInicial.ToString(@"hh\:mm\:ss"),
                     HoraFinal = r.HoraFinal.ToString(@"hh\:mm\:ss"),
                     r.RecordType,
@@ -549,6 +554,8 @@ namespace WebAppSystems.Controllers
                 record.Description = request.Description;
             if (request.ClientId.HasValue && request.ClientId > 0)
                 record.ClientId = request.ClientId.Value;
+            if (request.DepartmentId.HasValue && request.DepartmentId > 0)
+                record.DepartmentId = request.DepartmentId.Value;
             if (!string.IsNullOrWhiteSpace(request.Solicitante))
                 record.Solicitante = request.Solicitante;
             if (request.RecordType.HasValue && Enum.IsDefined(typeof(RecordType), request.RecordType.Value))
@@ -568,6 +575,7 @@ namespace WebAppSystems.Controllers
             public string HoraFinal { get; set; }
             public string Description { get; set; }
             public int? ClientId { get; set; }
+            public int? DepartmentId { get; set; }
             public string Solicitante { get; set; }
             public int? RecordType { get; set; }
         }
@@ -578,15 +586,27 @@ namespace WebAppSystems.Controllers
             if (request == null || string.IsNullOrWhiteSpace(request.Descricao))
                 return BadRequest(new { erro = "Informe uma descrição para melhorar." });
 
-            var apiKey = _configuration["GoogleAI:ApiKey"];
-            if (string.IsNullOrEmpty(apiKey) || apiKey.Contains("COLE_SUA"))
-                return StatusCode(503, new { erro = "API de IA não configurada." });
+            try
+            {
+                var usuario = _isessao.BuscarSessaoDoUsuario();
 
-            var tipo = string.IsNullOrWhiteSpace(request.Tipo) ? "não informado" : request.Tipo;
-            var cliente = string.IsNullOrWhiteSpace(request.Cliente) ? "não informado" : request.Cliente;
-            var area = string.IsNullOrWhiteSpace(request.Area) ? "não informada" : request.Area;
+                // Verificar limite de uso de IA
+                var (canUse, remainingUses, limitMessage) = await _aiUsageLimitService.CanUseAIAsync(usuario.Id);
+                if (!canUse)
+                {
+                    return StatusCode(429, new { erro = limitMessage });
+                }
 
-            var prompt = $@"Você é um assistente jurídico especializado em registros de horas para escritórios de advocacia brasileiros.
+                // Verificar se a IA está configurada
+                var (isConfigured, errorMessage) = await _aiService.IsConfiguredAsync();
+                if (!isConfigured)
+                    return StatusCode(503, new { erro = errorMessage });
+
+                var tipo = string.IsNullOrWhiteSpace(request.Tipo) ? "não informado" : request.Tipo;
+                var cliente = string.IsNullOrWhiteSpace(request.Cliente) ? "não informado" : request.Cliente;
+                var area = string.IsNullOrWhiteSpace(request.Area) ? "não informada" : request.Area;
+
+                var prompt = $@"Você é um assistente jurídico especializado em registros de horas para escritórios de advocacia brasileiros.
 
 Melhore a descrição abaixo para um lançamento de horas profissional, formal e adequado para faturamento ao cliente.
 A descrição deve ser objetiva, em português, entre 1 e 2 frases, sem inventar informações que não estejam no contexto.
@@ -599,37 +619,16 @@ Contexto:
 
 Retorne APENAS a descrição melhorada, completa, sem aspas, sem explicações, sem prefixos. Máximo de 2 frases curtas.";
 
-            try
-            {
-                var http = _httpClientFactory.CreateClient();
-                var body = new
-                {
-                    contents = new[] { new { parts = new[] { new { text = prompt } } } },
-                    generationConfig = new { temperature = 0.3, maxOutputTokens = 1024 }
-                };
-                var json = JsonSerializer.Serialize(body);
-                var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key={apiKey}";
-                var response = await http.PostAsync(url, new StringContent(json, Encoding.UTF8, "application/json"));
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    var errBody = await response.Content.ReadAsStringAsync();
-                    return StatusCode(502, new { erro = $"Erro na API: {response.StatusCode} - {errBody}" });
-                }
-
-                var result = JsonSerializer.Deserialize<JsonElement>(await response.Content.ReadAsStringAsync());
-                var sugestao = result
-                    .GetProperty("candidates")[0]
-                    .GetProperty("content")
-                    .GetProperty("parts")[0]
-                    .GetProperty("text")
-                    .GetString()?.Trim();
-
-                return Ok(new { sugestao });
+                var sugestao = await _aiService.GenerateContentAsync(prompt, maxTokens: 1024, temperature: 0.3);
+                
+                // Registrar o uso da IA
+                await _aiUsageLimitService.RegisterAIUsageAsync(usuario.Id);
+                
+                return Ok(new { sugestao, remainingUses = remainingUses - 1 });
             }
             catch (Exception ex)
             {
-                return StatusCode(502, new { erro = $"Exceção: {ex.Message}" });
+                return StatusCode(502, new { erro = $"Erro ao gerar sugestão: {ex.Message}" });
             }
         }
 

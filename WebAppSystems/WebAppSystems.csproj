@@ -2110,6 +2110,7 @@
     <PackageReference Include="EPPlus" Version="7.0.5" />
     <PackageReference Include="FFMpegCore" Version="4.4.0" />
     <PackageReference Include="Google.Cloud.Speech.V1" Version="3.8.0" />
+    <PackageReference Include="Google.GenAI" Version="1.6.1" />
     <PackageReference Include="itext7" Version="8.0.2" />
     <PackageReference Include="jQuery" Version="3.7.1" />
     <PackageReference Include="jQuery.Fullcalendar" Version="3.9.0" />

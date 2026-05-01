@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WebAppSystems.Data;
 
@@ -11,9 +12,10 @@ using WebAppSystems.Data;
 namespace WebAppSystems.Migrations
 {
     [DbContext(typeof(WebAppSystemsContext))]
-    partial class WebAppSystemsContextModelSnapshot : ModelSnapshot
+    [Migration("20260418101652_AddAIConfiguration")]
+    partial class AddAIConfiguration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -57,39 +59,6 @@ namespace WebAppSystems.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("AIConfiguration");
-                });
-
-            modelBuilder.Entity("WebAppSystems.Models.AIUsageLimit", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
-
-                    b.Property<int>("AttorneyId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("DailyLimit")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("UsageCount")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AttorneyId");
-
-                    b.ToTable("AIUsageLimit");
                 });
 
             modelBuilder.Entity("WebAppSystems.Models.Attorney", b =>
@@ -464,17 +433,6 @@ namespace WebAppSystems.Migrations
                     b.HasIndex("ClientId");
 
                     b.ToTable("ValorCliente");
-                });
-
-            modelBuilder.Entity("WebAppSystems.Models.AIUsageLimit", b =>
-                {
-                    b.HasOne("WebAppSystems.Models.Attorney", "Attorney")
-                        .WithMany()
-                        .HasForeignKey("AttorneyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Attorney");
                 });
 
             modelBuilder.Entity("WebAppSystems.Models.Attorney", b =>

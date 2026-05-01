@@ -50,7 +50,10 @@ namespace WebAppSystems
             // Assistente Jurídico IA
             builder.Services.AddScoped<DocumentTextExtractorService>();
             builder.Services.AddScoped<AIDocumentAnalysisService>();
+            builder.Services.AddScoped<DocumentAIAnalysisService>();
             builder.Services.AddScoped<AttorneyRecommendationService>();
+            builder.Services.AddScoped<AIService>();
+            builder.Services.AddScoped<AIUsageLimitService>();
 
             builder.Services.AddHttpClient();
 

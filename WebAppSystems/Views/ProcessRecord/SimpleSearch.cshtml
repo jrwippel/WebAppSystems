@@ -7,16 +7,20 @@
     var selectedAttorneyId = ViewData["attorneyId"]?.ToString();
     var selectedRecordType = ViewData["selectedRecordType"]?.ToString();
     var userProfile = (WebAppSystems.Models.Enums.ProfileEnum)ViewBag.UserProfile;
+    var clientIdList = selectedClientIds?.Split(',').Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+    var umClienteSelecionado = clientIdList != null && clientIdList.Count == 1;
     
-    // Calcular total de horas
-    TimeSpan totalHours = TimeSpan.Zero;
+    // Calcular total de horas (Deslocamento conta 50%)
+    double totalMinutosDecimal = 0;
     foreach (var item in Model)
     {
-        totalHours += item.CalculoHorasTotal();
+        double mins = item.CalculoHorasTotal().TotalMinutes;
+        if (item.RecordType == WebAppSystems.Models.Enums.RecordType.Deslocamento)
+            mins *= 0.5;
+        totalMinutosDecimal += mins;
     }
-    int totalDays = (int)totalHours.TotalDays;
-    TimeSpan correctedTotalHours = totalHours - TimeSpan.FromDays(totalDays);
-    string totalFormatted = $"{totalDays * 24 + correctedTotalHours.Hours}:{correctedTotalHours.Minutes:00}";
+    int totalMinutosInt = (int)Math.Round(totalMinutosDecimal);
+    string totalFormatted = $"{totalMinutosInt / 60}:{(totalMinutosInt % 60):00}";
 }
 
 <div class="report-container">
@@ -128,7 +132,22 @@
                         <i class="bi bi-receipt"></i> Pré-Fatura
                     </button>
                 }
+                
+                <!-- Botão Resumo Executivo com IA -->
+                @if (umClienteSelecionado && Model.Any())
+                {
+                    <button type="button" class="btn btn-resumo-ia" id="btnResumoIA" 
+                            data-bs-toggle="modal" data-bs-target="#resumoIAModal">
+                        <i class="bi bi-stars"></i> Resumo Executivo com IA
+                    </button>
+                }
             </div>
+            
+            <!-- Campo hidden para armazenar clientIds -->
+            <input type="hidden" id="clientIds" value="@selectedClientIds" />
+            <input type="hidden" id="minDateValue" value="@ViewData["minDate"]" />
+            <input type="hidden" id="maxDateValue" value="@ViewData["maxDate"]" />
+            <input type="hidden" name="ignoredIds" id="ignoredIds" value="" />
         </form>
     </div>
 
@@ -136,6 +155,16 @@
     @if (Model.Any())
     {
         <div class="results-card">
+            <!-- Barra de busca rápida -->
+            <div class="table-search-bar">
+                <i class="bi bi-search"></i>
+                <input type="text" id="tableSearch" placeholder="Filtrar por descrição, usuário, tipo, área..." autocomplete="off" />
+                <span id="tableSearchCount" class="search-count"></span>
+                <button type="button" id="btnClearSearch" class="btn-clear-search" title="Limpar filtro" style="display:none;" onclick="limparFiltro()">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
             <div class="table-responsive">
                 <table class="modern-table" id="resultsTable">
                     <thead>
@@ -147,12 +176,21 @@
                             <th data-i18n="reports.table.client">Cliente</th>
                             <th data-i18n="reports.table.requester">Solicitante</th>
                             <th data-i18n="reports.table.type">Tipo</th>
+                            <th class="col-descricao">Descrição</th>
+                            @if (umClienteSelecionado)
+                            {
+                                <th title="Marque para excluir da geração de Excel, Pré-Fatura e Resumo IA">Ignorar</th>
+                            }
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var item in Model)
                         {
-                            <tr>
+                            var minutos = item.CalculoHorasTotal().TotalMinutes;
+                            if (item.RecordType == WebAppSystems.Models.Enums.RecordType.Deslocamento)
+                                minutos *= 0.5;
+                            var minutosInt = (int)Math.Round(minutos);
+                            <tr data-id="@item.Id" data-descricao="@item.Description" data-minutos="@minutosInt" data-search="@($"{item.Date:dd/MM/yyyy} {item.Attorney.Name} {item.Department.Name} {item.Client.Name} {item.Solicitante} {item.RecordType} {item.Description}".ToLower())">
                                 <td data-label="Data">@item.Date.ToString("dd/MM/yyyy")</td>
                                 <td data-label="Usuário">@item.Attorney.Name</td>
                                 <td data-label="Área">@item.Department.Name</td>
@@ -160,6 +198,15 @@
                                 <td data-label="Cliente">@item.Client.Name</td>
                                 <td data-label="Solicitante">@item.Solicitante</td>
                                 <td data-label="Tipo"><span class="type-badge type-@item.RecordType.ToString().ToLower()">@item.RecordType</span></td>
+                                <td data-label="Descrição" class="col-descricao" title="@item.Description">@item.Description</td>
+                                @if (umClienteSelecionado)
+                                {
+                                    <td data-label="Ignorar" style="text-align:center;">
+                                        <input type="checkbox" class="ignore-check" data-id="@item.Id"
+                                               title="Ignorar este registro"
+                                               onchange="toggleIgnorar(this)" />
+                                    </td>
+                                }
                             </tr>
                         }
                     </tbody>
@@ -258,6 +305,10 @@
         font-size: 24px;
         font-weight: 700;
         letter-spacing: 1px;
+        transition: transform 0.2s;
+    }
+    .badge-updated .badge-value {
+        transform: scale(1.12);
     }
 
     /* Card de filtros */
@@ -427,6 +478,144 @@
         background: #38a169;
         color: white;
         transform: translateY(-2px);
+    }
+
+    .btn-resumo-ia {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+    }
+    .btn-resumo-ia:hover { opacity: 0.88; transform: translateY(-2px); color: white; }
+
+    /* Checkbox Ignorar */
+    .ignore-check {
+        width: 18px; height: 18px;
+        accent-color: #e53e3e;
+        cursor: pointer;
+    }
+    tr.ignorado td {
+        opacity: 0.4;
+        text-decoration: line-through;
+    }
+    tr.ignorado td:last-child {
+        opacity: 1;
+        text-decoration: none;
+    }
+    .modern-table thead th:last-child {
+        text-align: center;
+    }
+
+    /* Barra de busca rápida na tabela */
+    .table-search-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 20px;
+        border-bottom: 1px solid #e2e8f0;
+        background: #fafbff;
+    }
+    .table-search-bar i { color: #a0aec0; font-size: 16px; flex-shrink: 0; }
+    .table-search-bar input {
+        flex: 1;
+        border: none;
+        outline: none;
+        font-size: 14px;
+        color: #2d3748;
+        background: transparent;
+    }
+    .table-search-bar input::placeholder { color: #a0aec0; }
+    .search-count {
+        font-size: 12px;
+        color: #718096;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+    .btn-clear-search {
+        background: none;
+        border: none;
+        color: #a0aec0;
+        cursor: pointer;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 13px;
+        flex-shrink: 0;
+    }
+    .btn-clear-search:hover { color: #e53e3e; background: #fff5f5; }
+
+    /* Coluna descrição */
+    .col-descricao {
+        max-width: 220px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 13px;
+        color: #4a5568;
+    }
+    .modern-table thead th.col-descricao { max-width: 220px; }
+
+    /* Highlight do termo buscado */
+    mark.search-hl {
+        background: #fef08a;
+        color: inherit;
+        border-radius: 2px;
+        padding: 0 1px;
+    }
+
+    /* Modal Resumo IA */
+    .resumo-modal-overlay {
+        display: none;
+        position: fixed; inset: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+    }
+    .resumo-modal-overlay.active { display: flex; }    .resumo-modal {
+        background: white;
+        border-radius: 16px;
+        padding: 32px;
+        max-width: 640px;
+        width: 90%;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+    }
+    .resumo-modal-header {
+        display: flex; align-items: center; gap: 10px;
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    .resumo-modal-header h3 { margin: 0; font-size: 18px; color: #1a202c; }
+    .resumo-modal-header i { color: #667eea; font-size: 22px; }
+    .resumo-modal-meta { font-size: 12px; color: #718096; margin-bottom: 16px; }
+    .resumo-texto {
+        background: #f7fafc;
+        border-left: 4px solid #667eea;
+        border-radius: 8px;
+        padding: 16px 20px;
+        font-size: 14px;
+        line-height: 1.7;
+        color: #2d3748;
+        min-height: 80px;
+        white-space: pre-wrap;
+    }
+    .resumo-modal-actions {
+        display: flex; gap: 10px; justify-content: flex-end;
+        margin-top: 20px;
+    }
+    .btn-imprimir {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 9px 20px; border-radius: 8px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white; border: none; font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    .btn-fechar-modal {
+        padding: 9px 20px; border-radius: 8px;
+        background: white; border: 2px solid #e2e8f0;
+        color: #4a5568; font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    @@media print {
+        body > *:not(#areaImpressao) { display: none !important; }
+        #areaImpressao { display: block !important; }
     }
 
     /* Card de resultados */
@@ -653,7 +842,39 @@
     }
 </style>
 
+<!-- Modal Resumo Executivo IA (Bootstrap) -->
+<div class="modal fade" id="resumoIAModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background:linear-gradient(135deg,#667eea,#764ba2);">
+                <h5 class="modal-title text-white"><i class="bi bi-stars me-2"></i>Resumo Executivo</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="resumoMeta" class="text-muted small mb-3"></p>
+                <div id="resumoTexto" class="p-3 rounded" style="background:#f7fafc;border-left:4px solid #667eea;font-size:14px;line-height:1.9;min-height:120px;white-space:pre-wrap;max-height:60vh;overflow-y:auto;">
+                    Clique em gerar para criar o resumo...
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-primary" id="btnGerarPDF" onclick="gerarPDF()" disabled>
+                    <i class="bi bi-file-earmark-pdf me-1"></i>Baixar PDF
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Área de impressão -->
+<div id="areaImpressao" style="display:none;padding:40px;font-family:Arial,sans-serif;">
+    <h2 id="printTitulo" style="color:#667eea;margin-bottom:8px;"></h2>
+    <p id="printMeta" style="color:#718096;font-size:13px;margin-bottom:24px;"></p>
+    <div id="printTexto" style="font-size:14px;line-height:1.8;color:#2d3748;border-left:4px solid #667eea;padding-left:16px;"></div>
+</div>
+
 <script>
+document.addEventListener('DOMContentLoaded', function() {
     // Sistema de múltipla seleção de clientes
     const clientSearch = document.getElementById('clientSearch');
     const clientList = document.getElementById('clientList');
@@ -662,46 +883,41 @@
     let selectedClients = [];
 
     // Carregar clientes já selecionados (se houver)
-    const preSelectedIds = clientIdsInput.value ? clientIdsInput.value.split(',') : [];
-    if (preSelectedIds.length > 0 && preSelectedIds[0] !== '') {
+    const preSelectedIds = clientIdsInput.value ? clientIdsInput.value.split(',').filter(x => x.trim()) : [];
+    if (preSelectedIds.length > 0) {
         preSelectedIds.forEach(id => {
-            const option = Array.from(clientList.options).find(opt => opt.getAttribute('data-id') === id);
+            const option = Array.from(clientList.options).find(opt => opt.getAttribute('data-id') === id.trim());
             if (option) {
-                selectedClients.push({ id: id, name: option.value });
+                selectedClients.push({ id: id.trim(), name: option.value });
             }
         });
         renderSelectedClients();
+        atualizarBotaoResumoIA();
     }
 
-    // Adicionar cliente
+    // Adicionar cliente ao selecionar
     clientSearch.addEventListener('change', function() {
         const selectedOption = Array.from(clientList.options).find(option => option.value === this.value);
-        
         if (selectedOption) {
             const clientId = selectedOption.getAttribute('data-id');
             const clientName = selectedOption.value;
-            
             if (!selectedClients.find(c => c.id === clientId)) {
                 selectedClients.push({ id: clientId, name: clientName });
                 renderSelectedClients();
                 updateHiddenInput();
+                atualizarBotaoResumoIA();
             }
         }
-        
         this.value = '';
     });
 
     // Renderizar tags de clientes selecionados
     function renderSelectedClients() {
         selectedClientsDiv.innerHTML = '';
-        
         selectedClients.forEach(client => {
             const tag = document.createElement('div');
             tag.className = 'client-tag';
-            tag.innerHTML = `
-                <span>${client.name}</span>
-                <span class="remove-client" onclick="removeClient('${client.id}')">×</span>
-            `;
+            tag.innerHTML = `<span>${client.name}</span><span class="remove-client" onclick="removeClient('${client.id}')">×</span>`;
             selectedClientsDiv.appendChild(tag);
         });
     }
@@ -711,11 +927,18 @@
         selectedClients = selectedClients.filter(c => c.id !== clientId);
         renderSelectedClients();
         updateHiddenInput();
+        atualizarBotaoResumoIA();
     };
 
     // Atualizar campo hidden
     function updateHiddenInput() {
         clientIdsInput.value = selectedClients.map(c => c.id).join(',');
+    }
+
+    // Controla visibilidade do botão IA (só com 1 cliente)
+    function atualizarBotaoResumoIA() {
+        const btn = document.getElementById('btnResumoIA');
+        if (btn) btn.style.display = selectedClients.length === 1 ? 'inline-flex' : 'none';
     }
 
     // Autocomplete para Usuário
@@ -724,26 +947,23 @@
     const attorneyList = document.getElementById('attorneyList');
 
     if (attorneyIdInput.value) {
-        const selectedAttorneyOption = Array.from(attorneyList.options).find(option => option.getAttribute('data-id') === attorneyIdInput.value);
-        if (selectedAttorneyOption) {
-            attorneySearch.value = selectedAttorneyOption.value;
-        }
+        const selectedAttorneyOption = Array.from(attorneyList.options).find(opt => opt.getAttribute('data-id') === attorneyIdInput.value);
+        if (selectedAttorneyOption) attorneySearch.value = selectedAttorneyOption.value;
     }
 
     attorneySearch.addEventListener('input', function() {
         const selectedOption = Array.from(attorneyList.options).find(option => option.value === this.value);
-        if (selectedOption) {
-            attorneyIdInput.value = selectedOption.getAttribute('data-id') || '';
-        } else {
-            attorneyIdInput.value = '';
-        }
+        attorneyIdInput.value = selectedOption ? selectedOption.getAttribute('data-id') || '' : '';
     });
 
-    // Sistema de Paginação
+    // Inicializar botão IA
+    atualizarBotaoResumoIA();
+
+    // Sistema de Paginação + Filtro dinâmico
     const table = document.getElementById('resultsTable');
     if (table) {
         const tbody = table.querySelector('tbody');
-        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const allRows = Array.from(tbody.querySelectorAll('tr'));
         const pageSizeSelect = document.getElementById('pageSize');
         const firstPageBtn = document.getElementById('firstPage');
         const prevPageBtn = document.getElementById('prevPage');
@@ -754,72 +974,321 @@
         const currentStartSpan = document.getElementById('currentStart');
         const currentEndSpan = document.getElementById('currentEnd');
         const totalRecordsSpan = document.getElementById('totalRecords');
+        const searchInput = document.getElementById('tableSearch');
+        const searchCount = document.getElementById('tableSearchCount');
+        const clearBtn = document.getElementById('btnClearSearch');
 
         let currentPage = 1;
         let pageSize = 10;
-        let totalPages = Math.ceil(rows.length / pageSize);
+        let filteredRows = allRows;
+
+        // Filtro dinâmico
+        searchInput.addEventListener('input', function () {
+            currentPage = 1;
+            applyFilter();
+        });
+
+        function applyFilter() {
+            const term = searchInput.value.trim().toLowerCase();
+            clearBtn.style.display = term ? 'inline-flex' : 'none';
+
+            if (!term) {
+                filteredRows = allRows;
+                // Remove highlights
+                allRows.forEach(r => {
+                    r.querySelectorAll('mark.search-hl').forEach(m => {
+                        m.replaceWith(document.createTextNode(m.textContent));
+                    });
+                });
+            } else {
+                filteredRows = allRows.filter(r => {
+                    const searchData = r.getAttribute('data-search') || '';
+                    return searchData.includes(term);
+                });
+
+                // Highlight na coluna descrição
+                allRows.forEach(r => {
+                    const descCell = r.querySelector('.col-descricao');
+                    if (!descCell) return;
+                    // Remove highlight anterior
+                    descCell.querySelectorAll('mark.search-hl').forEach(m => m.replaceWith(document.createTextNode(m.textContent)));
+                    const originalText = r.getAttribute('data-descricao') || '';
+                    if (!term || !originalText.toLowerCase().includes(term)) {
+                        descCell.textContent = originalText;
+                        return;
+                    }
+                    // Aplica highlight
+                    const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+                    descCell.innerHTML = originalText.replace(regex, '<mark class="search-hl">$1</mark>');
+                });
+            }
+
+            const total = filteredRows.length;
+            searchCount.textContent = term ? `${total} resultado${total !== 1 ? 's' : ''}` : '';
+            renderPage();
+        }
 
         function renderPage() {
             const start = (currentPage - 1) * pageSize;
             const end = start + pageSize;
+            const total = filteredRows.length;
+            const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
-            rows.forEach((row, index) => {
-                if (index >= start && index < end) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
+            // Esconde todas, mostra só as filtradas na página atual
+            allRows.forEach(r => r.style.display = 'none');
+            filteredRows.forEach((r, i) => {
+                r.style.display = (i >= start && i < end) ? '' : 'none';
             });
 
-            // Atualizar informações
             currentPageSpan.textContent = currentPage;
             totalPagesSpan.textContent = totalPages;
-            currentStartSpan.textContent = start + 1;
-            currentEndSpan.textContent = Math.min(end, rows.length);
-            totalRecordsSpan.textContent = rows.length;
+            currentStartSpan.textContent = total > 0 ? start + 1 : 0;
+            currentEndSpan.textContent = Math.min(end, total);
+            totalRecordsSpan.textContent = total;
 
-            // Atualizar botões
             firstPageBtn.disabled = currentPage === 1;
             prevPageBtn.disabled = currentPage === 1;
-            nextPageBtn.disabled = currentPage === totalPages;
-            lastPageBtn.disabled = currentPage === totalPages;
+            nextPageBtn.disabled = currentPage >= totalPages;
+            lastPageBtn.disabled = currentPage >= totalPages;
         }
 
         function updatePagination() {
             pageSize = parseInt(pageSizeSelect.value);
-            totalPages = Math.ceil(rows.length / pageSize);
             currentPage = 1;
             renderPage();
         }
 
-        // Event listeners
         pageSizeSelect.addEventListener('change', updatePagination);
+        firstPageBtn.addEventListener('click', () => { currentPage = 1; renderPage(); });
+        prevPageBtn.addEventListener('click', () => { if (currentPage > 1) { currentPage--; renderPage(); } });
+        nextPageBtn.addEventListener('click', () => { const tp = Math.ceil(filteredRows.length / pageSize); if (currentPage < tp) { currentPage++; renderPage(); } });
+        lastPageBtn.addEventListener('click', () => { currentPage = Math.ceil(filteredRows.length / pageSize); renderPage(); });
 
-        firstPageBtn.addEventListener('click', () => {
-            currentPage = 1;
-            renderPage();
-        });
-
-        prevPageBtn.addEventListener('click', () => {
-            if (currentPage > 1) {
-                currentPage--;
-                renderPage();
-            }
-        });
-
-        nextPageBtn.addEventListener('click', () => {
-            if (currentPage < totalPages) {
-                currentPage++;
-                renderPage();
-            }
-        });
-
-        lastPageBtn.addEventListener('click', () => {
-            currentPage = totalPages;
-            renderPage();
-        });
-
-        // Inicializar
         renderPage();
     }
+
+    window.limparFiltro = function() {
+        const input = document.getElementById('tableSearch');
+        input.value = '';
+        input.dispatchEvent(new Event('input'));
+        input.focus();
+    };
+
+}); // fim DOMContentLoaded
+
+    // ---- Ignorar registros ----
+    function toggleIgnorar(checkbox) {
+        const row = checkbox.closest('tr');
+        const id = checkbox.dataset.id;
+        row.classList.toggle('ignorado', checkbox.checked);
+
+        // Atualiza o campo hidden com os IDs ignorados
+        const ignoredInput = document.getElementById('ignoredIds');
+        const current = ignoredInput.value ? ignoredInput.value.split(',').filter(x => x) : [];
+        if (checkbox.checked) {
+            if (!current.includes(id)) current.push(id);
+        } else {
+            const idx = current.indexOf(id);
+            if (idx > -1) current.splice(idx, 1);
+        }
+        ignoredInput.value = current.join(',');
+
+        // Recalcula o total de horas excluindo os ignorados
+        recalcularTotal();
+    }
+
+    function recalcularTotal() {
+        const badgeEl = document.querySelector('.badge-value');
+        if (!badgeEl) return;
+
+        let totalMin = 0;
+        document.querySelectorAll('#resultsTable tbody tr').forEach(row => {
+            if (row.classList.contains('ignorado')) return;
+            const min = parseInt(row.getAttribute('data-minutos') || '0');
+            totalMin += min;
+        });
+
+        const h = Math.floor(totalMin / 60);
+        const m = totalMin % 60;
+        const formatted = `${h}:${String(m).padStart(2, '0')}`;
+        badgeEl.textContent = formatted;
+
+        // Animação sutil no badge
+        badgeEl.closest('.total-hours-badge')?.classList.add('badge-updated');
+        setTimeout(() => badgeEl.closest('.total-hours-badge')?.classList.remove('badge-updated'), 400);
+    }
+
+    // ---- Resumo Executivo IA ----
+
+    // Dispara geração quando o modal termina de abrir
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('resumoIAModal')?.addEventListener('shown.bs.modal', gerarResumoIA);
+    });
+
+    // Dados do resumo gerado (para PDF)
+    let dadosResumoAtual = null;
+
+    async function gerarResumoIA() {
+        const textoEl = document.getElementById('resumoTexto');
+        const metaEl = document.getElementById('resumoMeta');
+        const btnPDF = document.getElementById('btnGerarPDF');
+        btnPDF.disabled = true;
+        dadosResumoAtual = null;
+        textoEl.innerHTML = '<div style="text-align:center;padding:30px;color:#667eea;"><i class="bi bi-arrow-repeat" style="font-size:2rem;animation:spin 1s linear infinite;display:inline-block;"></i><p style="margin-top:12px;">Analisando dados...</p></div>';
+        metaEl.textContent = '';
+
+        const clientIds = document.getElementById('clientIds')?.value || '';
+        const minDate = document.getElementById('minDate')?.value || '';
+        const maxDate = document.getElementById('maxDate')?.value || '';
+        const clientId = parseInt(clientIds.split(',')[0]);
+
+        // Coletar dados da tabela de resultados — TODOS os registros, não só os visíveis
+        const rows = document.querySelectorAll('#resultsTable tbody tr');
+        const registros = [];
+        let totalMin = 0;
+        rows.forEach(row => {
+            // Pular registros marcados como ignorar
+            if (row.classList.contains('ignorado')) return;
+
+            const cells = row.querySelectorAll('td');
+            if (cells.length < 4) return;
+            const horas = cells[3]?.textContent?.trim() || '';
+            const match = horas.match(/(\d+):(\d+)/);
+            if (match) totalMin += parseInt(match[1]) * 60 + parseInt(match[2]);
+            registros.push({
+                data: cells[0]?.textContent?.trim() || '',
+                advogado: cells[1]?.textContent?.trim() || '',
+                descricao: row.getAttribute('data-descricao') || '',
+                horas: horas,
+                tipo: cells[6]?.textContent?.trim() || ''
+            });
+        });
+
+        const clienteNome = document.querySelector('.client-tag span')?.textContent?.trim() || 'Cliente';
+        const totalH = Math.floor(totalMin / 60);
+        const totalM = totalMin % 60;
+        const totalHoras = `${totalH}:${String(totalM).padStart(2,'0')}h`;
+        const periodo = `${minDate} a ${maxDate}`;
+
+        metaEl.textContent = `${clienteNome} | ${periodo} | Total: ${totalHoras}`;
+
+        try {
+            const resp = await fetch('/ProcessRecord/GerarResumoExecutivo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    cliente: clienteNome,
+                    periodo: periodo,
+                    totalHoras: totalHoras,
+                    registros: registros
+                })
+            });
+
+            const result = await resp.json();
+
+            if (resp.ok && result.resumo) {
+                textoEl.innerHTML = `<div style="font-size:14px;line-height:1.8;color:#2d3748;white-space:pre-wrap;">${result.resumo}</div>`;
+                // Guardar dados para o PDF
+                dadosResumoAtual = {
+                    cliente: clienteNome,
+                    periodo: periodo,
+                    totalHoras: totalHoras,
+                    resumo: result.resumo,
+                    registros: registros
+                };
+                btnPDF.disabled = false;
+            } else {
+                let errorMessage = result.erro || 'Erro desconhecido';
+                let errorStyle = 'background:#fed7d7;color:#822727;padding:16px;border-radius:8px;font-size:14px;';
+                if (resp.status === 429) {
+                    errorStyle = 'background:linear-gradient(135deg,#fff5f5,#fed7d7);border:2px solid #f5576c;color:#2d3748;padding:24px;border-radius:12px;font-size:14px;text-align:center;';
+                    errorMessage = `<i class="bi bi-exclamation-triangle" style="font-size:2rem;color:#f5576c;"></i><h5 style="color:#f5576c;margin:12px 0;">Limite Diário Atingido!</h5><p>${result.erro}</p>`;
+                } else if (resp.status === 503) {
+                    errorStyle = 'background:#fff3cd;border:1px solid #ffc107;color:#856404;padding:16px;border-radius:8px;font-size:14px;text-align:center;';
+                    errorMessage = `<i class="bi bi-gear" style="font-size:2rem;"></i><h5 style="margin:8px 0;">IA não configurada</h5><p>${result.erro}</p>`;
+                }
+                textoEl.innerHTML = `<div style="${errorStyle}">${errorMessage}</div>`;
+            }
+        } catch (e) {
+            textoEl.innerHTML = `<div style="background:#fed7d7;color:#822727;padding:16px;border-radius:8px;">Erro: ${e.message}</div>`;
+        }
+    }
+
+    function imprimirResumo() {
+        document.getElementById('areaImpressao').style.display = 'block';
+        window.print();
+        document.getElementById('areaImpressao').style.display = 'none';
+    }
+
+    async function gerarPDF() {
+        if (!dadosResumoAtual) return;
+        const btn = document.getElementById('btnGerarPDF');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Gerando...';
+        try {
+            const resp = await fetch('/ProcessRecord/GerarResumoExecutivoPDF', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...dadosResumoAtual,
+                    clienteId: parseInt(document.getElementById('clientIds')?.value?.split(',')[0] || '0')
+                })
+            });
+            if (resp.ok) {
+                const blob = await resp.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Resumo_Executivo_${dadosResumoAtual.cliente.replace(/\s+/g,'_')}.pdf`;
+                a.click();
+                URL.revokeObjectURL(url);
+            } else {
+                const data = await resp.json();
+                alert('Erro ao gerar PDF: ' + (data.erro || resp.status));
+            }
+        } catch(e) {
+            alert('Erro: ' + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-file-earmark-pdf me-1"></i>Baixar PDF';
+        }
+    }
 </script>
+
+<!-- Modal Resumo Executivo -->
+<div class="modal fade" id="resumoIAModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;">
+                <h5 class="modal-title"><i class="bi bi-stars me-2"></i>Resumo Executivo com IA</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="resumoMeta" class="text-muted small mb-3"></div>
+                <div id="resumoTexto" style="background:#f8f9fa;border-left:4px solid #667eea;padding:20px;border-radius:8px;min-height:120px;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-primary" onclick="imprimirResumo()"><i class="bi bi-printer me-1"></i>Imprimir</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Área de impressão -->
+<div id="areaImpressao" style="display:none;padding:40px;font-family:Arial,sans-serif;">
+    <h2 id="printTitulo" style="color:#667eea;margin-bottom:8px;"></h2>
+    <p id="printMeta" style="color:#718096;font-size:13px;margin-bottom:24px;"></p>
+    <div id="printTexto" style="font-size:14px;line-height:1.8;color:#2d3748;border-left:4px solid #667eea;padding-left:16px;"></div>
+</div>
+
+@section Styles {
+    <style>
+        @@media print {
+            body * { visibility: hidden; }
+            #areaImpressao, #areaImpressao * { visibility: visible; }
+            #areaImpressao { position: absolute; left: 0; top: 0; width: 100%; }
+        }
+        @@keyframes spin { 0% { transform:rotate(0deg); } 100% { transform:rotate(360deg); } }
+    </style>
+}

@@ -45,6 +45,14 @@ namespace WebAppSystems.Controllers
                     TempData["MensagemAviso"] = "A sessão expirou. Por favor, faça login novamente.";
                 }
             }
+            
+            // Limpa mensagens de erro de outros controllers que não são relevantes para o login
+            // Mantém apenas mensagens de erro relacionadas ao processo de login
+            if (TempData["MensagemErro"] != null && !TempData.ContainsKey("LoginError"))
+            {
+                TempData.Remove("MensagemErro");
+            }
+            
             return View();
         }
 
@@ -216,6 +224,7 @@ namespace WebAppSystems.Controllers
                         TempData["MensagemErro"] = lockoutTime.HasValue
                             ? $"Conta bloqueada. Tente novamente em {lockoutTime.Value.Minutes}m {lockoutTime.Value.Seconds}s."
                             : "Conta temporariamente bloqueada. Tente novamente mais tarde.";
+                        TempData["LoginError"] = true;
                         return View("Index");
                     }
 
@@ -226,6 +235,7 @@ namespace WebAppSystems.Controllers
                         if (usuario.Inativo)
                         {
                             TempData["MensagemErro"] = "Usuário inativo. Contate o administrador para mais informações.";
+                            TempData["LoginError"] = true;
                             return View("Index");
                         }
 
@@ -254,6 +264,7 @@ namespace WebAppSystems.Controllers
                         TempData["MensagemErro"] = remaining > 0
                             ? $"Senha inválida. Você tem {remaining} tentativa(s) restante(s)."
                             : "Senha inválida. Conta bloqueada por 15 minutos.";
+                        TempData["LoginError"] = true;
                     }
                     else
                     {
@@ -262,6 +273,7 @@ namespace WebAppSystems.Controllers
                         TempData["MensagemErro"] = remaining > 0
                             ? $"Usuário e/ou senha inválido(s). Você tem {remaining} tentativa(s) restante(s)."
                             : "Usuário e/ou senha inválido(s). Conta bloqueada por 15 minutos.";
+                        TempData["LoginError"] = true;
                     }
                 }
                 else
@@ -274,11 +286,13 @@ namespace WebAppSystems.Controllers
             catch (Sessao.SessionExpiredException)
             {
                 TempData["MensagemErro"] = "A sessão expirou. Por favor, faça login novamente.";
+                TempData["LoginError"] = true;
                 return RedirectToAction("Index");
             }
             catch (Exception)
             {
                 TempData["MensagemErro"] = "Ops, não conseguimos realizar o seu login. Tente novamente.";
+                TempData["LoginError"] = true;
                 return RedirectToAction("Index");
             }
         }

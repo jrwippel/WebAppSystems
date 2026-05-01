@@ -111,7 +111,17 @@
                         <i class="bi bi-receipt"></i> Pré-Fatura
                     </button>
                 }
+                
+                <!-- Botão Resumo Executivo com IA -->
+                <button type="button" class="btn btn-resumo-ia" id="btnResumoIA" data-bs-toggle="modal" data-bs-target="#resumoIAModal" disabled>
+                    <i class="bi bi-stars"></i> Resumo Executivo com IA
+                </button>
             </div>
+            
+            <!-- Campo hidden para armazenar dados -->
+            <input type="hidden" id="clientIds" />
+            <input type="hidden" id="minDateValue" />
+            <input type="hidden" id="maxDateValue" />
         </form>
     </div>
 
@@ -329,6 +339,63 @@
         transform: translateY(-2px);
     }
 
+    .btn-resumo-ia {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+    }
+    .btn-resumo-ia:hover:not(:disabled) { opacity: 0.88; transform: translateY(-2px); color: white; }
+    .btn-resumo-ia:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* Modal Resumo IA */
+    .resumo-modal-overlay {
+        display: none;
+        position: fixed; inset: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+    }
+    .resumo-modal-overlay.active { display: flex; }
+    .resumo-modal {
+        background: white;
+        border-radius: 16px;
+        padding: 32px;
+        max-width: 640px;
+        width: 90%;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+    }
+    .resumo-modal-header {
+        display: flex; align-items: center; gap: 10px;
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    .resumo-modal-header h3 { margin: 0; font-size: 18px; color: #1a202c; }
+    .resumo-modal-header i { color: #667eea; font-size: 22px; }
+    .resumo-modal-meta { font-size: 12px; color: #718096; margin-bottom: 16px; }
+    .resumo-texto {
+        background: #f7fafc;
+        border-left: 4px solid #667eea;
+        border-radius: 8px;
+        padding: 16px 20px;
+        font-size: 14px;
+        line-height: 1.7;
+        color: #2d3748;
+        min-height: 80px;
+        white-space: pre-wrap;
+    }
+    .resumo-modal-actions {
+        display: flex; gap: 10px; justify-content: flex-end;
+        margin-top: 20px;
+    }
+    .btn-imprimir {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 9px 20px; border-radius: 8px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white; border: none; font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+
     /* Card informativo */
     .info-card {
         background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
@@ -439,6 +506,9 @@
     // Atualizar campo hidden
     function updateHiddenInput() {
         clientIdsInput.value = selectedClients.map(c => c.id).join(',');
+        // Habilita botão IA só com exatamente 1 cliente
+        const btn = document.getElementById('btnResumoIA');
+        if (btn) btn.disabled = selectedClients.length !== 1;
     }
 
     // Autocomplete para Usuário
@@ -461,4 +531,117 @@
             attorneyIdInput.value = '';
         }
     });
+</script>
+
+<!-- Modal Resumo Executivo IA -->
+<div class="modal fade" id="resumoIAModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background:linear-gradient(135deg,#667eea,#764ba2);">
+                <h5 class="modal-title text-white"><i class="bi bi-stars me-2"></i>Resumo Executivo</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="resumoMeta" class="text-muted small mb-3"></p>
+                <div id="resumoTexto" class="p-3 rounded" style="background:#f7fafc;border-left:4px solid #667eea;font-size:14px;line-height:1.8;min-height:80px;white-space:pre-wrap;">
+                    Aguarde...
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-primary" onclick="imprimirResumo()"><i class="bi bi-printer me-1"></i>Imprimir</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Área de impressão -->
+<div id="areaImpressao" style="display:none;padding:40px;font-family:Arial,sans-serif;">
+    <h2 id="printTitulo" style="color:#667eea;margin-bottom:8px;"></h2>
+    <p id="printMeta" style="color:#718096;font-size:13px;margin-bottom:24px;"></p>
+    <div id="printTexto" style="font-size:14px;line-height:1.8;color:#2d3748;border-left:4px solid #667eea;padding-left:16px;"></div>
+</div>
+
+<!-- Modal Resumo Executivo IA -->
+<div class="modal fade" id="resumoIAModal" tabindex="-1" aria-labelledby="resumoIAModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
+                <h5 class="modal-title" id="resumoIAModalLabel">
+                    <i class="bi bi-stars me-2"></i>Resumo Executivo com IA
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="resumoMeta" class="text-muted small mb-3"></div>
+                <div id="resumoTexto" style="background: #f8f9fa; border-left: 4px solid #667eea; padding: 20px; border-radius: 8px; min-height: 120px; white-space: pre-wrap; font-size: 14px; line-height: 1.6;">
+                    Carregando...
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-primary" onclick="imprimirResumo()"><i class="bi bi-printer me-1"></i>Imprimir</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('resumoIAModal')?.addEventListener('shown.bs.modal', async function () {
+        const textoEl = document.getElementById('resumoTexto');
+        const metaEl = document.getElementById('resumoMeta');
+        textoEl.innerHTML = '<div style="text-align:center;padding:30px;color:#667eea;"><i class="bi bi-arrow-repeat" style="font-size:2rem;animation:spin 1s linear infinite;display:inline-block;"></i><p style="margin-top:12px;">Analisando dados...</p></div>';
+        metaEl.textContent = '';
+
+        const minDate = document.getElementById('minDate')?.value || '';
+        const maxDate = document.getElementById('maxDate')?.value || '';
+        const clienteNome = selectedClients[0]?.name || 'Cliente';
+        const clienteId = selectedClients[0]?.id;
+
+        try {
+            const resp = await fetch('/ProcessRecord/GerarResumoExecutivo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    clienteId: clienteId,
+                    dataInicio: minDate,
+                    dataFim: maxDate
+                })
+            });
+
+            const result = await resp.json();
+
+            if (resp.ok && result.resumo) {
+                metaEl.textContent = `${result.cliente} | ${result.periodo} | Total: ${result.totalHoras}`;
+                textoEl.innerHTML = `<div style="font-size:14px;line-height:1.8;color:#2d3748;white-space:pre-wrap;">${result.resumo}</div>`;
+                document.getElementById('printTitulo').textContent = `Resumo Executivo — ${result.cliente}`;
+                document.getElementById('printMeta').textContent = `Período: ${result.periodo} | Total: ${result.totalHoras}`;
+                document.getElementById('printTexto').textContent = result.resumo;
+            } else {
+                let errorMessage = result.erro || 'Erro desconhecido';
+                let errorStyle = 'background:#fed7d7;color:#822727;padding:16px;border-radius:8px;font-size:14px;';
+
+                if (resp.status === 429) {
+                    errorStyle = 'background:linear-gradient(135deg,#fff5f5,#fed7d7);border:2px solid #f5576c;color:#2d3748;padding:24px;border-radius:12px;font-size:14px;text-align:center;';
+                    errorMessage = `<i class="bi bi-exclamation-triangle" style="font-size:2rem;color:#f5576c;"></i>
+                        <h5 style="color:#f5576c;margin:12px 0;">Limite Diário Atingido!</h5>
+                        <p>Você já usou suas 10 consultas de IA hoje.</p>
+                        <p style="margin-top:8px;font-size:13px;">Aguarde até amanhã ou entre em contato com o administrador para upgrade do plano.</p>`;
+                } else if (resp.status === 503) {
+                    errorStyle = 'background:#fff3cd;border:1px solid #ffc107;color:#856404;padding:16px;border-radius:8px;font-size:14px;text-align:center;';
+                    errorMessage = `<i class="bi bi-gear" style="font-size:2rem;"></i><h5 style="margin:8px 0;">IA não configurada</h5><p>${result.erro}</p>`;
+                }
+
+                textoEl.innerHTML = `<div style="${errorStyle}">${errorMessage}</div>`;
+            }
+        } catch (e) {
+            textoEl.innerHTML = `<div style="background:#fed7d7;color:#822727;padding:16px;border-radius:8px;">Erro: ${e.message}</div>`;
+        }
+    });
+
+    function imprimirResumo() {
+        document.getElementById('areaImpressao').style.display = 'block';
+        window.print();
+        document.getElementById('areaImpressao').style.display = 'none';
+    }
 </script>
