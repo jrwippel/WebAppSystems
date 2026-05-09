@@ -26,9 +26,21 @@ namespace WebAppSystems.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            base.OnModelCreating(modelBuilder);          
+            base.OnModelCreating(modelBuilder);
 
+            // Configurar relacionamento ProcessRecord -> Attorney (relacionamento principal)
+            modelBuilder.Entity<ProcessRecord>()
+                .HasOne(p => p.Attorney)
+                .WithMany(a => a.ProcessRecords)
+                .HasForeignKey(p => p.AttorneyId)
+                .OnDelete(DeleteBehavior.Restrict);
 
+            // Configurar relacionamento ProcessRecord -> FaturadoPor (Attorney)
+            modelBuilder.Entity<ProcessRecord>()
+                .HasOne(p => p.FaturadoPor)
+                .WithMany()
+                .HasForeignKey(p => p.FaturadoPorId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // Outras configurações de modelo podem ir aqui, se necessário
         }               

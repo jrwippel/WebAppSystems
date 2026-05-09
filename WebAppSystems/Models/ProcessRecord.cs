@@ -45,6 +45,15 @@ namespace WebAppSystems.Models
 
         [Required(ErrorMessage = "O tipo de registro é obrigatório.")]
         public RecordType RecordType { get; set; }
+        
+        // Campos de Faturamento
+        public bool IsFaturado { get; set; } = false;
+        public DateTime? DataFaturamento { get; set; }
+        public int? FaturadoPorId { get; set; }
+        [JsonIgnore]
+        [ValidateNever]
+        public Attorney? FaturadoPor { get; set; }
+        
         public ProcessRecord()
         {
         }
