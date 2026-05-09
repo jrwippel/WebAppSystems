@@ -1,0 +1,1469 @@
+@using WebAppSystems.Models.ViewModels
+@model List<FaturamentoGrupoViewModel>
+
+@{
+    ViewData["Title"] = "Faturamento";
+}
+
+<div class="faturamento-container">
+    <!-- Header com Banner -->
+    <div class="page-banner">
+        <div class="banner-content">
+            <div class="banner-icon">
+                <i class="bi bi-cash-coin"></i>
+            </div>
+            <div class="banner-text">
+                <h1>Faturamento</h1>
+                <p>Gerencie e controle os lançamentos faturados</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filters-card">
+        <div class="filters-header">
+            <h5><i class="bi bi-funnel"></i> Filtros</h5>
+        </div>
+        <div class="filters-body">
+            <form method="get" class="filters-form" id="filterForm">
+                <div class="filter-row">
+                    <div class="filter-field">
+                        <label>Mês/Ano</label>
+                        <select name="mesAno" class="form-control" id="mesAnoSelect" onchange="document.getElementById('filterForm').submit()">
+                            @{
+                                var dataAtual = DateTime.Now;
+                                for (int i = 0; i < 12; i++)
+                                {
+                                    var mes = dataAtual.AddMonths(-i);
+                                    var mesAnoValue = mes.ToString("yyyy-MM");
+                                    var mesAnoText = mes.ToString("MMMM/yyyy", new System.Globalization.CultureInfo("pt-BR"));
+                                    mesAnoText = char.ToUpper(mesAnoText[0]) + mesAnoText.Substring(1);
+                                    <option value="@mesAnoValue" selected="@(ViewBag.MesAno == mesAnoValue)">@mesAnoText</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="filter-field filter-field-large">
+                        <label>Cliente</label>
+                        <select name="clienteId" class="form-control">
+                            <option value="">Todos os Clientes</option>
+                            @foreach (var cliente in ViewBag.Clientes)
+                            {
+                                <option value="@cliente.Id" selected="@(ViewBag.ClienteId == cliente.Id)">@cliente.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="filter-field">
+                        <label>Área</label>
+                        <select name="departamentoId" class="form-control">
+                            <option value="">Todas as Áreas</option>
+                            @foreach (var dept in ViewBag.Departamentos)
+                            {
+                                <option value="@dept.Id" selected="@(ViewBag.DepartamentoId == dept.Id)">@dept.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="filter-field">
+                        <label>Advogado</label>
+                        <select name="advogadoId" class="form-control">
+                            <option value="">Todos</option>
+                            @foreach (var adv in ViewBag.Advogados)
+                            {
+                                <option value="@adv.Id" selected="@(ViewBag.AdvogadoId == adv.Id)">@adv.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="filter-field filter-button">
+                        <button type="submit" class="btn-search">
+                            <i class="bi bi-search"></i> Buscar
+                        </button>
+                    </div>
+                </div>
+                <div class="filter-checkbox">
+                    <input type="checkbox" 
+                           id="apenasNaoFaturados" 
+                           @(ViewBag.ApenasNaoFaturados != false ? "checked" : "")
+                           onchange="toggleApenasNaoFaturados()">
+                    <label for="apenasNaoFaturados">
+                        Mostrar apenas lançamentos não faturados
+                    </label>
+                    <input type="hidden" name="apenasNaoFaturados" id="hiddenApenasNaoFaturados" value="@(ViewBag.ApenasNaoFaturados != false ? "true" : "false")" />
+                </div>
+                
+                @{
+                    var temFaturados = Model != null && Model.Any() && Model.SelectMany(g => g.Lancamentos).Any(l => l.IsFaturado);
+                    var umClienteSelecionado = ViewBag.ClienteId != null;
+                }
+                
+                @if (temFaturados)
+                {
+                    <!-- Botões de Ação -->
+                    <div class="action-buttons-bar">
+                        <button type="button" class="btn btn-excel" onclick="gerarExcel()">
+                            <i class="bi bi-file-earmark-spreadsheet"></i> Gerar Excel
+                        </button>
+                        <button type="button" class="btn btn-prefatura" onclick="gerarPreFatura()">
+                            <i class="bi bi-receipt"></i> Pré-Fatura
+                        </button>
+                        @if (umClienteSelecionado)
+                        {
+                            <button type="button" class="btn btn-resumo-ia" onclick="abrirResumoIA()">
+                                <i class="bi bi-stars"></i> Resumo Executivo com IA
+                            </button>
+                        }
+                    </div>
+                }
+            </form>
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <p>Nenhum lançamento encontrado com os filtros selecionados.</p>
+        </div>
+    }
+    else
+    {
+        <!-- Filtro Rápido -->
+        <div class="quick-filter">
+            <i class="bi bi-search"></i>
+            <input type="text" id="quickFilter" placeholder="Filtrar por descrição, usuário, tipo, área..." />
+        </div>
+
+        <!-- Lançamentos Agrupados por Cliente -->
+        @foreach (var grupo in Model)
+        {
+            <div class="client-card">
+                <div class="client-header">
+                    <div class="client-info">
+                        <input type="checkbox" class="select-all-client" 
+                               data-client="@grupo.Cliente.Id" />
+                        <h5><i class="bi bi-building"></i> @grupo.Cliente.Name</h5>
+                    </div>
+                    <div class="client-summary">
+                        <span class="badge badge-hours">
+                            <i class="bi bi-clock"></i> @grupo.TotalHoras.ToString("F2")h
+                        </span>
+                        <span class="badge badge-value">
+                            <i class="bi bi-currency-dollar"></i> R$ @grupo.ValorEstimado.ToString("N2")
+                        </span>
+                    </div>
+                </div>
+                <div class="client-body">
+                    <div class="table-responsive">
+                        <table class="records-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;"></th>
+                                    <th style="width: 100px;">Data</th>
+                                    <th>Profissional</th>
+                                    <th>Área</th>
+                                    <th>Descrição</th>
+                                    <th style="width: 120px;">Tipo</th>
+                                    <th style="width: 80px;">Horas</th>
+                                    <th style="width: 120px;">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var lancamento in grupo.Lancamentos)
+                                {
+                                    <tr class="@(lancamento.IsFaturado ? "row-faturado" : "")">
+                                        <td class="text-center">
+                                            @if (!lancamento.IsFaturado)
+                                            {
+                                                <input type="checkbox" class="entry-checkbox" 
+                                                       value="@lancamento.Id" 
+                                                       data-client="@grupo.Cliente.Id" />
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-check-circle-fill text-success"></i>
+                                            }
+                                        </td>
+                                        <td>@lancamento.Date.ToString("dd/MM/yyyy")</td>
+                                        <td>
+                                            <i class="bi bi-person-badge"></i> @lancamento.Attorney.Name
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-area">@lancamento.Department.Name</span>
+                                        </td>
+                                        <td class="description-cell" title="@lancamento.Description" data-bs-toggle="tooltip" data-bs-placement="top">
+                                            @lancamento.Description
+                                        </td>
+                                        <td>
+                                            @switch (lancamento.RecordType)
+                                            {
+                                                case WebAppSystems.Models.Enums.RecordType.Consultivo:
+                                                    <span class="badge badge-consultivo">Consultivo</span>
+                                                    break;
+                                                case WebAppSystems.Models.Enums.RecordType.Contencioso:
+                                                    <span class="badge badge-contencioso">Contencioso</span>
+                                                    break;
+                                                case WebAppSystems.Models.Enums.RecordType.PropostaEspecifica:
+                                                    <span class="badge badge-proposta">Proposta</span>
+                                                    break;
+                                                case WebAppSystems.Models.Enums.RecordType.Deslocamento:
+                                                    <span class="badge badge-deslocamento">Deslocamento</span>
+                                                    break;
+                                                default:
+                                                    <span class="badge badge-outro">Outro</span>
+                                                    break;
+                                            }
+                                        </td>
+                                        <td class="text-center hours-cell">
+                                            @lancamento.CalculoHorasDecimal().ToString("F2")h
+                                        </td>
+                                        <td class="text-center">
+                                            @if (lancamento.IsFaturado)
+                                            {
+                                                <span class="badge badge-faturado" title="Faturado em @lancamento.DataFaturamento?.ToString("dd/MM/yyyy HH:mm")">
+                                                    <i class="bi bi-check-circle"></i> Faturado
+                                                </span>
+                                                @if (lancamento.FaturadoPor != null)
+                                                {
+                                                    <br />
+                                                    <small class="faturado-por">por @lancamento.FaturadoPor.Name</small>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span class="badge badge-pendente">
+                                                    <i class="bi bi-clock-history"></i> Pendente
+                                                </span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="client-footer">
+                    <button class="btn-select-all" data-client="@grupo.Cliente.Id">
+                        <i class="bi bi-check-square"></i> Selecionar Todos
+                    </button>
+                    <button class="btn-deselect-all" data-client="@grupo.Cliente.Id">
+                        <i class="bi bi-square"></i> Desmarcar Todos
+                    </button>
+                </div>
+            </div>
+        }
+
+        <!-- Resumo Flutuante -->
+        <div class="summary-card" id="summaryCard" style="display: none;">
+            <div class="summary-content">
+                <div class="summary-stats">
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalLancamentos">0</div>
+                        <div class="stat-label">Lançamentos Selecionados</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalHoras">0.00h</div>
+                        <div class="stat-label">Total de Horas</div>
+                    </div>
+                </div>
+                <div class="summary-actions">
+                    <button class="btn-faturar" onclick="marcarComoFaturado()">
+                        <i class="bi bi-check-circle"></i> Marcar como Faturado
+                    </button>
+                    <button class="btn-limpar" onclick="limparSelecao()">
+                        <i class="bi bi-x-circle"></i> Limpar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Paginação -->
+        @if (ViewBag.TotalPages > 1)
+        {
+            <div class="pagination-container">
+                <div class="pagination-info">
+                    Mostrando @((ViewBag.CurrentPage - 1) * ViewBag.PageSize + 1) - @(Math.Min(ViewBag.CurrentPage * ViewBag.PageSize, ViewBag.TotalItems)) de @ViewBag.TotalItems lançamentos
+                </div>
+                <div class="pagination-controls">
+                    @if (ViewBag.CurrentPage > 1)
+                    {
+                        <a href="@Url.Action("Index", new { 
+                            mesAno = ViewBag.MesAno,
+                            dataInicio = ViewBag.DataInicio, 
+                            dataFim = ViewBag.DataFim, 
+                            clienteId = ViewBag.ClienteId, 
+                            departamentoId = ViewBag.DepartamentoId, 
+                            advogadoId = ViewBag.AdvogadoId, 
+                            apenasNaoFaturados = ViewBag.ApenasNaoFaturados,
+                            page = ViewBag.CurrentPage - 1 
+                        })" class="btn-pagination">
+                            <i class="bi bi-chevron-left"></i> Anterior
+                        </a>
+                    }
+                    else
+                    {
+                        <button class="btn-pagination" disabled>
+                            <i class="bi bi-chevron-left"></i> Anterior
+                        </button>
+                    }
+
+                    <div class="page-numbers">
+                        @{
+                            int currentPage = ViewBag.CurrentPage;
+                            int totalPages = ViewBag.TotalPages;
+                            int startPage = Math.Max(1, currentPage - 2);
+                            int endPage = Math.Min(totalPages, currentPage + 2);
+
+                            if (startPage > 1)
+                            {
+                                <a href="@Url.Action("Index", new { 
+                                    mesAno = ViewBag.MesAno,
+                                    dataInicio = ViewBag.DataInicio, 
+                                    dataFim = ViewBag.DataFim, 
+                                    clienteId = ViewBag.ClienteId, 
+                                    departamentoId = ViewBag.DepartamentoId, 
+                                    advogadoId = ViewBag.AdvogadoId, 
+                                    apenasNaoFaturados = ViewBag.ApenasNaoFaturados,
+                                    page = 1 
+                                })" class="page-number">1</a>
+                                
+                                if (startPage > 2)
+                                {
+                                    <span class="page-ellipsis">...</span>
+                                }
+                            }
+
+                            for (int i = startPage; i <= endPage; i++)
+                            {
+                                if (i == currentPage)
+                                {
+                                    <span class="page-number active">@i</span>
+                                }
+                                else
+                                {
+                                    <a href="@Url.Action("Index", new { 
+                                        mesAno = ViewBag.MesAno,
+                                        dataInicio = ViewBag.DataInicio, 
+                                        dataFim = ViewBag.DataFim, 
+                                        clienteId = ViewBag.ClienteId, 
+                                        departamentoId = ViewBag.DepartamentoId, 
+                                        advogadoId = ViewBag.AdvogadoId, 
+                                        apenasNaoFaturados = ViewBag.ApenasNaoFaturados,
+                                        page = i 
+                                    })" class="page-number">@i</a>
+                                }
+                            }
+
+                            if (endPage < totalPages)
+                            {
+                                if (endPage < totalPages - 1)
+                                {
+                                    <span class="page-ellipsis">...</span>
+                                }
+                                
+                                <a href="@Url.Action("Index", new { 
+                                    mesAno = ViewBag.MesAno,
+                                    dataInicio = ViewBag.DataInicio, 
+                                    dataFim = ViewBag.DataFim, 
+                                    clienteId = ViewBag.ClienteId, 
+                                    departamentoId = ViewBag.DepartamentoId, 
+                                    advogadoId = ViewBag.AdvogadoId, 
+                                    apenasNaoFaturados = ViewBag.ApenasNaoFaturados,
+                                    page = totalPages 
+                                })" class="page-number">@totalPages</a>
+                            }
+                        }
+                    </div>
+
+                    @if (ViewBag.CurrentPage < ViewBag.TotalPages)
+                    {
+                        <a href="@Url.Action("Index", new { 
+                            mesAno = ViewBag.MesAno,
+                            dataInicio = ViewBag.DataInicio, 
+                            dataFim = ViewBag.DataFim, 
+                            clienteId = ViewBag.ClienteId, 
+                            departamentoId = ViewBag.DepartamentoId, 
+                            advogadoId = ViewBag.AdvogadoId, 
+                            apenasNaoFaturados = ViewBag.ApenasNaoFaturados,
+                            page = ViewBag.CurrentPage + 1 
+                        })" class="btn-pagination">
+                            Próxima <i class="bi bi-chevron-right"></i>
+                        </a>
+                    }
+                    else
+                    {
+                        <button class="btn-pagination" disabled>
+                            Próxima <i class="bi bi-chevron-right"></i>
+                        </button>
+                    }
+                </div>
+            </div>
+        }
+    }
+</div>
+
+<!-- Modal Resumo Executivo IA -->
+<div class="modal fade" id="resumoIAModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;">
+                <h5 class="modal-title"><i class="bi bi-stars me-2"></i>Resumo Executivo com IA</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="resumoMeta" class="mb-3"></div>
+                <div id="resumoTexto" style="white-space:pre-wrap;line-height:1.8;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-primary" id="btnGerarPDF" onclick="gerarPDFResumo()" disabled>
+                    <i class="bi bi-file-earmark-pdf me-1"></i>Baixar PDF
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+    // Inicializar Select2 nos campos de seleção
+    $(document).ready(function() {
+        // Inicializar tooltips do Bootstrap
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Cliente com busca
+        $('select[name="clienteId"]').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Todos os Clientes',
+            allowClear: true,
+            width: '100%',
+            language: {
+                noResults: function() {
+                    return "Nenhum cliente encontrado";
+                },
+                searching: function() {
+                    return "Buscando...";
+                }
+            }
+        });
+
+        // Área/Departamento com busca
+        $('select[name="departamentoId"]').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Todas as Áreas',
+            allowClear: true,
+            width: '100%'
+        });
+
+        // Advogado com busca
+        $('select[name="advogadoId"]').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Todos',
+            allowClear: true,
+            width: '100%'
+        });
+    });
+
+    // Gerar Excel com registros faturados
+    function gerarExcel() {
+        const params = new URLSearchParams(window.location.search);
+        const url = '/Faturamento/GerarExcel?' + params.toString();
+        window.location.href = url;
+    }
+
+    // Gerar Pré-Fatura com registros faturados
+    function gerarPreFatura() {
+        const params = new URLSearchParams(window.location.search);
+        const url = '/Faturamento/GerarPreFatura?' + params.toString();
+        window.open(url, '_blank');
+    }
+
+    // Abrir modal de Resumo Executivo com IA
+    function abrirResumoIA() {
+        $('#resumoIAModal').modal('show');
+    }
+
+    // Gerar Resumo Executivo com IA
+    async function gerarResumoIA() {
+        const textoEl = document.getElementById('resumoTexto');
+        const metaEl = document.getElementById('resumoMeta');
+        const btnPDF = document.getElementById('btnGerarPDF');
+
+        textoEl.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Gerando resumo executivo com IA...</p></div>';
+        metaEl.innerHTML = '';
+        btnPDF.disabled = true;
+
+        const params = new URLSearchParams(window.location.search);
+        const mesAno = params.get('mesAno');
+        const clienteId = params.get('clienteId');
+        const departamentoId = params.get('departamentoId');
+        const advogadoId = params.get('advogadoId');
+
+        try {
+            const resp = await fetch('/Faturamento/GerarResumoExecutivo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    mesAno: mesAno,
+                    clienteId: clienteId ? parseInt(clienteId) : null,
+                    departamentoId: departamentoId ? parseInt(departamentoId) : null,
+                    advogadoId: advogadoId ? parseInt(advogadoId) : null
+                })
+            });
+
+            const data = await resp.json();
+
+            if (data.success) {
+                window.dadosResumoAtual = data;
+                textoEl.innerHTML = data.resumo.replace(/\n/g, '<br>');
+                metaEl.innerHTML = `
+                    <div class="row text-center">
+                        <div class="col-4"><strong>Total de Horas:</strong><br>${data.totalHoras}</div>
+                        <div class="col-4"><strong>Lançamentos:</strong><br>${data.totalLancamentos}</div>
+                        <div class="col-4"><strong>Período:</strong><br>${data.periodo}</div>
+                    </div>
+                `;
+                btnPDF.disabled = false;
+            } else {
+                textoEl.innerHTML = `<div class="alert alert-danger">${data.message || 'Erro ao gerar resumo.'}</div>`;
+            }
+        } catch (err) {
+            textoEl.innerHTML = '<div class="alert alert-danger">Erro ao conectar com o servidor.</div>';
+            console.error(err);
+        }
+    }
+
+    // Gerar PDF do Resumo
+    async function gerarPDFResumo() {
+        const btn = document.getElementById('btnGerarPDF');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Gerando...';
+
+        try {
+            const params = new URLSearchParams(window.location.search);
+            const mesAno = params.get('mesAno');
+            const clienteId = params.get('clienteId');
+            const departamentoId = params.get('departamentoId');
+            const advogadoId = params.get('advogadoId');
+
+            const resp = await fetch('/Faturamento/GerarResumoExecutivoPDF', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    mesAno: mesAno,
+                    clienteId: clienteId ? parseInt(clienteId) : null,
+                    departamentoId: departamentoId ? parseInt(departamentoId) : null,
+                    advogadoId: advogadoId ? parseInt(advogadoId) : null,
+                    resumo: window.dadosResumoAtual?.resumo || ''
+                })
+            });
+
+            if (resp.ok) {
+                const blob = await resp.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `ResumoExecutivo_${mesAno || 'Faturamento'}.pdf`;
+                a.click();
+            } else {
+                alert('Erro ao gerar PDF');
+            }
+        } catch (err) {
+            alert('Erro ao gerar PDF');
+            console.error(err);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-file-earmark-pdf me-1"></i>Baixar PDF';
+        }
+    }
+
+    // Disparar geração quando o modal abre
+    $('#resumoIAModal').on('shown.bs.modal', gerarResumoIA);
+
+    // Toggle do checkbox de apenas não faturados
+    function toggleApenasNaoFaturados() {
+        const checkbox = document.getElementById('apenasNaoFaturados');
+        const hidden = document.getElementById('hiddenApenasNaoFaturados');
+        hidden.value = checkbox.checked ? 'true' : 'false';
+        document.getElementById('filterForm').submit();
+    }
+
+    // Filtro rápido
+    $('#quickFilter').on('input', function() {
+        const filterText = $(this).val().toLowerCase();
+        
+        $('.client-card').each(function() {
+            const card = $(this);
+            let hasVisibleRows = false;
+            
+            card.find('tbody tr').each(function() {
+                const row = $(this);
+                const text = row.text().toLowerCase();
+                
+                if (text.includes(filterText)) {
+                    row.show();
+                    hasVisibleRows = true;
+                } else {
+                    row.hide();
+                }
+            });
+            
+            // Mostrar/ocultar o card inteiro se não houver linhas visíveis
+            if (hasVisibleRows) {
+                card.show();
+            } else {
+                card.hide();
+            }
+        });
+    });
+
+    // Selecionar todos de um cliente
+    $('.select-all-client').change(function() {
+        const clientId = $(this).data('client');
+        const checked = $(this).prop('checked');
+        $(`.entry-checkbox[data-client="${clientId}"]:visible`).prop('checked', checked);
+        atualizarResumo();
+    });
+
+    // Botões de selecionar/desmarcar todos
+    $('.btn-select-all').click(function() {
+        const clientId = $(this).data('client');
+        $(`.entry-checkbox[data-client="${clientId}"]:visible`).prop('checked', true);
+        $(`.select-all-client[data-client="${clientId}"]`).prop('checked', true);
+        atualizarResumo();
+    });
+
+    $('.btn-deselect-all').click(function() {
+        const clientId = $(this).data('client');
+        $(`.entry-checkbox[data-client="${clientId}"]:visible`).prop('checked', false);
+        $(`.select-all-client[data-client="${clientId}"]`).prop('checked', false);
+        atualizarResumo();
+    });
+
+    // Atualizar ao marcar checkbox individual
+    $('.entry-checkbox').change(function() {
+        atualizarResumo();
+    });
+
+    function atualizarResumo() {
+        const selecionados = $('.entry-checkbox:checked');
+        const count = selecionados.length;
+        
+        if (count > 0) {
+            $('#summaryCard').slideDown();
+            $('#totalLancamentos').text(count);
+            
+            // Calcular total de horas
+            let totalHoras = 0;
+            selecionados.each(function() {
+                const row = $(this).closest('tr');
+                const horasText = row.find('.hours-cell').text().replace('h', '').trim();
+                totalHoras += parseFloat(horasText) || 0;
+            });
+            
+            $('#totalHoras').text(totalHoras.toFixed(2) + 'h');
+        } else {
+            $('#summaryCard').slideUp();
+        }
+    }
+
+    function marcarComoFaturado() {
+        const ids = $('.entry-checkbox:checked').map(function() {
+            return parseInt($(this).val());
+        }).get();
+
+        if (ids.length === 0) {
+            alert('Selecione pelo menos um lançamento.');
+            return;
+        }
+
+        if (!confirm(`Confirma marcar ${ids.length} lançamento(s) como faturado(s)?`)) {
+            return;
+        }
+
+        $.ajax({
+            url: '/Faturamento/MarcarComoFaturado',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ processRecordIds: ids }),
+            success: function(response) {
+                if (response.success) {
+                    alert(response.message);
+                    location.reload();
+                } else {
+                    alert('Erro: ' + response.message);
+                }
+            },
+            error: function(xhr) {
+                alert('Erro ao processar solicitação.');
+                console.error(xhr);
+            }
+        });
+    }
+
+    function limparSelecao() {
+        $('.entry-checkbox').prop('checked', false);
+        $('.select-all-client').prop('checked', false);
+        atualizarResumo();
+    }
+
+    // Inicializar
+    $(document).ready(function() {
+        atualizarResumo();
+    });
+</script>
+}
+
+@section Styles {
+<style>
+    .faturamento-container {
+        padding: 24px;
+        max-width: 1600px;
+        margin: 0 auto;
+    }
+
+    /* Page Banner */
+    .page-banner {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 16px;
+        padding: 32px 40px;
+        margin-bottom: 24px;
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+    }
+
+    .banner-content {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+    }
+
+    .banner-icon {
+        width: 80px;
+        height: 80px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .banner-icon i {
+        font-size: 40px;
+        color: white;
+    }
+
+    .banner-text h1 {
+        font-size: 32px;
+        font-weight: 700;
+        color: white;
+        margin: 0 0 8px 0;
+    }
+
+    .banner-text p {
+        font-size: 16px;
+        color: rgba(255, 255, 255, 0.9);
+        margin: 0;
+    }
+
+    .page-header {
+        margin-bottom: 24px;
+    }
+
+    .page-header h2 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #2d3748;
+        margin-bottom: 8px;
+    }
+
+    .page-header p {
+        font-size: 14px;
+        color: #718096;
+        margin: 0;
+    }
+
+    /* Filtros */
+    .filters-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        margin-bottom: 24px;
+        overflow: hidden;
+    }
+
+    .filters-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 16px 24px;
+        color: white;
+    }
+
+    .filters-header h5 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    .filters-body {
+        padding: 24px;
+    }
+
+    .filters-form {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .filter-row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .filter-field {
+        flex: 1;
+        min-width: 150px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .filter-field-large {
+        flex: 2;
+    }
+
+    .filter-field label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #4a5568;
+        margin-bottom: 6px;
+    }
+
+    .filter-field .form-control {
+        height: 40px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+
+    .filter-field .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        outline: none;
+    }
+
+    .filter-button {
+        display: flex;
+        align-items: flex-end;
+    }
+
+    .btn-search {
+        height: 40px;
+        padding: 0 24px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        white-space: nowrap;
+    }
+
+    .btn-search:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .filter-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding-top: 8px;
+    }
+
+    .filter-checkbox input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+    }
+
+    .filter-checkbox label {
+        font-size: 14px;
+        color: #4a5568;
+        cursor: pointer;
+        margin: 0;
+    }
+
+    /* Quick Filter */
+    .quick-filter {
+        position: relative;
+        margin-bottom: 24px;
+    }
+
+    .quick-filter i {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #718096;
+        font-size: 18px;
+    }
+
+    .quick-filter input {
+        width: 100%;
+        height: 50px;
+        padding: 0 20px 0 48px;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        font-size: 15px;
+        background: white;
+        transition: all 0.3s;
+    }
+
+    .quick-filter input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        outline: none;
+    }
+
+    .quick-filter input::placeholder {
+        color: #a0aec0;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .empty-state i {
+        font-size: 64px;
+        color: #cbd5e0;
+        margin-bottom: 16px;
+    }
+
+    .empty-state p {
+        font-size: 16px;
+        color: #718096;
+        margin: 0;
+    }
+
+    /* Action Buttons Bar */
+    .action-buttons-bar {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+    }
+
+    .action-buttons-bar .btn {
+        padding: 12px 24px;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-excel {
+        background: white;
+        color: #667eea;
+        border-color: #667eea;
+    }
+
+    .btn-excel:hover {
+        background: #667eea;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-prefatura {
+        background: white;
+        color: #38a169;
+        border-color: #38a169;
+    }
+
+    .btn-prefatura:hover {
+        background: #38a169;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(56, 161, 105, 0.4);
+    }
+
+    .btn-resumo-ia {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+    }
+
+    .btn-resumo-ia:hover {
+        opacity: 0.88;
+        transform: translateY(-2px);
+        color: white;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    /* Client Card */
+    .client-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        margin-bottom: 24px;
+        overflow: hidden;
+        transition: all 0.3s;
+    }
+
+    .client-card:hover {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    }
+
+    .client-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 20px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .client-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .client-info input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+    }
+
+    .client-info h5 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: white;
+    }
+
+    .client-summary {
+        display: flex;
+        gap: 12px;
+    }
+
+    .badge {
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .badge-hours {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+    }
+
+    .badge-value {
+        background: rgba(255, 255, 255, 0.3);
+        color: white;
+    }
+
+    /* Table */
+    .client-body {
+        padding: 0;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .records-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .records-table thead {
+        background: #f7fafc;
+    }
+
+    .records-table th {
+        padding: 12px 16px;
+        text-align: left;
+        font-size: 12px;
+        font-weight: 600;
+        color: #4a5568;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .records-table td {
+        padding: 16px;
+        font-size: 14px;
+        color: #2d3748;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .records-table tbody tr {
+        transition: background 0.2s;
+    }
+
+    .records-table tbody tr:hover {
+        background: #f7fafc;
+    }
+
+    .records-table tbody tr.row-faturado {
+        background: #f7fafc;
+        opacity: 0.7;
+    }
+
+    .entry-checkbox {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+    }
+
+    .description-cell {
+        max-width: 300px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .hours-cell {
+        font-weight: 700;
+        color: #667eea;
+    }
+
+    .badge-area {
+        background: #e6fffa;
+        color: #047857;
+    }
+
+    .badge-consultivo {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .badge-contencioso {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .badge-proposta {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .badge-deslocamento {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .badge-outro {
+        background: #e5e7eb;
+        color: #374151;
+    }
+
+    .badge-faturado {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .badge-pendente {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .faturado-por {
+        font-size: 11px;
+        color: #718096;
+    }
+
+    /* Client Footer */
+    .client-footer {
+        padding: 16px 24px;
+        background: #f7fafc;
+        display: flex;
+        gap: 12px;
+    }
+
+    .btn-select-all,
+    .btn-deselect-all {
+        padding: 8px 16px;
+        border: 1px solid #e2e8f0;
+        background: white;
+        color: #4a5568;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-select-all:hover {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+
+    .btn-deselect-all:hover {
+        background: #718096;
+        color: white;
+        border-color: #718096;
+    }
+
+    /* Summary Card */
+    .summary-card {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1000;
+        width: calc(100% - 48px);
+        max-width: 800px;
+    }
+
+    .summary-content {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
+    }
+
+    .summary-stats {
+        display: flex;
+        justify-content: space-around;
+        margin-bottom: 20px;
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 4px;
+    }
+
+    .stat-label {
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    .summary-actions {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+    }
+
+    .btn-faturar,
+    .btn-limpar {
+        padding: 12px 32px;
+        border: none;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .btn-faturar {
+        background: white;
+        color: #667eea;
+    }
+
+    .btn-faturar:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-limpar {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+    }
+
+    .btn-limpar:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+
+    /* Paginação */
+    .pagination-container {
+        background: white;
+        border-radius: 12px;
+        padding: 20px 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 24px;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .pagination-info {
+        font-size: 14px;
+        color: #718096;
+    }
+
+    .pagination-controls {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-pagination {
+        padding: 8px 16px;
+        border: 1px solid #e2e8f0;
+        background: white;
+        color: #4a5568;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-pagination:hover:not(:disabled) {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+
+    .btn-pagination:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .page-numbers {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+    }
+
+    .page-number {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #e2e8f0;
+        background: white;
+        color: #4a5568;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+
+    .page-number:hover:not(.active) {
+        background: #f7fafc;
+        border-color: #cbd5e0;
+    }
+
+    .page-number.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: #667eea;
+    }
+
+    .page-ellipsis {
+        padding: 0 8px;
+        color: #a0aec0;
+        font-weight: 600;
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .page-banner {
+            padding: 24px;
+        }
+
+        .banner-content {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .banner-icon {
+            width: 64px;
+            height: 64px;
+        }
+
+        .banner-icon i {
+            font-size: 32px;
+        }
+
+        .banner-text h1 {
+            font-size: 24px;
+        }
+
+        .banner-text p {
+            font-size: 14px;
+        }
+
+        .filter-row {
+            flex-direction: column;
+        }
+
+        .filter-field {
+            min-width: 100%;
+        }
+
+        .client-header {
+            flex-direction: column;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .summary-stats {
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .summary-actions {
+            flex-direction: column;
+        }
+
+        .btn-faturar,
+        .btn-limpar {
+            width: 100%;
+        }
+
+        .pagination-container {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .pagination-controls {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+    }
+</style>
+}
