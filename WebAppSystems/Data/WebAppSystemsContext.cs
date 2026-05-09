@@ -56,6 +56,12 @@ namespace WebAppSystems.Data
         public DbSet<WebAppSystems.Models.AIConfiguration> AIConfiguration { get; set; } = default!;
 
         public DbSet<WebAppSystems.Models.AIUsageLimit> AIUsageLimit { get; set; } = default!;
+        
+        // Tabelas para fluxo de aprovação de faturamento
+        public DbSet<WebAppSystems.Models.LoteAprovacao> LoteAprovacao { get; set; } = default!;
+        public DbSet<WebAppSystems.Models.LoteAprovacaoItem> LoteAprovacaoItem { get; set; } = default!;
+        public DbSet<WebAppSystems.Models.HistoricoAprovacao> HistoricoAprovacao { get; set; } = default!;
+        public DbSet<WebAppSystems.Models.NotificacaoAprovacao> NotificacaoAprovacao { get; set; } = default!;
     }
 }
 

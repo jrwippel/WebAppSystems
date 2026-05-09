@@ -1,0 +1,64 @@
+using System.ComponentModel.DataAnnotations;
+
+namespace WebAppSystems.Models
+{
+    public class LoteAprovacao
+    {
+        public int Id { get; set; }
+        
+        [Required]
+        public DateTime DataCriacao { get; set; }
+        
+        [Required]
+        public int CriadoPorId { get; set; }
+        public Attorney CriadoPor { get; set; }
+        
+        [Required]
+        public int ClienteId { get; set; }
+        public Client Cliente { get; set; }
+        
+        [Required]
+        public DateTime PeriodoInicio { get; set; }
+        
+        [Required]
+        public DateTime PeriodoFim { get; set; }
+        
+        [Required]
+        public StatusLoteAprovacao Status { get; set; }
+        
+        public double TotalHoras { get; set; }
+        
+        public double ValorEstimado { get; set; }
+        
+        public DateTime? DataAprovacao { get; set; }
+        
+        public int? AprovadoPorId { get; set; }
+        public Attorney? AprovadoPor { get; set; }
+        
+        public string? ComentarioAprovador { get; set; }
+        
+        public DateTime? DataFaturamento { get; set; }
+        
+        public int? FaturadoPorId { get; set; }
+        public Attorney? FaturadoPor { get; set; }
+        
+        // Relacionamento com lançamentos
+        public ICollection<LoteAprovacaoItem> Itens { get; set; } = new List<LoteAprovacaoItem>();
+        
+        // Histórico de ações
+        public ICollection<HistoricoAprovacao> Historico { get; set; } = new List<HistoricoAprovacao>();
+        
+        public LoteAprovacao()
+        {
+        }
+    }
+    
+    public enum StatusLoteAprovacao
+    {
+        Pendente = 1,
+        Aprovado = 2,
+        Rejeitado = 3,
+        Cancelado = 4,
+        Faturado = 5
+    }
+}

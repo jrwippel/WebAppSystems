@@ -35,6 +35,11 @@ namespace WebAppSystems.Models
         public bool UseBorder { get; set; }
         public bool UseCronometroAlwaysOnTop { get; set; }
         public bool Inativo { get; set; }
+        
+        // Flags para fluxo de aprovação de faturamento (mutuamente exclusivas)
+        public bool IsFinanceiro { get; set; } = false;
+        public bool IsAprovador { get; set; } = false;
+        
         public Attorney()
         {
         }

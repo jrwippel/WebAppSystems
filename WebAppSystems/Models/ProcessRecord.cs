@@ -54,6 +54,9 @@ namespace WebAppSystems.Models
         [ValidateNever]
         public Attorney? FaturadoPor { get; set; }
         
+        // Campo para fluxo de aprovação
+        public bool EmAprovacao { get; set; } = false;
+        
         public ProcessRecord()
         {
         }
