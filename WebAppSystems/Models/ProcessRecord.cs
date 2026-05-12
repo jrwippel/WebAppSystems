@@ -94,16 +94,33 @@ namespace WebAppSystems.Models
         public string CalculoHoras()
         {
             TimeSpan diferenca = HoraFinal - HoraInicial;
-            int horas = diferenca.Hours;
-            int minutos = diferenca.Minutes;
-            string diferencaFormatada = string.Format("{0:00}:{1:00}", horas, minutos);
-            return diferencaFormatada;
+            // Arredondar para o minuto mais próximo (evita perda de segundos)
+            int totalMinutos = (int)Math.Round(diferenca.TotalMinutes);
+            int horas = totalMinutos / 60;
+            int minutos = totalMinutos % 60;
+            return string.Format("{0:00}:{1:00}", horas, minutos);
         }
+
+        // Retorna as horas efetivas considerando a regra de Deslocamento (50%)
+        public string CalculoHorasEfetivas()
+        {
+            TimeSpan diferenca = HoraFinal - HoraInicial;
+            double totalMinutos = diferenca.Hours * 60 + diferenca.Minutes;
+
+            if (RecordType == Enums.RecordType.Deslocamento)
+                totalMinutos *= 0.5;
+
+            int horas = (int)totalMinutos / 60;
+            int minutos = (int)totalMinutos % 60;
+            return string.Format("{0:00}:{1:00}", horas, minutos);
+        }
+
         public double CalculoHorasDecimal()
         {
             TimeSpan diferenca = HoraFinal - HoraInicial;
-            double totalHoras = diferenca.TotalHours;
-            return totalHoras;
+            // Arredondar para o minuto mais próximo e converter para decimal
+            int totalMinutos = (int)Math.Round(diferenca.TotalMinutes);
+            return totalMinutos / 60.0;
         }
 
         public TimeSpan CalculoHorasTotal()
@@ -111,10 +128,22 @@ namespace WebAppSystems.Models
             TimeSpan diferenca = HoraFinal - HoraInicial;
 
             if (diferenca < TimeSpan.Zero)
-            {
-                diferenca += TimeSpan.FromDays(1); // Adiciona 1 dia completo
-            }
+                diferenca += TimeSpan.FromDays(1);
 
+            // Arredondar para o minuto mais próximo
+            int totalMinutos = (int)Math.Round(diferenca.TotalMinutes);
+            return TimeSpan.FromMinutes(totalMinutos);
+        }
+
+        // Retorna o TimeSpan efetivo considerando a regra de Deslocamento (50%)
+        public TimeSpan CalculoHorasTotalEfetivas()
+        {
+            var diferenca = CalculoHorasTotal();
+            if (RecordType == Enums.RecordType.Deslocamento)
+            {
+                var totalMinutos = (int)(diferenca.TotalMinutes * 0.5);
+                return TimeSpan.FromMinutes(totalMinutos);
+            }
             return diferenca;
         }
 

@@ -75,7 +75,7 @@
                         <p>Log in to your account</p>
                     </div>
 
-                    @if (TempData["MensagemErro"] != null)
+                    @if (TempData["MensagemErro"] != null && TempData["LoginError"] != null)
                     {
                         <div class="alert alert-danger">
                             <i class="bi bi-exclamation-circle"></i>

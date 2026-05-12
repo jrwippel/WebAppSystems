@@ -46,11 +46,11 @@ namespace WebAppSystems.Controllers
                 }
             }
             
-            // Limpa mensagens de erro de outros controllers que não são relevantes para o login
-            // Mantém apenas mensagens de erro relacionadas ao processo de login
-            if (TempData["MensagemErro"] != null && !TempData.ContainsKey("LoginError"))
+            // Limpa mensagens de sucesso de outros controllers que não são relevantes para o login
+            // Mantém apenas mensagens de sucesso relacionadas ao processo de redefinição de senha
+            if (TempData["MensagemSucesso"] != null && !TempData.ContainsKey("PasswordReset"))
             {
-                TempData.Remove("MensagemErro");
+                TempData.Remove("MensagemSucesso");
             }
             
             return View();
@@ -191,6 +191,7 @@ namespace WebAppSystems.Controllers
                         {
                             _attorneyService.AtualizarSenha(usuarioModel);
                             TempData["MensagemSucesso"] = "Enviamos para o seu email cadastrado uma nova senha.";
+                            TempData["PasswordReset"] = true; // Marca que é uma mensagem de redefinição de senha
                         }
                         else
                         {
@@ -255,6 +256,15 @@ namespace WebAppSystems.Controllers
                             var diasSemLancamento = await ObterDiasSemLancamentoAsync(usuario.Id);
                             if (diasSemLancamento >= 3)
                                 TempData["NotificacaoLancamento"] = diasSemLancamento;
+
+                            // Verifica lotes pendentes para aprovadores
+                            if (usuario.IsAprovador)
+                            {
+                                var lotesPendentes = await _context.LoteAprovacao
+                                    .CountAsync(l => l.Status == WebAppSystems.Models.StatusLoteAprovacao.Pendente);
+                                if (lotesPendentes > 0)
+                                    TempData["NotificacaoLotesPendentes"] = lotesPendentes;
+                            }
 
                             return RedirectToAction("Index", "Home");
                         }

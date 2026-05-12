@@ -1,0 +1,784 @@
+@{
+    ViewData["Title"] = "Criar Lote de Aprovação";
+}
+
+<div class="criar-lote-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-left">
+                <div class="header-icon">
+                    <i class="bi bi-plus-circle"></i>
+                </div>
+                <div class="header-text">
+                    <h1 class="page-title">Criar Lote de Aprovação</h1>
+                    <p class="page-subtitle">Selecione o período e os clientes para criar lotes de aprovação</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulário de Filtros -->
+    <div class="form-card">
+        <div class="form-section">
+            <h3 class="section-title">
+                <i class="bi bi-calendar-range"></i>
+                Período e Clientes
+            </h3>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>
+                        <i class="bi bi-calendar"></i>
+                        Data Início
+                    </label>
+                    <input type="date" id="dataInicio" class="form-control" value="@DateTime.Now.AddDays(-30).ToString("yyyy-MM-dd")">
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <i class="bi bi-calendar"></i>
+                        Data Fim
+                    </label>
+                    <input type="date" id="dataFim" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group full-width">
+                    <label>
+                        <i class="bi bi-building"></i>
+                        Clientes (opcional - deixe em branco para buscar todos)
+                    </label>
+                    <select id="clientesSelect" class="form-control" multiple="multiple">
+                        @foreach (var cliente in ViewBag.Clientes)
+                        {
+                            <option value="@cliente.Id">@cliente.Name</option>
+                        }
+                    </select>
+                    <small class="form-text">Digite para buscar e selecione múltiplos clientes</small>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn-search" onclick="buscarLancamentos()">
+                    <i class="bi bi-search"></i> Buscar Lançamentos
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <div id="loadingIndicator" class="loading-card" style="display: none;">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p>Buscando lançamentos...</p>
+    </div>
+
+    <!-- Resultados -->
+    <div id="resultadosContainer" style="display: none;">
+        <div class="results-header">
+            <h3><i class="bi bi-list-check"></i> Lançamentos Disponíveis</h3>
+            <p class="text-muted">Selecione os clientes para criar os lotes de aprovação</p>
+        </div>
+
+        <div id="clientesContainer"></div>
+
+        <div class="action-bar" id="actionBar" style="display: none;">
+            <div class="action-summary">
+                <span id="clientesSelecionados">0 clientes selecionados</span>
+                <span id="lancamentosSelecionados">0 lançamentos</span>
+                <span id="horasSelecionadas">0.00h</span>
+            </div>
+            <button type="button" class="btn-criar-lotes" onclick="criarLotes()">
+                <i class="bi bi-check-circle"></i> Criar Lotes
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+    let dadosClientes = [];
+    let lancamentosSelecionados = new Set();
+
+    // Inicializar Select2
+    $(document).ready(function() {
+        $('#clientesSelect').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Digite para buscar clientes...',
+            allowClear: true,
+            width: '100%',
+            language: {
+                noResults: function() {
+                    return "Nenhum cliente encontrado";
+                },
+                searching: function() {
+                    return "Buscando...";
+                }
+            }
+        });
+    });
+
+    async function buscarLancamentos() {
+        const dataInicio = document.getElementById('dataInicio').value;
+        const dataFim = document.getElementById('dataFim').value;
+
+        if (!dataInicio || !dataFim) {
+            alert('Por favor, selecione o período');
+            return;
+        }
+
+        // Obter clientes selecionados via Select2
+        const clientesSelecionados = $('#clientesSelect').val() || [];
+
+        document.getElementById('loadingIndicator').style.display = 'flex';
+        document.getElementById('resultadosContainer').style.display = 'none';
+
+        try {
+            // Montar query string com clientes selecionados
+            let queryString = `dataInicio=${dataInicio}&dataFim=${dataFim}`;
+            if (clientesSelecionados.length > 0) {
+                clientesSelecionados.forEach(id => {
+                    queryString += `&clienteIds=${id}`;
+                });
+            }
+
+            const response = await fetch('/AprovacaoFinanceiro/BuscarLancamentos', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: queryString
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                dadosClientes = result.data;
+                renderizarClientes();
+                document.getElementById('resultadosContainer').style.display = 'block';
+            } else {
+                alert(result.message || 'Erro ao buscar lançamentos');
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            alert('Erro ao buscar lançamentos');
+        } finally {
+            document.getElementById('loadingIndicator').style.display = 'none';
+        }
+    }
+
+    function renderizarClientes() {
+        const container = document.getElementById('clientesContainer');
+        
+        if (dadosClientes.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="bi bi-inbox"></i>
+                    <p>Nenhum lançamento disponível para o período selecionado</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = dadosClientes.map(cliente => `
+            <div class="cliente-card">
+                <div class="cliente-header">
+                    <div class="cliente-info">
+                        <input type="checkbox" 
+                               class="cliente-checkbox" 
+                               id="cliente_${cliente.clienteId}" 
+                               data-cliente-id="${cliente.clienteId}"
+                               onchange="toggleCliente(${cliente.clienteId})">
+                        <label for="cliente_${cliente.clienteId}">
+                            <h5><i class="bi bi-building"></i> ${cliente.clienteNome}</h5>
+                        </label>
+                    </div>
+                    <div class="cliente-summary">
+                        <span class="badge badge-lancamentos">
+                            <i class="bi bi-list-check"></i> ${cliente.quantidadeLancamentos} lançamentos
+                        </span>
+                        <span class="badge badge-hours">
+                            <i class="bi bi-clock"></i> ${cliente.totalHoras.toFixed(2)}h
+                        </span>
+                    </div>
+                </div>
+                <div class="cliente-body" id="lancamentos_${cliente.clienteId}" style="display: none;">
+                    <table class="lancamentos-table">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Advogado</th>
+                                <th>Descrição</th>
+                                <th>Horas</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${cliente.lancamentos.map(lanc => `
+                                <tr>
+                                    <td>${lanc.data}</td>
+                                    <td>${lanc.advogado}</td>
+                                    <td class="description-cell">${lanc.descricao}</td>
+                                    <td>${lanc.horas.toFixed(2)}h</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="cliente-footer">
+                    <button class="btn-toggle" onclick="toggleDetalhes(${cliente.clienteId})">
+                        <i class="bi bi-chevron-down"></i> Ver Detalhes
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function toggleCliente(clienteId) {
+        const checkbox = document.getElementById(`cliente_${clienteId}`);
+        const cliente = dadosClientes.find(c => c.clienteId === clienteId);
+
+        if (checkbox.checked) {
+            cliente.lancamentos.forEach(lanc => lancamentosSelecionados.add(lanc.id));
+        } else {
+            cliente.lancamentos.forEach(lanc => lancamentosSelecionados.delete(lanc.id));
+        }
+
+        atualizarResumo();
+    }
+
+    function toggleDetalhes(clienteId) {
+        const detalhes = document.getElementById(`lancamentos_${clienteId}`);
+        const btn = event.target.closest('.btn-toggle');
+        
+        if (detalhes.style.display === 'none') {
+            detalhes.style.display = 'block';
+            btn.innerHTML = '<i class="bi bi-chevron-up"></i> Ocultar Detalhes';
+        } else {
+            detalhes.style.display = 'none';
+            btn.innerHTML = '<i class="bi bi-chevron-down"></i> Ver Detalhes';
+        }
+    }
+
+    function atualizarResumo() {
+        const clientesSelecionados = document.querySelectorAll('.cliente-checkbox:checked').length;
+        const totalLancamentos = lancamentosSelecionados.size;
+        
+        let totalHoras = 0;
+        dadosClientes.forEach(cliente => {
+            const checkbox = document.getElementById(`cliente_${cliente.clienteId}`);
+            if (checkbox && checkbox.checked) {
+                totalHoras += cliente.totalHoras;
+            }
+        });
+
+        document.getElementById('clientesSelecionados').textContent = `${clientesSelecionados} cliente(s) selecionado(s)`;
+        document.getElementById('lancamentosSelecionados').textContent = `${totalLancamentos} lançamentos`;
+        document.getElementById('horasSelecionadas').textContent = `${totalHoras.toFixed(2)}h`;
+
+        document.getElementById('actionBar').style.display = clientesSelecionados > 0 ? 'flex' : 'none';
+    }
+
+    async function criarLotes() {
+        const clientesSelecionados = Array.from(document.querySelectorAll('.cliente-checkbox:checked'))
+            .map(cb => parseInt(cb.dataset.clienteId));
+
+        if (clientesSelecionados.length === 0) {
+            alert('Selecione pelo menos um cliente');
+            return;
+        }
+
+        const dataInicio = document.getElementById('dataInicio').value;
+        const dataFim = document.getElementById('dataFim').value;
+
+        const btn = event.target;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Criando...';
+
+        try {
+            const formData = new URLSearchParams();
+            formData.append('dataInicio', dataInicio);
+            formData.append('dataFim', dataFim);
+            clientesSelecionados.forEach(id => formData.append('clienteIds', id));
+            Array.from(lancamentosSelecionados).forEach(id => formData.append('lancamentoIds', id));
+
+            const response = await fetch('/AprovacaoFinanceiro/CriarLotes', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: formData.toString()
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert(result.message);
+                window.location.href = '/AprovacaoFinanceiro';
+            } else {
+                alert(result.message || 'Erro ao criar lotes');
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            alert('Erro ao criar lotes');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-circle"></i> Criar Lotes';
+        }
+    }
+</script>
+
+<style>
+    .criar-lote-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        padding: 24px 28px;
+        margin-bottom: 24px;
+        box-shadow: 0 6px 25px rgba(102, 126, 234, 0.25);
+    }
+
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .header-icon {
+        width: 50px;
+        height: 50px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: white;
+    }
+
+    .page-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: white;
+        margin: 0 0 6px 0;
+    }
+
+    .page-subtitle {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.9);
+        margin: 0;
+    }
+
+    .form-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+        padding: 32px;
+        margin-bottom: 24px;
+    }
+
+    .form-section {
+        margin-bottom: 0;
+    }
+
+    .section-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #2d3748;
+        margin: 0 0 24px 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .section-title i {
+        color: #667eea;
+        font-size: 20px;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-group.full-width {
+        grid-column: 1 / -1;
+    }
+
+    .form-group label {
+        font-size: 14px;
+        font-weight: 600;
+        color: #4a5568;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .form-group label i {
+        color: #667eea;
+        font-size: 16px;
+    }
+
+    .form-control {
+        padding: 12px 16px;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-control[multiple] {
+        min-height: 120px;
+    }
+
+    /* Estilos customizados para Select2 */
+    .select2-container--bootstrap-5 .select2-selection {
+        border: 2px solid #e2e8f0 !important;
+        border-radius: 8px !important;
+        min-height: 48px !important;
+        padding: 4px 8px !important;
+    }
+
+    .select2-container--bootstrap-5 .select2-selection:focus,
+    .select2-container--bootstrap-5.select2-container--focus .select2-selection {
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+    }
+
+    .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        border: none !important;
+        color: white !important;
+        padding: 6px 12px !important;
+        border-radius: 6px !important;
+        font-size: 13px !important;
+        font-weight: 500 !important;
+    }
+
+    .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice__remove {
+        color: white !important;
+        margin-right: 6px !important;
+        font-weight: bold !important;
+    }
+
+    .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice__remove:hover {
+        color: #ffd6d6 !important;
+    }
+
+    .select2-container--bootstrap-5 .select2-dropdown {
+        border: 2px solid #e2e8f0 !important;
+        border-radius: 8px !important;
+        box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .select2-container--bootstrap-5 .select2-results__option--highlighted {
+        background: rgba(102, 126, 234, 0.1) !important;
+        color: #667eea !important;
+    }
+
+    .select2-container--bootstrap-5 .select2-results__option--selected {
+        background: rgba(102, 126, 234, 0.05) !important;
+    }
+
+    .form-text {
+        font-size: 12px;
+        color: #718096;
+        margin-top: 6px;
+        font-style: italic;
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .btn-search {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .btn-search:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .loading-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+        padding: 60px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .results-header {
+        margin-bottom: 24px;
+    }
+
+    .results-header h3 {
+        font-size: 20px;
+        font-weight: 600;
+        color: #2d3748;
+        margin: 0 0 8px 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .cliente-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+        margin-bottom: 20px;
+        overflow: hidden;
+    }
+
+    .cliente-header {
+        padding: 20px 24px;
+        border-bottom: 2px solid #f7fafc;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .cliente-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .cliente-checkbox {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        accent-color: #667eea;
+    }
+
+    .cliente-info label {
+        cursor: pointer;
+        margin: 0;
+    }
+
+    .cliente-info h5 {
+        font-size: 18px;
+        font-weight: 600;
+        color: #2d3748;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .cliente-summary {
+        display: flex;
+        gap: 12px;
+    }
+
+    .badge {
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .badge-lancamentos {
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea;
+    }
+
+    .badge-hours {
+        background: rgba(72, 187, 120, 0.1);
+        color: #2f855a;
+    }
+
+    .cliente-body {
+        padding: 20px 24px;
+        background: #f7fafc;
+    }
+
+    .lancamentos-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .lancamentos-table thead th {
+        text-align: left;
+        padding: 12px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #4a5568;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .lancamentos-table tbody td {
+        padding: 12px;
+        font-size: 14px;
+        color: #2d3748;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .description-cell {
+        max-width: 400px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .cliente-footer {
+        padding: 16px 24px;
+        background: #f7fafc;
+        display: flex;
+        justify-content: center;
+    }
+
+    .btn-toggle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        background: transparent;
+        color: #667eea;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .btn-toggle:hover {
+        background: rgba(102, 126, 234, 0.1);
+    }
+
+    .action-bar {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        left: 20px;
+        max-width: 1400px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+        padding: 20px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .action-summary {
+        display: flex;
+        gap: 24px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #4a5568;
+    }
+
+    .btn-criar-lotes {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .btn-criar-lotes:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(72, 187, 120, 0.4);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .empty-state i {
+        font-size: 48px;
+        color: #cbd5e0;
+        margin-bottom: 16px;
+    }
+
+    .empty-state p {
+        font-size: 14px;
+        color: #718096;
+        margin: 0;
+    }
+
+    @@media (max-width: 768px) {
+        .cliente-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .action-bar {
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .action-summary {
+            flex-direction: column;
+            gap: 8px;
+        }
+    }
+</style>
+}

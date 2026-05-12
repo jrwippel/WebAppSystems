@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste Simples</title>
+</head>
+<body>
+    <h1>Teste de JavaScript</h1>
+    <button id="btnTeste" onclick="alert('Onclick funcionou!')">Teste Onclick</button>
+    <button id="btnJquery">Teste jQuery</button>
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        alert('Script carregou!');
+        
+        $(document).ready(function() {
+            alert('jQuery ready funcionou!');
+            
+            $('#btnJquery').click(function() {
+                alert('jQuery click funcionou!');
+            });
+        });
+    </script>
+</body>
+</html>

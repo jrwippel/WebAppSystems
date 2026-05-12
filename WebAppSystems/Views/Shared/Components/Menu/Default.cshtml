@@ -488,9 +488,6 @@
                             </a>
                             <div class="dd-divider"></div>
                             <div class="gerenciar-section-label">Financeiro</div>
-                            <a class="gerenciar-item" asp-controller="Faturamento" asp-action="Index">
-                                <i class="bi bi-receipt"></i><span>Faturamento</span>
-                            </a>
                             <a class="gerenciar-item" asp-controller="ValorClientes" asp-action="Index">
                                 <i class="bi bi-cash-coin"></i><span data-i18n="menu.valores">Valores</span>
                             </a>
@@ -502,6 +499,25 @@
                             </a>
                             <a class="gerenciar-item" asp-controller="PercentualAreas" asp-action="Index">
                                 <i class="bi bi-percent"></i><span data-i18n="menu.percentuais">Percentuais</span>
+                            </a>
+                        }
+                        @if (isAdmin && Model.IsFinanceiro)
+                        {
+                            <div class="dd-divider"></div>
+                            <div class="gerenciar-section-label">Faturamento</div>
+                            <a class="gerenciar-item" asp-controller="AprovacaoFinanceiro" asp-action="Index">
+                                <i class="bi bi-cash-stack"></i><span>Lotes</span>
+                            </a>
+                        }
+                        @if (Model.IsAprovador)
+                        {
+                            <div class="dd-divider"></div>
+                            <div class="gerenciar-section-label">Faturamento</div>
+                            <a class="gerenciar-item" asp-controller="AprovacaoAprovador" asp-action="Index">
+                                <i class="bi bi-check-circle"></i><span>Aprovação</span>
+                            </a>
+                            <a class="gerenciar-item" asp-controller="AprovacaoAprovador" asp-action="Notificacoes">
+                                <i class="bi bi-bell"></i><span>Notificações</span>
                             </a>
                         }
                     </div>

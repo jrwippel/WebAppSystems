@@ -1,0 +1,467 @@
+@model List<WebAppSystems.Models.NotificacaoAprovacao>
+
+@{
+    ViewData["Title"] = "Notificações";
+}
+
+<div class="notificacoes-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-left">
+                <div class="header-icon">
+                    <i class="bi bi-bell"></i>
+                </div>
+                <div class="header-text">
+                    <h1 class="page-title">Notificações</h1>
+                    <p class="page-subtitle">Acompanhe as atualizações dos lotes de aprovação</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="empty-state">
+            <i class="bi bi-bell-slash"></i>
+            <h3>Nenhuma notificação</h3>
+            <p>Você não possui notificações no momento</p>
+        </div>
+    }
+    else
+    {
+        <!-- Filtros -->
+        <div class="filters-card">
+            <button class="filter-btn active" onclick="filtrarNotificacoes('todas')">
+                Todas (@Model.Count)
+            </button>
+            <button class="filter-btn" onclick="filtrarNotificacoes('nao-lidas')">
+                Não Lidas (@Model.Count(n => !n.Lida))
+            </button>
+            <button class="filter-btn" onclick="filtrarNotificacoes('lidas')">
+                Lidas (@Model.Count(n => n.Lida))
+            </button>
+        </div>
+
+        <!-- Lista de Notificações -->
+        <div class="notificacoes-list">
+            @foreach (var notificacao in Model)
+            {
+                <div class="notificacao-card @(notificacao.Lida ? "lida" : "nao-lida")" data-status="@(notificacao.Lida ? "lida" : "nao-lida")">
+                    <div class="notificacao-indicator">
+                        @if (!notificacao.Lida)
+                        {
+                            <div class="indicator-dot"></div>
+                        }
+                    </div>
+                    <div class="notificacao-icon">
+                        @switch (notificacao.TipoNotificacao)
+                        {
+                            case "NovoLote":
+                                <i class="bi bi-plus-circle"></i>
+                                break;
+                            case "LoteAprovado":
+                                <i class="bi bi-check-circle"></i>
+                                break;
+                            case "LoteRejeitado":
+                                <i class="bi bi-x-circle"></i>
+                                break;
+                            case "Comentario":
+                                <i class="bi bi-chat-dots"></i>
+                                break;
+                            default:
+                                <i class="bi bi-bell"></i>
+                                break;
+                        }
+                    </div>
+                    <div class="notificacao-content">
+                        <div class="notificacao-header">
+                            <h5 class="notificacao-title">
+                                @switch (notificacao.TipoNotificacao)
+                                {
+                                    case "NovoLote":
+                                        <span>Novo Lote de Aprovação</span>
+                                        break;
+                                    case "LoteAprovado":
+                                        <span>Lote Aprovado</span>
+                                        break;
+                                    case "LoteRejeitado":
+                                        <span>Lote Rejeitado</span>
+                                        break;
+                                    case "Comentario":
+                                        <span>Novo Comentário</span>
+                                        break;
+                                    default:
+                                        <span>Notificação</span>
+                                        break;
+                                }
+                            </h5>
+                            <span class="notificacao-time">
+                                @{
+                                    var tempoDecorrido = DateTime.Now - notificacao.DataCriacao;
+                                    if (tempoDecorrido.TotalMinutes < 60)
+                                    {
+                                        <span>@((int)tempoDecorrido.TotalMinutes)m atrás</span>
+                                    }
+                                    else if (tempoDecorrido.TotalHours < 24)
+                                    {
+                                        <span>@((int)tempoDecorrido.TotalHours)h atrás</span>
+                                    }
+                                    else if (tempoDecorrido.TotalDays < 7)
+                                    {
+                                        <span>@((int)tempoDecorrido.TotalDays)d atrás</span>
+                                    }
+                                    else
+                                    {
+                                        <span>@notificacao.DataCriacao.ToString("dd/MM/yyyy")</span>
+                                    }
+                                }
+                            </span>
+                        </div>
+                        <p class="notificacao-message">@notificacao.Mensagem</p>
+                        @if (notificacao.LoteAprovacao != null)
+                        {
+                            <div class="notificacao-lote-info">
+                                <i class="bi bi-building"></i>
+                                <span>@notificacao.LoteAprovacao.Cliente.Name</span>
+                            </div>
+                        }
+                    </div>
+                    <div class="notificacao-actions">
+                        @if (!notificacao.Lida)
+                        {
+                            <button class="btn-action btn-marcar-lida" onclick="marcarComoLida(@notificacao.Id)">
+                                <i class="bi bi-check"></i>
+                            </button>
+                        }
+                        @if (notificacao.LoteAprovacao != null && notificacao.TipoNotificacao == "NovoLote")
+                        {
+                            <a asp-controller="AprovacaoAprovador" asp-action="Revisar" asp-route-id="@notificacao.LoteAprovacaoId" class="btn-action btn-revisar">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+<script>
+    async function marcarComoLida(notificacaoId) {
+        try {
+            const response = await fetch('/AprovacaoAprovador/MarcarNotificacaoLida', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `id=${notificacaoId}`
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                const card = document.querySelector(`[data-status="nao-lida"]`);
+                if (card) {
+                    card.classList.remove('nao-lida');
+                    card.classList.add('lida');
+                    card.dataset.status = 'lida';
+                    card.querySelector('.indicator-dot')?.remove();
+                    card.querySelector('.btn-marcar-lida')?.remove();
+                }
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+        }
+    }
+
+    function filtrarNotificacoes(filtro) {
+        const cards = document.querySelectorAll('.notificacao-card');
+        const buttons = document.querySelectorAll('.filter-btn');
+
+        buttons.forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+
+        cards.forEach(card => {
+            if (filtro === 'todas') {
+                card.style.display = 'flex';
+            } else if (filtro === 'nao-lidas') {
+                card.style.display = card.dataset.status === 'nao-lida' ? 'flex' : 'none';
+            } else if (filtro === 'lidas') {
+                card.style.display = card.dataset.status === 'lida' ? 'flex' : 'none';
+            }
+        });
+    }
+</script>
+
+<style>
+    .notificacoes-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        padding: 24px 28px;
+        margin-bottom: 24px;
+        box-shadow: 0 6px 25px rgba(102, 126, 234, 0.25);
+    }
+
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .header-icon {
+        width: 50px;
+        height: 50px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: white;
+    }
+
+    .page-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: white;
+        margin: 0 0 6px 0;
+    }
+
+    .page-subtitle {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.9);
+        margin: 0;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 80px 20px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .empty-state i {
+        font-size: 64px;
+        color: #cbd5e0;
+        margin-bottom: 20px;
+    }
+
+    .empty-state h3 {
+        font-size: 20px;
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 8px;
+    }
+
+    .empty-state p {
+        font-size: 14px;
+        color: #718096;
+        margin: 0;
+    }
+
+    .filters-card {
+        background: white;
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+        margin-bottom: 24px;
+        display: flex;
+        gap: 12px;
+    }
+
+    .filter-btn {
+        padding: 10px 20px;
+        background: transparent;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #4a5568;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .filter-btn:hover {
+        border-color: #667eea;
+        color: #667eea;
+    }
+
+    .filter-btn.active {
+        background: #667eea;
+        border-color: #667eea;
+        color: white;
+    }
+
+    .notificacoes-list {
+        display: grid;
+        gap: 16px;
+    }
+
+    .notificacao-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+        padding: 20px;
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+        transition: all 0.3s;
+    }
+
+    .notificacao-card:hover {
+        box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .notificacao-card.nao-lida {
+        background: rgba(102, 126, 234, 0.02);
+        border-left: 4px solid #667eea;
+    }
+
+    .notificacao-indicator {
+        width: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .indicator-dot {
+        width: 8px;
+        height: 8px;
+        background: #667eea;
+        border-radius: 50%;
+    }
+
+    .notificacao-icon {
+        width: 48px;
+        height: 48px;
+        background: rgba(102, 126, 234, 0.1);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: #667eea;
+        flex-shrink: 0;
+    }
+
+    .notificacao-content {
+        flex: 1;
+    }
+
+    .notificacao-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    .notificacao-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #2d3748;
+        margin: 0;
+    }
+
+    .notificacao-time {
+        font-size: 12px;
+        color: #a0aec0;
+    }
+
+    .notificacao-message {
+        font-size: 14px;
+        color: #4a5568;
+        line-height: 1.5;
+        margin: 0 0 12px 0;
+    }
+
+    .notificacao-lote-info {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: #718096;
+    }
+
+    .notificacao-lote-info i {
+        color: #667eea;
+    }
+
+    .notificacao-actions {
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+    .btn-action {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-size: 16px;
+        text-decoration: none;
+    }
+
+    .btn-marcar-lida {
+        background: rgba(72, 187, 120, 0.1);
+        color: #2f855a;
+    }
+
+    .btn-marcar-lida:hover {
+        background: #48bb78;
+        color: white;
+    }
+
+    .btn-revisar {
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea;
+    }
+
+    .btn-revisar:hover {
+        background: #667eea;
+        color: white;
+    }
+
+    @@media (max-width: 768px) {
+        .filters-card {
+            flex-direction: column;
+        }
+
+        .filter-btn {
+            width: 100%;
+        }
+
+        .notificacao-card {
+            flex-direction: column;
+        }
+
+        .notificacao-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+        }
+
+        .notificacao-actions {
+            width: 100%;
+            justify-content: flex-end;
+        }
+    }
+</style>
+}

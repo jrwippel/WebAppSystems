@@ -119,10 +119,27 @@ namespace WebAppSystems
             using (var scope = app.Services.CreateScope())
             {
                 var services = scope.ServiceProvider;
+                var logger = services.GetRequiredService<ILogger<Program>>();
                 try
                 {
                     var myDbContext = services.GetRequiredService<WebAppSystemsContext>();
+
+                    // Listar migrations pendentes antes de aplicar
+                    var pendingMigrations = myDbContext.Database.GetPendingMigrations().ToList();
+                    if (pendingMigrations.Any())
+                    {
+                        logger.LogInformation("Aplicando {Count} migration(s) pendente(s): {Migrations}",
+                            pendingMigrations.Count,
+                            string.Join(", ", pendingMigrations));
+                    }
+                    else
+                    {
+                        logger.LogInformation("Banco de dados atualizado. Nenhuma migration pendente.");
+                    }
+
                     myDbContext.Database.Migrate();
+
+                    logger.LogInformation("Migrations aplicadas com sucesso.");
 
                     // Garante que AttorneyId é nullable (migration manual)
                     myDbContext.Database.ExecuteSqlRaw(@"
@@ -139,8 +156,12 @@ namespace WebAppSystems
                 }
                 catch (Exception ex)
                 {
-                    var logger = services.GetRequiredService<ILogger<Program>>();
-                    logger.LogError(ex, "An error occurred while migrating the database.");
+                    logger.LogCritical(ex,
+                        "FALHA CRÍTICA ao aplicar migrations. O banco pode estar desatualizado. " +
+                        "Verifique as permissões do usuário do banco e o estado das migrations.");
+
+                    // Lança a exceção para impedir o app de subir com banco desatualizado
+                    throw;
                 }
             }
 

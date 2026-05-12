@@ -1,0 +1,258 @@
+@model WebAppSystems.Models.LoteAprovacao
+
+@{
+    ViewData["Title"] = "Detalhes do Lote";
+}
+
+<div class="detalhes-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-left">
+                <div class="header-icon">
+                    <i class="bi bi-file-earmark-text"></i>
+                </div>
+                <div class="header-text">
+                    <h1 class="page-title">Detalhes do Lote #@Model.Id</h1>
+                    <p class="page-subtitle">@Model.Cliente.Name</p>
+                </div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a asp-action="Index" class="btn-back">
+                <i class="bi bi-arrow-left"></i> Voltar
+            </a>
+        </div>
+    </div>
+
+    <!-- Status e Informações -->
+    <div class="info-grid">
+        <div class="info-card">
+            <div class="info-label">Status</div>
+            <div class="info-value">
+                @switch (Model.Status)
+                {
+                    case WebAppSystems.Models.StatusLoteAprovacao.Pendente:
+                        <span class="badge badge-pendente"><i class="bi bi-clock-history"></i> Pendente</span>
+                        break;
+                    case WebAppSystems.Models.StatusLoteAprovacao.Aprovado:
+                        <span class="badge badge-aprovado"><i class="bi bi-check-circle"></i> Aprovado</span>
+                        break;
+                    case WebAppSystems.Models.StatusLoteAprovacao.Faturado:
+                        <span class="badge badge-faturado"><i class="bi bi-receipt"></i> Faturado</span>
+                        break;
+                    case WebAppSystems.Models.StatusLoteAprovacao.Rejeitado:
+                        <span class="badge badge-rejeitado"><i class="bi bi-x-circle"></i> Rejeitado</span>
+                        break;
+                    case WebAppSystems.Models.StatusLoteAprovacao.Cancelado:
+                        <span class="badge badge-cancelado"><i class="bi bi-dash-circle"></i> Cancelado</span>
+                        break;
+                }
+            </div>
+        </div>
+
+        <div class="info-card">
+            <div class="info-label">Período</div>
+            <div class="info-value">
+                <i class="bi bi-calendar-range"></i>
+                @Model.PeriodoInicio.ToString("dd/MM/yyyy") - @Model.PeriodoFim.ToString("dd/MM/yyyy")
+            </div>
+        </div>
+
+        <div class="info-card">
+            <div class="info-label">Cliente</div>
+            <div class="info-value">
+                <i class="bi bi-building"></i>
+                @Model.Cliente.Name
+            </div>
+        </div>
+
+        <div class="info-card">
+            <div class="info-label">Total de Horas (Aprovadas)</div>
+            <div class="info-value">
+                <i class="bi bi-clock"></i>
+                @{
+                    var totalSpan = Model.Itens
+                        .Where(i => i.ProcessRecord != null && i.Status == WebAppSystems.Models.StatusItemAprovacao.Aprovado)
+                        .Aggregate(TimeSpan.Zero, (acc, i) => acc + i.ProcessRecord.CalculoHorasTotal());
+                    var totalDias = (int)totalSpan.TotalDays;
+                    var totalHorasFormatado = $"{totalDias * 24 + totalSpan.Hours}:{totalSpan.Minutes:00}h";
+                }
+                @totalHorasFormatado
+            </div>
+        </div>
+
+        <div class="info-card">
+            <div class="info-label">Valor Estimado</div>
+            <div class="info-value">
+                <i class="bi bi-currency-dollar"></i>
+                R$ @Model.ValorEstimado.ToString("N2")
+            </div>
+        </div>
+    </div>
+
+    <!-- Informações Adicionais -->
+    <div class="details-card">
+        <h3 class="card-title"><i class="bi bi-info-circle"></i> Informações</h3>
+        <div class="details-grid">
+            <div class="detail-item">
+                <span class="detail-label">Criado por:</span>
+                <span class="detail-value">@Model.CriadoPor.Name</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Data de Criação:</span>
+                <span class="detail-value">@Model.DataCriacao.ToString("dd/MM/yyyy HH:mm")</span>
+            </div>
+            @if (Model.DataAprovacao.HasValue)
+            {
+                <div class="detail-item">
+                    <span class="detail-label">Aprovado por:</span>
+                    <span class="detail-value">@Model.AprovadoPor?.Name</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Data de Aprovação:</span>
+                    <span class="detail-value">@Model.DataAprovacao.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(Model.ComentarioAprovador))
+            {
+                <div class="detail-item full-width">
+                    <span class="detail-label">Comentário do Aprovador:</span>
+                    <span class="detail-value">@Model.ComentarioAprovador</span>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Lançamentos -->
+    <div class="lancamentos-card">
+        <h3 class="card-title"><i class="bi bi-list-check"></i> Lançamentos (@Model.Itens.Count)</h3>
+        <div class="table-responsive">
+            <table class="lancamentos-table">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Advogado</th>
+                        <th>Área</th>
+                        <th>Descrição</th>
+                        <th>Horas</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Itens.OrderBy(i => i.ProcessRecord.Date))
+                    {
+                        <tr class="@(item.Status == WebAppSystems.Models.StatusItemAprovacao.Abonado ? "row-abonado" : "")">
+                            <td>@item.ProcessRecord.Date.ToString("dd/MM/yyyy")</td>
+                            <td><i class="bi bi-person-badge"></i> @item.ProcessRecord.Attorney.Name</td>
+                            <td><span class="badge badge-area">@item.ProcessRecord.Department.Name</span></td>
+                            <td class="description-cell" title="@item.ProcessRecord.Description">@item.ProcessRecord.Description</td>
+                            <td class="text-center">@item.ProcessRecord.CalculoHoras()h</td>
+                            <td class="text-center">
+                                @switch (item.Status)
+                                {
+                                    case WebAppSystems.Models.StatusItemAprovacao.Pendente:
+                                        <span class="badge badge-item-pendente"><i class="bi bi-clock"></i> Pendente</span>
+                                        break;
+                                    case WebAppSystems.Models.StatusItemAprovacao.Aprovado:
+                                        <span class="badge badge-item-aprovado"><i class="bi bi-check"></i> Aprovado</span>
+                                        break;
+                                    case WebAppSystems.Models.StatusItemAprovacao.Abonado:
+                                        <span class="badge badge-item-abonado"><i class="bi bi-x"></i> Abonado</span>
+                                        break;
+                                }
+                                @if (item.FoiEditado)
+                                {
+                                    <br /><small class="text-muted"><i class="bi bi-pencil"></i> Editado</small>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Histórico -->
+    @if (Model.Historico.Any())
+    {
+        <div class="historico-card">
+            <h3 class="card-title"><i class="bi bi-clock-history"></i> Histórico de Ações</h3>
+            <div class="timeline">
+                @foreach (var hist in Model.Historico.OrderByDescending(h => h.DataHora))
+                {
+                    <div class="timeline-item">
+                        <div class="timeline-marker">
+                            @switch (hist.TipoAcao)
+                            {
+                                case "Criacao": <i class="bi bi-plus-circle"></i> break;
+                                case "Aprovacao": <i class="bi bi-check-circle"></i> break;
+                                case "Edicao": <i class="bi bi-pencil"></i> break;
+                                case "Abono": <i class="bi bi-x-circle"></i> break;
+                                default: <i class="bi bi-circle"></i> break;
+                            }
+                        </div>
+                        <div class="timeline-content">
+                            <div class="timeline-header">
+                                <span class="timeline-action">@hist.TipoAcao</span>
+                                <span class="timeline-date">@hist.DataHora.ToString("dd/MM/yyyy HH:mm")</span>
+                            </div>
+                            <div class="timeline-user"><i class="bi bi-person"></i> @hist.Usuario.Name</div>
+                            <div class="timeline-details">@hist.Detalhes</div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .detalhes-container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+    .page-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; padding: 24px 28px; margin-bottom: 24px; box-shadow: 0 6px 25px rgba(102,126,234,0.25); display: flex; justify-content: space-between; align-items: center; }
+    .header-content { display: flex; align-items: center; }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .header-icon { width: 50px; height: 50px; background: rgba(255,255,255,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: white; }
+    .page-title { font-size: 24px; font-weight: 700; color: white; margin: 0 0 6px 0; }
+    .page-subtitle { font-size: 14px; color: rgba(255,255,255,0.9); margin: 0; }
+    .btn-back { display: flex; align-items: center; gap: 8px; padding: 10px 20px; background: rgba(255,255,255,0.2); color: white; border-radius: 8px; font-weight: 600; text-decoration: none; transition: all 0.3s; }
+    .btn-back:hover { background: rgba(255,255,255,0.3); color: white; }
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 24px; }
+    .info-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 15px rgba(0,0,0,0.05); }
+    .info-label { font-size: 13px; color: #718096; margin-bottom: 8px; }
+    .info-value { font-size: 18px; font-weight: 600; color: #2d3748; display: flex; align-items: center; gap: 8px; }
+    .badge { padding: 6px 12px; border-radius: 16px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+    .badge-pendente { background: rgba(237,137,54,0.1); color: #dd6b20; }
+    .badge-aprovado { background: rgba(72,187,120,0.1); color: #2f855a; }
+    .badge-faturado { background: rgba(102,126,234,0.1); color: #667eea; }
+    .badge-rejeitado { background: rgba(245,101,101,0.1); color: #c53030; }
+    .badge-cancelado { background: rgba(160,174,192,0.1); color: #718096; }
+    .details-card, .lancamentos-card, .historico-card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 15px rgba(0,0,0,0.05); margin-bottom: 24px; }
+    .card-title { font-size: 18px; font-weight: 600; color: #2d3748; margin: 0 0 20px 0; display: flex; align-items: center; gap: 10px; }
+    .card-title i { color: #667eea; }
+    .details-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+    .detail-item { display: flex; flex-direction: column; gap: 4px; }
+    .detail-item.full-width { grid-column: 1 / -1; }
+    .detail-label { font-size: 13px; color: #718096; font-weight: 600; }
+    .detail-value { font-size: 14px; color: #2d3748; }
+    .table-responsive { overflow-x: auto; }
+    .lancamentos-table { width: 100%; border-collapse: collapse; }
+    .lancamentos-table thead th { text-align: left; padding: 12px; font-size: 13px; font-weight: 600; color: #4a5568; border-bottom: 2px solid #e2e8f0; background: #f7fafc; }
+    .lancamentos-table tbody td { padding: 12px; font-size: 14px; color: #2d3748; border-bottom: 1px solid #e2e8f0; }
+    .row-abonado { background: rgba(245,101,101,0.05); text-decoration: line-through; opacity: 0.6; }
+    .description-cell { max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .badge-area { background: rgba(102,126,234,0.1); color: #667eea; padding: 4px 10px; border-radius: 12px; font-size: 12px; }
+    .badge-item-pendente { background: rgba(237,137,54,0.1); color: #dd6b20; }
+    .badge-item-aprovado { background: rgba(72,187,120,0.1); color: #2f855a; }
+    .badge-item-abonado { background: rgba(245,101,101,0.1); color: #c53030; }
+    .timeline { position: relative; padding-left: 40px; }
+    .timeline::before { content: ''; position: absolute; left: 15px; top: 0; bottom: 0; width: 2px; background: #e2e8f0; }
+    .timeline-item { position: relative; margin-bottom: 24px; }
+    .timeline-marker { position: absolute; left: -40px; width: 32px; height: 32px; background: white; border: 3px solid #667eea; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #667eea; font-size: 14px; }
+    .timeline-content { background: #f7fafc; border-radius: 8px; padding: 16px; }
+    .timeline-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .timeline-action { font-size: 14px; font-weight: 600; color: #2d3748; }
+    .timeline-date { font-size: 12px; color: #718096; }
+    .timeline-user { font-size: 13px; color: #4a5568; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+    .timeline-details { font-size: 13px; color: #718096; line-height: 1.5; }
+</style>

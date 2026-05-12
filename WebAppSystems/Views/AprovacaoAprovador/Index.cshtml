@@ -1,0 +1,915 @@
+@model List<WebAppSystems.Models.LoteAprovacao>
+@using WebAppSystems.Models.Enums
+
+@{
+    ViewData["Title"] = "Lotes de Aprovação";
+    var lotesPendentes = Model.Where(l => l.Status == StatusLoteAprovacao.Pendente).ToList();
+    var lotesRevisados = Model.Where(l => l.Status == StatusLoteAprovacao.Aprovado || l.Status == StatusLoteAprovacao.Rejeitado || l.Status == StatusLoteAprovacao.Faturado).ToList();
+}
+
+<div class="aprovador-container">
+    <!-- Header -->
+    <div class="page-banner">
+        <div class="banner-content">
+            <div class="banner-icon">
+                <i class="bi bi-check-circle"></i>
+            </div>
+            <div class="banner-text">
+                <h1>Lotes de Aprovação</h1>
+                <p>Revise e aprove os lotes de faturamento</p>
+            </div>
+        </div>
+        <div class="banner-badge">
+            <span class="notification-badge">
+                @lotesPendentes.Count() lote(s) pendente(s)
+            </span>
+        </div>
+    </div>
+
+    <!-- Abas de Filtro -->
+    <div class="tabs-container">
+        <button class="tab-btn active" data-tab="pendentes">
+            <i class="bi bi-clock-history"></i> Pendentes (@lotesPendentes.Count())
+        </button>
+        <button class="tab-btn" data-tab="revisados">
+            <i class="bi bi-check-circle-fill"></i> Revisados (@lotesRevisados.Count())
+        </button>
+    </div>
+
+    <!-- Filtro por Cliente -->
+    <div class="filter-bar">
+        <div class="filter-group">
+            <i class="bi bi-funnel"></i>
+            <label>Filtrar por cliente:</label>
+            <select id="filtroCliente" class="filter-select">
+                <option value="">Todos os clientes</option>
+                @foreach (var cliente in Model.Select(l => l.Cliente.Name).Distinct().OrderBy(n => n))
+                {
+                    <option value="@cliente">@cliente</option>
+                }
+            </select>
+        </div>
+        <button class="filter-clear" id="btnLimparFiltro" style="display:none;">
+            <i class="bi bi-x-circle"></i> Limpar
+        </button>
+    </div>
+
+    <!-- Conteúdo Pendentes -->
+    <div class="tab-content" id="content-pendentes">
+        @if (!lotesPendentes.Any())
+        {
+            <div class="empty-state">
+                <i class="bi bi-check-circle-fill"></i>
+                <h3>Nenhum lote pendente</h3>
+                <p>Todos os lotes foram revisados!</p>
+            </div>
+        }
+        else
+        {
+            <!-- Estatísticas -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(102, 126, 234, 0.1); color: #667eea;">
+                        <i class="bi bi-list-check"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">@lotesPendentes.Count()</div>
+                        <div class="stat-label">Lotes Pendentes</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(237, 137, 54, 0.1); color: #ed8936;">
+                        <i class="bi bi-clock"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">@lotesPendentes.Sum(l => l.TotalHoras).ToString("F2")h</div>
+                        <div class="stat-label">Total de Horas</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(102, 126, 234, 0.1); color: #667eea;">
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">R$ @lotesPendentes.Sum(l => l.ValorEstimado).ToString("N2")</div>
+                        <div class="stat-label">Valor Total</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(237, 137, 54, 0.1); color: #ed8936;">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">@lotesPendentes.Count(l => (DateTime.Now - l.DataCriacao).TotalDays > 3)</div>
+                        <div class="stat-label">Com Mais de 3 Dias</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista de Lotes -->
+            <div class="lotes-list">
+                @foreach (var lote in lotesPendentes)
+                {
+                    var diasPendente = (DateTime.Now - lote.DataCriacao).TotalDays;
+                    var isAtrasado = diasPendente > 3;
+
+                    <div class="lote-card @(isAtrasado ? "lote-atrasado" : "")">
+                        @if (isAtrasado)
+                        {
+                            <div class="lote-alert">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                Pendente há @((int)diasPendente) dias
+                            </div>
+                        }
+                        <div class="lote-header">
+                            <div class="lote-info">
+                                <h5><i class="bi bi-building"></i> @lote.Cliente.Name</h5>
+                                <p class="lote-periodo">
+                                    <i class="bi bi-calendar-range"></i>
+                                    @lote.PeriodoInicio.ToString("dd/MM/yyyy") - @lote.PeriodoFim.ToString("dd/MM/yyyy")
+                                </p>
+                            </div>
+                            <div class="lote-priority">
+                                @if (isAtrasado)
+                                {
+                                    <span class="badge badge-urgent">
+                                        <i class="bi bi-exclamation-circle"></i> Urgente
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-normal">
+                                        <i class="bi bi-clock"></i> Normal
+                                    </span>
+                                }
+                            </div>
+                        </div>
+                        <div class="lote-body">
+                            <div class="lote-stats">
+                                <div class="lote-stat">
+                                    <i class="bi bi-list-check"></i>
+                                    <span>@lote.Itens.Count lançamentos</span>
+                                </div>
+                                <div class="lote-stat">
+                                    <i class="bi bi-clock"></i>
+                                    <span>@lote.TotalHoras.ToString("F2")h</span>
+                                </div>
+                                <div class="lote-stat">
+                                    <i class="bi bi-currency-dollar"></i>
+                                    <span>R$ @lote.ValorEstimado.ToString("N2")</span>
+                                </div>
+                            </div>
+                            <div class="lote-meta">
+                                <small class="text-muted">
+                                    <i class="bi bi-person"></i> Criado por @lote.CriadoPor.Name
+                                </small>
+                                <small class="text-muted">
+                                    <i class="bi bi-calendar"></i> @lote.DataCriacao.ToString("dd/MM/yyyy HH:mm")
+                                </small>
+                            </div>
+                        </div>
+                        <div class="lote-footer">
+                            <a asp-action="Revisar" asp-route-id="@lote.Id" class="btn-revisar">
+                                <i class="bi bi-eye-fill"></i> Revisar Agora
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- Conteúdo Revisados -->
+    <div class="tab-content" id="content-revisados" style="display: none;">
+        @if (!lotesRevisados.Any())
+        {
+            <div class="empty-state">
+                <i class="bi bi-inbox"></i>
+                <h3>Nenhum lote revisado</h3>
+                <p>Os lotes revisados aparecerão aqui</p>
+            </div>
+        }
+        else
+        {
+            <!-- Estatísticas Revisados -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(102, 126, 234, 0.1); color: #667eea;">
+                        <i class="bi bi-check-circle-fill"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">@lotesRevisados.Count()</div>
+                        <div class="stat-label">Lotes Revisados</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(102, 126, 234, 0.1); color: #667eea;">
+                        <i class="bi bi-clock"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">@lotesRevisados.Sum(l => l.TotalHoras).ToString("F2")h</div>
+                        <div class="stat-label">Total de Horas</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(102, 126, 234, 0.1); color: #667eea;">
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">R$ @lotesRevisados.Sum(l => l.ValorEstimado).ToString("N2")</div>
+                        <div class="stat-label">Valor Total</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(102, 126, 234, 0.1); color: #667eea;">
+                        <i class="bi bi-check-all"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">@lotesRevisados.Count(l => l.Status == StatusLoteAprovacao.Aprovado)</div>
+                        <div class="stat-label">Aprovados</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista de Lotes Revisados -->
+            <div class="lotes-list">
+                @foreach (var lote in lotesRevisados.OrderByDescending(l => l.DataAprovacao ?? l.DataCriacao))
+                {
+                    var statusClass = lote.Status == StatusLoteAprovacao.Aprovado ? "badge-aprovado"
+                                   : lote.Status == StatusLoteAprovacao.Faturado ? "badge-faturado"
+                                   : "badge-rejeitado";
+                    var statusIcon = lote.Status == StatusLoteAprovacao.Aprovado ? "check-circle-fill"
+                                   : lote.Status == StatusLoteAprovacao.Faturado ? "receipt-cutoff"
+                                   : "x-circle-fill";
+                    var statusText = lote.Status == StatusLoteAprovacao.Aprovado ? "Aprovado"
+                                   : lote.Status == StatusLoteAprovacao.Faturado ? "Faturado"
+                                   : "Rejeitado";
+
+                    <div class="lote-card lote-revisado">
+                        <div class="lote-header">
+                            <div class="lote-info">
+                                <h5><i class="bi bi-building"></i> @lote.Cliente.Name</h5>
+                                <p class="lote-periodo">
+                                    <i class="bi bi-calendar-range"></i>
+                                    @lote.PeriodoInicio.ToString("dd/MM/yyyy") - @lote.PeriodoFim.ToString("dd/MM/yyyy")
+                                </p>
+                            </div>
+                            <div class="lote-priority">
+                                <span class="badge @statusClass">
+                                    <i class="bi bi-@statusIcon"></i> @statusText
+                                </span>
+                            </div>
+                        </div>
+                        <div class="lote-body">
+                            <div class="lote-stats">
+                                <div class="lote-stat">
+                                    <i class="bi bi-list-check"></i>
+                                    <span>@lote.Itens.Count lançamentos</span>
+                                </div>
+                                <div class="lote-stat">
+                                    <i class="bi bi-clock"></i>
+                                    <span>@lote.TotalHoras.ToString("F2")h</span>
+                                </div>
+                                <div class="lote-stat">
+                                    <i class="bi bi-currency-dollar"></i>
+                                    <span>R$ @lote.ValorEstimado.ToString("N2")</span>
+                                </div>
+                            </div>
+                            <div class="lote-meta">
+                                <small class="text-muted">
+                                    <i class="bi bi-person"></i> Criado por @lote.CriadoPor.Name
+                                </small>
+                                @if (lote.DataAprovacao.HasValue)
+                                {
+                                    <small class="text-muted">
+                                        <i class="bi bi-check-circle"></i> Revisado em @lote.DataAprovacao.Value.ToString("dd/MM/yyyy HH:mm")
+                                    </small>
+                                }
+                            </div>
+                        </div>
+                        <div class="lote-footer">
+                            <a asp-action="DetalhesLote" asp-route-id="@lote.Id" style="display: inline-flex; align-items: center; gap: 7px; padding: 8px 16px; background: transparent; color: #667eea; border: 1.5px solid #667eea; border-radius: 7px; font-size: 13px; font-weight: 500; text-decoration: none; transition: all 0.2s;">
+                                <i class="bi bi-eye"></i> Ver Detalhes
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .aprovador-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .page-banner {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        padding: 20px 24px;
+        margin-bottom: 20px;
+        box-shadow: 0 6px 25px rgba(72, 187, 120, 0.25);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .banner-content {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .banner-icon {
+        width: 44px;
+        height: 44px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        color: white;
+    }
+
+    .banner-text h1 {
+        font-size: 22px;
+        font-weight: 700;
+        color: white;
+        margin: 0 0 4px 0;
+    }
+
+    .banner-text p {
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.9);
+        margin: 0;
+    }
+
+    .notification-badge {
+        padding: 8px 18px;
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        backdrop-filter: blur(10px);
+    }
+
+    /* Abas */
+    .tabs-container {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+        background: white;
+        padding: 8px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .tab-btn {
+        flex: 1;
+        padding: 12px 20px;
+        background: transparent;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #718096;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .tab-btn:hover {
+        background: #f7fafc;
+        color: #4a5568;
+    }
+
+    .tab-btn.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .tab-content {
+        animation: fadeIn 0.3s ease-in;
+    }
+
+    @@keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .empty-state i {
+        font-size: 56px;
+        color: #667eea;
+        margin-bottom: 16px;
+    }
+
+    .empty-state h3 {
+        font-size: 18px;
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 6px;
+    }
+
+    .empty-state p {
+        font-size: 13px;
+        color: #718096;
+        margin: 0;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 10px;
+        padding: 16px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .stat-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        flex-shrink: 0;
+    }
+
+    .stat-content {
+        flex: 1;
+    }
+
+    .stat-value {
+        font-size: 24px;
+        font-weight: 700;
+        color: #2d3748;
+        line-height: 1;
+        margin-bottom: 4px;
+    }
+
+    .stat-label {
+        font-size: 12px;
+        color: #718096;
+    }
+
+    .lotes-list {
+        display: grid;
+        gap: 14px;
+    }
+
+    .lote-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        transition: all 0.3s;
+        position: relative;
+    }
+
+    .lote-card:hover {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .lote-atrasado {
+        border: 2px solid #ed8936;
+    }
+
+    .lote-revisado {
+        opacity: 0.95;
+    }
+
+    .lote-alert {
+        background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+        color: white;
+        padding: 6px 14px;
+        font-size: 12px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        justify-content: center;
+    }
+
+    .lote-header {
+        padding: 14px 18px;
+        border-bottom: 1px solid #f7fafc;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .lote-info h5 {
+        font-size: 16px;
+        font-weight: 600;
+        color: #2d3748;
+        margin: 0 0 6px 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .lote-periodo {
+        font-size: 12px;
+        color: #718096;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .badge {
+        padding: 6px 14px;
+        border-radius: 16px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .badge-urgent {
+        background: rgba(237, 137, 54, 0.1);
+        color: #dd6b20;
+    }
+
+    .badge-normal {
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea;
+    }
+
+    .badge-aprovado {
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea;
+    }
+
+    .badge-faturado {
+        background: rgba(102, 126, 234, 0.15);
+        color: #667eea;
+        border: 1px solid rgba(102, 126, 234, 0.3);
+    }
+
+    .badge-rejeitado {
+        background: rgba(220, 38, 38, 0.1);
+        color: #dc2626;
+    }
+
+    .lote-body {
+        padding: 14px 18px;
+    }
+
+    .lote-stats {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+    }
+
+    .lote-stat {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: #4a5568;
+    }
+
+    .lote-stat i {
+        color: #667eea;
+        font-size: 15px;
+    }
+
+    .lote-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .lote-meta small {
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .lote-footer {
+        padding: 12px 18px;
+        background: #f7fafc;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .btn-revisar {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 10px 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 7px;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s;
+    }
+
+    .btn-revisar:hover {
+        background: linear-gradient(135deg, #5568d3 0%, #6a3d9a 100%);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(72, 187, 120, 0.4);
+    }
+
+    @@media (max-width: 768px) {
+        .page-banner {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 14px;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .lote-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .lote-stats {
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .tabs-container {
+            flex-direction: column;
+        }
+    }
+
+    /* Filtro */
+    .filter-bar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: white;
+        padding: 10px 16px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+    }
+
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: #4a5568;
+    }
+
+    .filter-group i { color: #667eea; }
+
+    .filter-select {
+        padding: 6px 12px;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 13px;
+        color: #2d3748;
+        background: white;
+        cursor: pointer;
+        min-width: 200px;
+    }
+
+    .filter-select:focus { outline: none; border-color: #667eea; }
+
+    .filter-clear {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 12px;
+        background: transparent;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 12px;
+        color: #718096;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .filter-clear:hover { border-color: #c0392b; color: #c0392b; }
+
+    /* Paginação */
+    .pagination-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 0;
+        margin-top: 8px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .pagination-info {
+        font-size: 12px;
+        color: #718096;
+    }
+
+    .pagination-controls {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+    }
+
+    .page-btn {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 6px;
+        background: white;
+        font-size: 13px;
+        color: #4a5568;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .page-btn:hover { border-color: #667eea; color: #667eea; }
+    .page-btn.active { background: #667eea; border-color: #667eea; color: white; font-weight: 700; }
+    .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .filter-empty {
+        text-align: center;
+        padding: 30px;
+        color: #718096;
+        font-size: 14px;
+        background: white;
+        border-radius: 10px;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const PAGE_SIZE = 10;
+    const state = { pendentes: { page: 1, filter: '' }, revisados: { page: 1, filter: '' } };
+
+    // --- Filtro por cliente ---
+    const filtroCliente = document.getElementById('filtroCliente');
+    const btnLimpar = document.getElementById('btnLimparFiltro');
+
+    filtroCliente.addEventListener('change', function() {
+        const val = this.value;
+        btnLimpar.style.display = val ? 'flex' : 'none';
+        ['pendentes', 'revisados'].forEach(tab => {
+            state[tab].filter = val;
+            state[tab].page = 1;
+        });
+        renderActiveTab();
+    });
+
+    btnLimpar.addEventListener('click', function() {
+        filtroCliente.value = '';
+        this.style.display = 'none';
+        ['pendentes', 'revisados'].forEach(tab => {
+            state[tab].filter = '';
+            state[tab].page = 1;
+        });
+        renderActiveTab();
+    });
+
+    // --- Abas ---
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+            const target = document.getElementById('content-' + this.dataset.tab);
+            if (target) target.style.display = 'block';
+            renderTab(this.dataset.tab);
+        });
+    });
+
+    // --- Paginação e filtro ---
+    function getCards(tabId) {
+        const list = document.querySelector(`#content-${tabId} .lotes-list`);
+        if (!list) return [];
+        return Array.from(list.querySelectorAll('.lote-card'));
+    }
+
+    function renderTab(tabId) {
+        const s = state[tabId];
+        const allCards = getCards(tabId);
+        if (!allCards.length) return;
+
+        const filtered = s.filter
+            ? allCards.filter(card => {
+                const h5 = card.querySelector('.lote-info h5');
+                return h5 && h5.textContent.trim().toLowerCase().includes(s.filter.toLowerCase());
+              })
+            : allCards;
+
+        allCards.forEach(c => c.style.display = 'none');
+
+        const container = document.querySelector(`#content-${tabId} .lotes-list`);
+        let emptyMsg = container.querySelector('.filter-empty');
+        if (!filtered.length) {
+            if (!emptyMsg) {
+                emptyMsg = document.createElement('div');
+                emptyMsg.className = 'filter-empty';
+                emptyMsg.innerHTML = '<i class="bi bi-search"></i> Nenhum lote encontrado para o cliente selecionado.';
+                container.appendChild(emptyMsg);
+            }
+            emptyMsg.style.display = 'block';
+            updatePagination(tabId, 0, 0);
+            return;
+        }
+        if (emptyMsg) emptyMsg.style.display = 'none';
+
+        const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+        s.page = Math.min(s.page, totalPages);
+        const start = (s.page - 1) * PAGE_SIZE;
+        const end = start + PAGE_SIZE;
+        filtered.forEach((card, i) => {
+            card.style.display = (i >= start && i < end) ? '' : 'none';
+        });
+
+        updatePagination(tabId, filtered.length, totalPages);
+    }
+
+    function updatePagination(tabId, total, totalPages) {
+        const s = state[tabId];
+        let bar = document.querySelector(`#content-${tabId} .pagination-bar`);
+        if (!bar) {
+            bar = document.createElement('div');
+            bar.className = 'pagination-bar';
+            document.getElementById(`content-${tabId}`).appendChild(bar);
+        }
+
+        if (totalPages <= 1) { bar.style.display = 'none'; return; }
+        bar.style.display = 'flex';
+
+        const start = (s.page - 1) * PAGE_SIZE + 1;
+        const end = Math.min(s.page * PAGE_SIZE, total);
+
+        let html = `<span class="pagination-info">Mostrando ${start}–${end} de ${total} lotes</span>`;
+        html += `<div class="pagination-controls">`;
+        html += `<button class="page-btn" onclick="goPage('${tabId}', ${s.page - 1})" ${s.page === 1 ? 'disabled' : ''}><i class="bi bi-chevron-left"></i></button>`;
+
+        pageRange(s.page, totalPages).forEach(p => {
+            if (p === '...') html += `<span class="page-btn" style="cursor:default;">…</span>`;
+            else html += `<button class="page-btn ${p === s.page ? 'active' : ''}" onclick="goPage('${tabId}', ${p})">${p}</button>`;
+        });
+
+        html += `<button class="page-btn" onclick="goPage('${tabId}', ${s.page + 1})" ${s.page === totalPages ? 'disabled' : ''}><i class="bi bi-chevron-right"></i></button>`;
+        html += `</div>`;
+        bar.innerHTML = html;
+    }
+
+    function pageRange(current, total) {
+        if (total <= 7) return Array.from({length: total}, (_, i) => i + 1);
+        if (current <= 4) return [1, 2, 3, 4, 5, '...', total];
+        if (current >= total - 3) return [1, '...', total-4, total-3, total-2, total-1, total];
+        return [1, '...', current-1, current, current+1, '...', total];
+    }
+
+    window.goPage = function(tabId, page) {
+        state[tabId].page = page;
+        renderTab(tabId);
+        document.getElementById(`content-${tabId}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    function renderActiveTab() {
+        const active = document.querySelector('.tab-btn.active');
+        if (active) renderTab(active.dataset.tab);
+    }
+
+    renderActiveTab();
+});
+</script>
