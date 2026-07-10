@@ -118,7 +118,8 @@ namespace WebAppSystems.Controllers
             // Aplica TODOS os campos editados pelo usuário
             if (!string.IsNullOrEmpty(request.Description))
                 processRecord.Description = request.Description;
-            if (request.ClientId > 0)
+            // Só altera cliente se o registro NÃO estiver em aprovação/faturado
+            if (request.ClientId > 0 && !processRecord.EmAprovacao && !processRecord.IsFaturado)
                 processRecord.ClientId = request.ClientId;
             if (request.DepartmentId > 0)
                 processRecord.DepartmentId = request.DepartmentId;
@@ -441,7 +442,8 @@ namespace WebAppSystems.Controllers
                     HoraFinal = r.HoraFinal.ToString(@"hh\:mm\:ss"),
                     r.RecordType,
                     r.Solicitante,
-                    r.Date
+                    r.Date,
+                    EmAprovacao = r.EmAprovacao || r.IsFaturado
                 }),
                 currentPage = page,
                 totalPages = totalPages,
@@ -552,7 +554,8 @@ namespace WebAppSystems.Controllers
 
             if (!string.IsNullOrWhiteSpace(request.Description))
                 record.Description = request.Description;
-            if (request.ClientId.HasValue && request.ClientId > 0)
+            // Só altera cliente se o registro NÃO estiver em aprovação/faturado
+            if (request.ClientId.HasValue && request.ClientId > 0 && !record.EmAprovacao && !record.IsFaturado)
                 record.ClientId = request.ClientId.Value;
             if (request.DepartmentId.HasValue && request.DepartmentId > 0)
                 record.DepartmentId = request.DepartmentId.Value;

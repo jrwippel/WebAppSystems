@@ -201,6 +201,46 @@
         </script>
     }
 
+    <!-- Toast global de erro -->
+    @if (TempData["MensagemErro"] != null)
+    {
+        <div id="toastErroGlobal" class="notif-lancamento" style="top: 72px;" role="alert">
+            <div class="notif-lancamento-inner" style="border-left-color: #e53e3e;">
+                <span class="notif-lancamento-icon" style="color: #e53e3e;"><i class="bi bi-exclamation-circle-fill"></i></span>
+                <span class="notif-lancamento-msg">@TempData["MensagemErro"]</span>
+                <button class="notif-lancamento-close" onclick="document.getElementById('toastErroGlobal').remove()" aria-label="Fechar">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+        </div>
+        <script>
+            setTimeout(function () {
+                var el = document.getElementById('toastErroGlobal');
+                if (el) { el.style.transition = 'opacity 0.5s'; el.style.opacity = '0'; setTimeout(function () { if (el) el.remove(); }, 500); }
+            }, 6000);
+        </script>
+    }
+
+    <!-- Toast global de sucesso -->
+    @if (TempData["MensagemSucesso"] != null)
+    {
+        <div id="toastSucessoGlobal" class="notif-lancamento" style="top: 72px;" role="alert">
+            <div class="notif-lancamento-inner" style="border-left-color: #48bb78;">
+                <span class="notif-lancamento-icon" style="color: #48bb78;"><i class="bi bi-check-circle-fill"></i></span>
+                <span class="notif-lancamento-msg">@TempData["MensagemSucesso"]</span>
+                <button class="notif-lancamento-close" onclick="document.getElementById('toastSucessoGlobal').remove()" aria-label="Fechar">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+        </div>
+        <script>
+            setTimeout(function () {
+                var el = document.getElementById('toastSucessoGlobal');
+                if (el) { el.style.transition = 'opacity 0.5s'; el.style.opacity = '0'; setTimeout(function () { if (el) el.remove(); }, 500); }
+            }, 5000);
+        </script>
+    }
+
     <!-- Timer Widget Flutuante Global -->
     <div id="floatingTimer" class="floating-timer" style="display: none;">
         <div class="floating-timer-content">
@@ -318,11 +358,39 @@
                 if (!href || href === '#' || href.startsWith('javascript') || href.startsWith('mailto')) return;
                 if (el.getAttribute('target') === '_blank') return;
                 if (el.hasAttribute('download')) return;
+
+                // Verificar se é um link de download (não navega para outra página)
+                var isDownloadLink = downloadActions.some(function(a) { return href.indexOf(a) !== -1; });
+                if (isDownloadLink) {
+                    // Tratar como download: mostrar loader e fechar via polling de cookie
+                    isPollingDownload = true;
+                    overlay.style.display = 'flex';
+                    startTime = null;
+                    animFrame = requestAnimationFrame(animateClock);
+                    var token = 'dl_' + new Date().getTime();
+                    document.cookie = 'fileDownloadToken=' + token + '; path=/';
+                    // Adicionar token na URL
+                    var sep = href.indexOf('?') !== -1 ? '&' : '?';
+                    el.href = href.split('?')[0] + (href.indexOf('?') !== -1 ? '?' + href.split('?')[1] : '') ;
+                    var pollInterval = setInterval(function() {
+                        if (document.cookie.indexOf('fileDownloadReady=' + token) !== -1) {
+                            clearInterval(pollInterval);
+                            document.cookie = 'fileDownloadReady=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                            document.cookie = 'fileDownloadToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                            isPollingDownload = false;
+                            hideLoader();
+                        }
+                    }, 500);
+                    // Timeout de segurança: 60s
+                    setTimeout(function() { clearInterval(pollInterval); isPollingDownload = false; hideLoader(); }, 60000);
+                    return;
+                }
+
                 scheduleLoader();
             });
 
             // Ações que geram download (não navegam para outra página) — loader fecha via cookie polling
-            var downloadActions = ['PreFatura', 'DownloadReport', 'DownloadPdfReport'];
+            var downloadActions = ['PreFatura', 'DownloadReport', 'DownloadPdfReport', 'GerarExcel', 'GerarPreFatura'];
             var isPollingDownload = false;
 
             document.addEventListener('submit', function (e) {
@@ -1115,6 +1183,80 @@
             hideFloatingTimer();
         };
     </script>
+
+            <!-- Notificações dinâmicas: financeiro e aprovador — apenas uma vez por sessão -->
+    <script>
+    (function() {
+        // Só exibe uma vez por sessão de navegação (sessionStorage é limpo ao fechar/sair)
+        if (sessionStorage.getItem('notifExibida')) return;
+
+        var pagina = window.location.pathname.toLowerCase();
+        var nextTop = 72;
+        function proximoTop() { var t = nextTop; nextTop += 80; return t; }
+
+        function mostrarToast(id, cor, icone, msg, link, linkLabel) {
+            if (document.getElementById(id)) return;
+            var top = proximoTop();
+            var div = document.createElement('div');
+            div.id = id;
+            div.style.cssText = 'position:fixed;top:' + top + 'px;right:20px;z-index:99998;max-width:420px;animation:notifSlideIn 0.4s cubic-bezier(.16,1,.3,1)';
+            div.innerHTML = '<div style="display:flex;align-items:center;gap:10px;background:#fff;border-left:4px solid ' + cor + ';border-radius:10px;padding:14px 16px;box-shadow:0 4px 20px rgba(0,0,0,0.12);"><span style="color:' + cor + ';font-size:20px;flex-shrink:0;"><i class="bi bi-' + icone + '"></i></span><span style="font-size:13px;color:#2d3748;line-height:1.5;flex:1;">' + msg + ' <a href="' + link + '" style="color:' + cor + ';font-weight:600;text-decoration:underline;">' + linkLabel + '</a></span><button onclick="document.getElementById(\'' + id + '\').remove()" style="background:none;border:none;color:#a0aec0;font-size:18px;cursor:pointer;padding:0 4px;line-height:1;flex-shrink:0;" aria-label="Fechar"><i class="bi bi-x"></i></button></div>';
+            document.body.appendChild(div);
+            setTimeout(function() { var el = document.getElementById(id); if (el) { el.style.transition='opacity 0.5s'; el.style.opacity='0'; setTimeout(function(){ if(el) el.remove(); }, 500); } }, 10000);
+        }
+
+        var financeiroMostrou = false;
+        var aprovadorMostrou = false;
+
+        function marcarExibidoSeAmbosResponderam() {
+            if (financeiroMostrou && aprovadorMostrou) {
+                sessionStorage.setItem('notifExibida', '1');
+            }
+        }
+
+        // Toast financeiro
+        if (pagina.indexOf('/aprovacaofinanceiro/notificacoes') === -1) {
+            fetch('/AprovacaoFinanceiro/ContarNotificacoes')
+                .then(function(r) { return r.ok ? r.json() : null; })
+                .then(function(data) {
+                    financeiroMostrou = true;
+                    if (data && data.naoLidas > 0) {
+                        var qtd = data.naoLidas;
+                        mostrarToast('notifFinanceiroDinamico','#48bb78','check-circle-fill',
+                            'Voce tem <strong>' + qtd + ' notificac' + (qtd>1?'oes':'ao') + '</strong> nao lida' + (qtd>1?'s':'') + ' de aprovacao.',
+                            '/AprovacaoFinanceiro/Notificacoes','Ver agora');
+                    }
+                    marcarExibidoSeAmbosResponderam();
+                })
+                .catch(function() { financeiroMostrou = true; marcarExibidoSeAmbosResponderam(); });
+        } else {
+            financeiroMostrou = true;
+        }
+
+        // Toast aprovador
+        if (pagina.indexOf('/aprovacaoaprovador/notificacoes') === -1) {
+            fetch('/AprovacaoAprovador/ContarNotificacoes')
+                .then(function(r) { return r.ok ? r.json() : null; })
+                .then(function(data) {
+                    aprovadorMostrou = true;
+                    if (data && data.lotesPendentes > 0) {
+                        var qtd = data.lotesPendentes;
+                        mostrarToast('notifAprovadorDinamico','#667eea','bell-fill',
+                            'Voce tem <strong>' + qtd + ' lote' + (qtd>1?'s':'') + '</strong> pendente' + (qtd>1?'s':'') + ' de aprovacao.',
+                            '/AprovacaoAprovador','Revisar agora');
+                    } else if (data && data.naoLidas > 0) {
+                        var qtd2 = data.naoLidas;
+                        mostrarToast('notifAprovadorDinamico','#667eea','bell-fill',
+                            'Voce tem <strong>' + qtd2 + ' notificac' + (qtd2>1?'oes':'ao') + '</strong> nao lida' + (qtd2>1?'s':'') + '.',
+                            '/AprovacaoAprovador/Notificacoes','Ver agora');
+                    }
+                    marcarExibidoSeAmbosResponderam();
+                })
+                .catch(function() { aprovadorMostrou = true; marcarExibidoSeAmbosResponderam(); });
+        } else {
+            aprovadorMostrou = true;
+        }
+    })();
+    </script>
 </body>
 </html>
-

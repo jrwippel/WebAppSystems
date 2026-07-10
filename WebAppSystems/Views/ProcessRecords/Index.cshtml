@@ -75,7 +75,10 @@
                             var isRunning = item.HoraFinal == null || item.HoraFinal == TimeSpan.Zero;
                             var rowClass = isRunning ? "running-timer" : "";
                             var canEdit = item.Attorney.Id == ViewBag.LoggedUserId;
+                            // Cliente não pode ser alterado se o registro estiver em aprovação ou faturado
+                            var canEditCliente = canEdit && !item.EmAprovacao && !item.IsFaturado;
                             var editableClass = canEdit ? "editable-cell" : "";
+                            var clientEditableClass = canEditCliente ? "editable-cell" : "";
                             var timeEditableClass = canEdit ? "time-editable" : "";
                             
                             <tr data-description="@item.Description" title="@item.Description" class="@rowClass" data-search="@($"{item.Date:dd/MM/yyyy} {item.Attorney.Name} {item.Department.Name} {item.Client.Name} {item.Solicitante} {item.RecordType} {item.Description}".ToLower())">
@@ -110,7 +113,7 @@
                                         <span class="hours-badge">@item.CalculoHoras()</span>
                                     }
                                 </td>
-                                <td class="client-cell @editableClass editable-select" data-id="@item.Id" data-field="clientId" data-value="@item.ClientId">
+                                <td class="client-cell @clientEditableClass @(canEditCliente ? "editable-select" : "")" data-id="@item.Id" data-field="clientId" data-value="@item.ClientId" @(item.EmAprovacao || item.IsFaturado ? "title=\"Registro com Lote gerado, não permite alterar o cliente\"" : "")>
                                     <i class="bi bi-briefcase"></i>
                                     @item.Client.Name
                                 </td>
@@ -142,9 +145,19 @@
 
                                         @if (item.Attorney.Id == ViewBag.LoggedUserId)
                                         {
-                                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn-action btn-delete" title="Excluir">
-                                                <i class="bi bi-trash"></i>
-                                            </a>
+                                            @if (item.EmAprovacao || item.IsFaturado)
+                                            {
+                                                <button type="button" class="btn-action btn-delete" title="Excluir"
+                                                    onclick="alert('Registro com Lote gerado, não é possível excluir.')">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn-action btn-delete" title="Excluir">
+                                                    <i class="bi bi-trash"></i>
+                                                </a>
+                                            }
                                         }
                                         else
                                         {

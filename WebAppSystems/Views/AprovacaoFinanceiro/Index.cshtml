@@ -4,13 +4,21 @@
 @{
     ViewData["Title"] = "Meus Lotes de Aprovação";
     var lotesPendentes = Model.Where(l => l.Status == StatusLoteAprovacao.Pendente).ToList();
-    var lotesAprovados = Model.Where(l => l.Status == StatusLoteAprovacao.Aprovado).ToList();
+    var lotesAprovados = Model.Where(l => l.Status == StatusLoteAprovacao.Aprovado || l.Status == StatusLoteAprovacao.ParcialmenteAprovado).ToList();
     var lotesFaturados = Model.Where(l => l.Status == StatusLoteAprovacao.Faturado).ToList();
 
-    // Calcular horas reais a partir dos ProcessRecords (apenas itens Aprovados)
-    double CalcHorasReais(WebAppSystems.Models.LoteAprovacao l) =>
-        l.Itens.Where(i => i.ProcessRecord != null && i.Status == WebAppSystems.Models.StatusItemAprovacao.Aprovado)
-               .Sum(i => i.ProcessRecord.CalculoHorasDecimal());
+    // Calcular horas reais a partir dos ProcessRecords
+    // Para lotes pendentes: soma todos os itens. Para aprovados/faturados: soma apenas aprovados.
+    double CalcHorasReais(WebAppSystems.Models.LoteAprovacao l) {
+        // Usa TotalHoras salvo no banco (mais rápido, evita N+1 queries)
+        if (l.TotalHoras > 0) return l.TotalHoras;
+        // Fallback: calcula dos itens se TotalHoras não estiver preenchido
+        var itensAprovados = l.Itens.Where(i => i.ProcessRecord != null && i.Status == WebAppSystems.Models.StatusItemAprovacao.Aprovado)
+                                    .Sum(i => i.ProcessRecord.CalculoHorasDecimal());
+        if (itensAprovados > 0) return itensAprovados;
+        return l.Itens.Where(i => i.ProcessRecord != null)
+                      .Sum(i => i.ProcessRecord.CalculoHorasDecimal());
+    }
 
     string FormatHoras(double h) {
         int hh = (int)h;
@@ -122,13 +130,13 @@
         </div>
 
         <!-- Lista de Lotes Pendentes -->
-        <div class="lotes-list">
-            @foreach (var lote in lotesPendentes.OrderBy(l => l.DataCriacao))
+        <div class="lotes-list" id="lista-pendentes">
+            @foreach (var lote in lotesPendentes.OrderByDescending(l => l.DataCriacao))
             {
-                <div class="lote-card">
+                <div class="lote-card lote-item" data-tab-group="pendentes">
                     <div class="lote-header">
                         <div class="lote-info">
-                            <h5><i class="bi bi-building"></i> @lote.Cliente.Name</h5>
+                            <h5><i class="bi bi-building"></i> <span class="lote-numero-badge">#@lote.Id</span> @lote.Cliente.Name</h5>
                             <p class="lote-periodo">
                                 <i class="bi bi-calendar-range"></i>
                                 @lote.PeriodoInicio.ToString("dd/MM/yyyy") - @lote.PeriodoFim.ToString("dd/MM/yyyy")
@@ -174,6 +182,7 @@
                 </div>
             }
         </div>
+        <div id="paginacao-pendentes" class="paginacao-container"></div>
     }
     </div>
 
@@ -230,22 +239,32 @@
         </div>
 
         <!-- Lista de Lotes Aprovados -->
-        <div class="lotes-list">
-            @foreach (var lote in lotesAprovados.OrderByDescending(l => l.DataAprovacao))
+        <div class="lotes-list" id="lista-aprovados">
+            @foreach (var lote in lotesAprovados.OrderByDescending(l => l.DataAprovacao ?? l.DataCriacao))
             {
-                <div class="lote-card lote-aprovado">
+                var isParcial = lote.Status == StatusLoteAprovacao.ParcialmenteAprovado;
+                <div class="lote-card @(isParcial ? "lote-parcial" : "lote-aprovado") lote-item" data-tab-group="aprovados">
                     <div class="lote-header">
                         <div class="lote-info">
-                            <h5><i class="bi bi-building"></i> @lote.Cliente.Name</h5>
+                            <h5><i class="bi bi-building"></i> <span class="lote-numero-badge">#@lote.Id</span> @lote.Cliente.Name</h5>
                             <p class="lote-periodo">
                                 <i class="bi bi-calendar-range"></i>
                                 @lote.PeriodoInicio.ToString("dd/MM/yyyy") - @lote.PeriodoFim.ToString("dd/MM/yyyy")
                             </p>
                         </div>
                         <div class="lote-status">
-                            <span class="badge badge-aprovado">
-                                <i class="bi bi-check-circle"></i> Aprovado
-                            </span>
+                            @if (isParcial)
+                            {
+                                <span class="badge badge-parcial">
+                                    <i class="bi bi-check2-circle"></i> Parcialmente Aprovado
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-aprovado">
+                                    <i class="bi bi-check-circle"></i> Aprovado
+                                </span>
+                            }
                         </div>
                     </div>
                     <div class="lote-body">
@@ -277,6 +296,13 @@
                                     }
                                 </small>
                             }
+                            @if (!string.IsNullOrWhiteSpace(lote.ComentarioAprovador))
+                            {
+                                <div class="comentario-aprovador">
+                                    <i class="bi bi-chat-quote-fill"></i>
+                                    <span>@lote.ComentarioAprovador</span>
+                                </div>
+                            }
                         </div>
                     </div>
                     <div class="lote-footer">
@@ -284,12 +310,26 @@
                             <a asp-action="DetalhesLote" asp-route-id="@lote.Id" class="btn-details">
                                 <i class="bi bi-eye"></i> Ver Detalhes
                             </a>
-                            <a asp-action="GerarExcel" asp-route-id="@lote.Id" class="btn-excel" title="Gerar Excel">
-                                <i class="bi bi-file-earmark-excel"></i> Excel
-                            </a>
-                            <a asp-action="GerarPreFatura" asp-route-id="@lote.Id" class="btn-prefatura" title="Gerar Pré-fatura">
-                                <i class="bi bi-file-earmark-pdf"></i> Pré-fatura
-                            </a>
+                            @{
+                                var todosAbonados = lote.Itens.Any() && lote.Itens.All(i => i.Status == WebAppSystems.Models.StatusItemAprovacao.Abonado);
+                            }
+                            @if (todosAbonados)
+                            {
+                                <button type="button" class="btn-fechar-lote"
+                                        onclick="fecharLote(@lote.Id, '@lote.Cliente.Name')"
+                                        title="Todos os itens foram abonados. Fechar lote.">
+                                    <i class="bi bi-x-circle"></i> Fechar Lote
+                                </button>
+                            }
+                            else
+                            {
+                                <a asp-action="GerarExcel" asp-route-id="@lote.Id" class="btn-excel" title="Gerar Excel">
+                                    <i class="bi bi-file-earmark-excel"></i> Excel
+                                </a>
+                                <a asp-action="GerarPreFatura" asp-route-id="@lote.Id" class="btn-prefatura" title="Gerar Pré-fatura">
+                                    <i class="bi bi-file-earmark-pdf"></i> Pré-fatura
+                                </a>
+                            }
                             <button type="button" class="btn-delete" onclick="confirmarExclusao(@lote.Id, '@lote.Cliente.Name')">
                                 <i class="bi bi-trash"></i> Excluir
                             </button>
@@ -298,6 +338,7 @@
                 </div>
             }
         </div>
+        <div id="paginacao-aprovados" class="paginacao-container"></div>
     }
     </div>
 
@@ -354,13 +395,13 @@
         </div>
 
         <!-- Lista de Lotes Faturados -->
-        <div class="lotes-list">
-            @foreach (var lote in lotesFaturados.OrderByDescending(l => l.DataFaturamento))
+        <div class="lotes-list" id="lista-faturados">
+            @foreach (var lote in lotesFaturados.OrderByDescending(l => l.DataFaturamento ?? l.DataCriacao))
             {
-                <div class="lote-card lote-faturado">
+                <div class="lote-card lote-faturado lote-item" data-tab-group="faturados">
                     <div class="lote-header">
                         <div class="lote-info">
-                            <h5><i class="bi bi-building"></i> @lote.Cliente.Name</h5>
+                            <h5><i class="bi bi-building"></i> <span class="lote-numero-badge">#@lote.Id</span> @lote.Cliente.Name</h5>
                             <p class="lote-periodo">
                                 <i class="bi bi-calendar-range"></i>
                                 @lote.PeriodoInicio.ToString("dd/MM/yyyy") - @lote.PeriodoFim.ToString("dd/MM/yyyy")
@@ -429,6 +470,7 @@
                 </div>
             }
         </div>
+        <div id="paginacao-faturados" class="paginacao-container"></div>
     }
     </div>
 </div>
@@ -694,10 +736,56 @@
         border-left: 4px solid #48bb78;
     }
 
+    .lote-parcial {
+        border-left: 4px solid #f59e0b;
+    }
+
+    .badge-parcial {
+        background: rgba(245, 158, 11, 0.1);
+        color: #b45309;
+    }
+
+    .comentario-aprovador {
+        display: flex;
+        align-items: flex-start;
+        gap: 7px;
+        margin-top: 8px;
+        padding: 10px 14px;
+        background: linear-gradient(135deg, #f0f4ff 0%, #faf5ff 100%);
+        border-left: 3px solid #667eea;
+        border-radius: 6px;
+        font-size: 12px;
+        color: #3730a3;
+        font-style: italic;
+    }
+
+    .comentario-aprovador i {
+        color: #667eea;
+        font-size: 14px;
+        flex-shrink: 0;
+        margin-top: 1px;
+    }
+
     .lote-faturado {
         border-left: 4px solid #667eea;
         opacity: 0.95;
     }
+
+    .lote-numero-badge {
+        display: inline-flex;
+        align-items: center;
+        background: rgba(102, 126, 234, 0.12);
+        color: #667eea;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 10px;
+        letter-spacing: 0.3px;
+        margin-right: 6px;
+        vertical-align: middle;
+    }
+
+    .lote-card { position: relative; }
 
     .lote-header {
         padding: 14px 18px;
@@ -893,6 +981,31 @@
     }
 
     .btn-prefatura i {
+        font-size: 14px;
+    }
+
+    .btn-fechar-lote {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 14px;
+        background: transparent;
+        color: #718096;
+        border: 1.5px solid #718096;
+        border-radius: 7px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+
+    .btn-fechar-lote:hover {
+        background: #718096;
+        color: white;
+    }
+
+    .btn-fechar-lote i {
         font-size: 14px;
     }
 
@@ -1220,6 +1333,18 @@ document.addEventListener('DOMContentLoaded', function() {
     // Inicializar paginação na aba ativa
     renderActiveTab();
 });
+
+function fecharLote(loteId, nomeCliente) {
+    if (!confirm('Fechar o lote de "' + nomeCliente + '"?\nTodos os itens foram abonados. O lote será marcado como Faturado.')) return;
+    fetch('/AprovacaoFinanceiro/FecharLote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'id=' + loteId
+    }).then(function(r) { return r.json(); }).then(function(data) {
+        if (data.success) window.location.reload();
+        else alert(data.message || 'Erro ao fechar lote.');
+    }).catch(function() { alert('Erro ao comunicar com o servidor.'); });
+}
 
 function confirmarExclusao(loteId, nomeCliente) {
     document.getElementById('nomeClienteExclusao').textContent = nomeCliente;

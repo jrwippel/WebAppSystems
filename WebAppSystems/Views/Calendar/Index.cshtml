@@ -353,7 +353,11 @@
                         Cliente e Área
                     </div>
                     <div class="form-group">
-                        <label for="clientSelect">Cliente</label>
+                        <label for="clientSelect">Cliente
+                            <span id="clientLockMsg" style="display:none;margin-left:6px;font-size:11px;color:#e53e3e;font-weight:600;">
+                                Registro com Lote gerado, não permite alterar o cliente
+                            </span>
+                        </label>
                         <select id="clientSelect" name="clientSelect" required>
                             <option value="Selecionar">Selecionar cliente...</option>
                             @foreach (var client in Model.ClientsOptions)
@@ -458,7 +462,8 @@
                     info.event.extendedProps.clientId,
                     info.event.extendedProps.departmentId,
                     info.event.extendedProps.tipoRegistro,
-                    info.event
+                    info.event,
+                    info.event.extendedProps.emAprovacao
                 );
             },
             eventChange: function () {
@@ -503,7 +508,7 @@
         var form = document.getElementById("eventForm");
         var currentEvent = null;
 
-        function openModal(start, end, title = '', solicitante = '', cliente, departamento, tipoRegistro, event = null) {
+        function openModal(start, end, title = '', solicitante = '', cliente, departamento, tipoRegistro, event = null, emAprovacao = false) {
             document.getElementById('modalTitle').textContent = event ? 'Editar Evento' : 'Adicionar Evento';
             document.getElementById('eventTitle').value = title;
             document.getElementById('eventSolicitante').value = solicitante;
@@ -514,6 +519,23 @@
             document.getElementById('clientSelect').value = cliente ? cliente : 'Selecionar';
             document.getElementById('departmentSelect').value = departamento ? departamento : 'Selecionar';
             document.getElementById('recordTypeSelect').value = tipoRegistro ? tipoRegistro : '0';
+
+            // Bloquear campo cliente se registro estiver em aprovação
+            var clientSelect = document.getElementById('clientSelect');
+            var clientLockMsg = document.getElementById('clientLockMsg');
+            if (emAprovacao) {
+                clientSelect.disabled = true;
+                clientSelect.style.background = '#f7fafc';
+                clientSelect.style.color = '#718096';
+                clientSelect.style.cursor = 'not-allowed';
+                if (clientLockMsg) clientLockMsg.style.display = 'inline';
+            } else {
+                clientSelect.disabled = false;
+                clientSelect.style.background = '';
+                clientSelect.style.color = '';
+                clientSelect.style.cursor = '';
+                if (clientLockMsg) clientLockMsg.style.display = 'none';
+            }
 
             console.log('cliente', cliente);
             calculateTotalHours();

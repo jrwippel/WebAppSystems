@@ -374,9 +374,9 @@
 <div class="navbar-left">
     <div class="user-dropdown" id="userDropdown">
         <button class="user-dropdown-toggle" id="userDropdownToggle"
-                title="Eberhardt, Carrascoza, Bossi, Silva, Matteussi &amp; Costa Beber Advogados">
+                title="@ViewBag.NomeEscritorioCompleto">
             <div class="user-toggle-info">
-                <span class="user-toggle-workspace">Eberhardt, Carrascoza, BSM &amp; CB Adv.</span>
+                <span class="user-toggle-workspace">@ViewBag.NomeEscritorio</span>
                 <span class="user-toggle-login">@Model.Login</span>
             </div>
             <i class="bi bi-chevron-down dropdown-arrow"></i>
@@ -403,7 +403,7 @@
                 <i class="bi bi-info-circle"></i><span data-i18n="menu.about">Sobre</span>
             </a>
             <div class="dd-divider"></div>
-            <a class="dd-item logout" asp-controller="Login" asp-action="Sair">
+            <a class="dd-item logout" asp-controller="Login" asp-action="Sair" onclick="sessionStorage.removeItem('notifExibida')">
                 <i class="bi bi-box-arrow-right"></i><span data-i18n="menu.sair">Sair</span>
             </a>
         </div>
@@ -507,6 +507,9 @@
                             <div class="gerenciar-section-label">Faturamento</div>
                             <a class="gerenciar-item" asp-controller="AprovacaoFinanceiro" asp-action="Index">
                                 <i class="bi bi-cash-stack"></i><span>Lotes</span>
+                            </a>
+                            <a class="gerenciar-item" asp-controller="AprovacaoFinanceiro" asp-action="Notificacoes">
+                                <i class="bi bi-bell"></i><span>Notificações</span>
                             </a>
                         }
                         @if (Model.IsAprovador)

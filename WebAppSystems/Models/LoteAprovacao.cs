@@ -47,6 +47,32 @@ namespace WebAppSystems.Models
         
         // Histórico de ações
         public ICollection<HistoricoAprovacao> Historico { get; set; } = new List<HistoricoAprovacao>();
+
+        // IDs de departamentos que já liberaram sua área (separados por vírgula)
+        public string? AreasLiberadas { get; set; }
+
+        // Helpers
+        public List<int> GetAreasLiberadasIds()
+        {
+            if (string.IsNullOrEmpty(AreasLiberadas)) return new List<int>();
+            return AreasLiberadas.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(s => int.TryParse(s.Trim(), out var id) ? id : 0)
+                .Where(id => id > 0)
+                .ToList();
+        }
+
+        public bool IsAreaLiberada(int departmentId)
+            => GetAreasLiberadasIds().Contains(departmentId);
+
+        public void LiberarArea(int departmentId)
+        {
+            var ids = GetAreasLiberadasIds();
+            if (!ids.Contains(departmentId))
+            {
+                ids.Add(departmentId);
+                AreasLiberadas = string.Join(",", ids);
+            }
+        }
         
         public LoteAprovacao()
         {
@@ -59,6 +85,7 @@ namespace WebAppSystems.Models
         Aprovado = 2,
         Rejeitado = 3,
         Cancelado = 4,
-        Faturado = 5
+        Faturado = 5,
+        ParcialmenteAprovado = 6
     }
 }

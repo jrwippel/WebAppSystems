@@ -29,6 +29,17 @@ namespace WebAppSystems.Models
         public string? DescricaoOriginal { get; set; }
         public TimeSpan? HoraInicialOriginal { get; set; }
         public TimeSpan? HoraFinalOriginal { get; set; }
+
+        // Desconto concedido pelo aprovador
+        public double? PercentualDesconto { get; set; } = null;
+        public string? JustificativaDesconto { get; set; }
+
+        // Helper: retorna o fator de desconto (ex: 50% → 0.5)
+        public double FatorDesconto => PercentualDesconto.HasValue
+            ? (1.0 - PercentualDesconto.Value / 100.0)
+            : 1.0;
+
+        public bool TemDesconto => PercentualDesconto.HasValue && PercentualDesconto.Value > 0;
         
         public LoteAprovacaoItem()
         {

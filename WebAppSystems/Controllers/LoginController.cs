@@ -257,13 +257,52 @@ namespace WebAppSystems.Controllers
                             if (diasSemLancamento >= 3)
                                 TempData["NotificacaoLancamento"] = diasSemLancamento;
 
-                            // Verifica lotes pendentes para aprovadores
+                            // Verifica lotes pendentes para aprovadores — filtra pela área do aprovador
                             if (usuario.IsAprovador)
                             {
-                                var lotesPendentes = await _context.LoteAprovacao
-                                    .CountAsync(l => l.Status == WebAppSystems.Models.StatusLoteAprovacao.Pendente);
-                                if (lotesPendentes > 0)
-                                    TempData["NotificacaoLotesPendentes"] = lotesPendentes;
+                                try
+                                {
+                                    var usuarioCompleto = await _context.Attorney
+                                        .AsNoTracking()
+                                        .FirstOrDefaultAsync(a => a.Id == usuario.Id);
+
+                                    var deptId = usuarioCompleto?.DepartmentId ?? 0;
+
+                                    var lotesPendentesParaArea = await _context.LoteAprovacao
+                                        .Include(l => l.Itens)
+                                            .ThenInclude(i => i.ProcessRecord)
+                                        .Where(l => l.Status == WebAppSystems.Models.StatusLoteAprovacao.Pendente
+                                                 || l.Status == WebAppSystems.Models.StatusLoteAprovacao.ParcialmenteAprovado)
+                                        .ToListAsync();
+
+                                    var qtdLotesParaAprovar = lotesPendentesParaArea
+                                        .Count(l => !l.IsAreaLiberada(deptId)
+                                                 && l.Itens.Any(i => i.ProcessRecord?.DepartmentId == deptId));
+
+                                    if (qtdLotesParaAprovar > 0)
+                                        TempData["NotificacaoLotesPendentes"] = qtdLotesParaAprovar;
+                                }
+                                catch { /* não bloqueia o login se a query falhar */ }
+                            }
+
+                            // Verifica lotes aprovados aguardando faturamento para o financeiro
+                            if (usuario.IsFinanceiro)
+                            {
+                                // Conta lotes aprovados/parcialmente aprovados aguardando faturamento
+                                var lotesParaFaturar = await _context.LoteAprovacao
+                                    .CountAsync(l => l.CriadoPorId == usuario.Id
+                                        && (l.Status == WebAppSystems.Models.StatusLoteAprovacao.Aprovado
+                                         || l.Status == WebAppSystems.Models.StatusLoteAprovacao.ParcialmenteAprovado));
+
+                                // Conta notificações não lidas (área liberada ou lote aprovado)
+                                var notifNaoLidas = await _context.NotificacaoAprovacao
+                                    .CountAsync(n => n.UsuarioId == usuario.Id && !n.Lida);
+
+                                // Mostra toast se há lotes para faturar OU notificações não lidas
+                                if (lotesParaFaturar > 0)
+                                    TempData["NotificacaoLotesFinanceiro"] = lotesParaFaturar;
+                                else if (notifNaoLidas > 0)
+                                    TempData["NotificacaoLotesFinanceiro"] = notifNaoLidas;
                             }
 
                             return RedirectToAction("Index", "Home");

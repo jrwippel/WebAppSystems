@@ -99,8 +99,8 @@ namespace WebAppSystems.Controllers
                     solicitante = r.Solicitante,
                     departmentId = r.DepartmentId,
                     clientId = r.ClientId,
-                    tipoRegistro = r.RecordType
-                    
+                    tipoRegistro = r.RecordType,
+                    emAprovacao = r.EmAprovacao || r.IsFaturado
                 }));
             }
 
@@ -147,15 +147,18 @@ namespace WebAppSystems.Controllers
                 var existingRecord = await _context.ProcessRecord.FindAsync(record.Id);
                 if (existingRecord != null)
                 {
+                    // Bloquear alteração de cliente se registro estiver em aprovação ou faturado
+                    if ((existingRecord.EmAprovacao || existingRecord.IsFaturado) && record.ClientId != existingRecord.ClientId)
+                        return BadRequest(new { success = false, message = "Registro com Lote gerado, não permite alterar o cliente." });
+
                     existingRecord.Description = record.Description;
                     existingRecord.Date = record.Date;
                     existingRecord.HoraInicial = horaInicial;
                     existingRecord.HoraFinal = horaFinal;
-                    existingRecord.ClientId = record.ClientId;
+                    existingRecord.ClientId = existingRecord.EmAprovacao || existingRecord.IsFaturado ? existingRecord.ClientId : record.ClientId;
                     existingRecord.DepartmentId = record.DepartmentId;
                     existingRecord.Solicitante = record.Solicitante;
                     existingRecord.RecordType = recordType;
-
                 }
             }
 

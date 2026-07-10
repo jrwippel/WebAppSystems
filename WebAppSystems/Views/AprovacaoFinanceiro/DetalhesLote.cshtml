@@ -82,8 +82,14 @@
             <div class="info-value">
                 <i class="bi bi-clock"></i>
                 @{
-                    var totalSpan = Model.Itens
+                    // Prioriza itens aprovados; se nenhum aprovado ainda, usa todos os itens
+                    var itensParaTotal = Model.Itens
                         .Where(i => i.ProcessRecord != null && i.Status == WebAppSystems.Models.StatusItemAprovacao.Aprovado)
+                        .ToList();
+                    if (!itensParaTotal.Any())
+                        itensParaTotal = Model.Itens.Where(i => i.ProcessRecord != null).ToList();
+
+                    var totalSpan = itensParaTotal
                         .Aggregate(TimeSpan.Zero, (acc, i) => acc + i.ProcessRecord.CalculoHorasTotal());
                     var totalDias = (int)totalSpan.TotalDays;
                     var totalHorasFormatado = $"{totalDias * 24 + totalSpan.Hours}:{totalSpan.Minutes:00}h";

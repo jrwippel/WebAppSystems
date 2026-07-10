@@ -58,6 +58,7 @@ namespace WebAppSystems.Controllers
                     .Include(p => p.Attorney)
                     .Include(p => p.Client)
                     .Include(p => p.Department)
+                    .AsNoTracking()
                     .AsQueryable();
 
                 // Filtro por perfil: não-admin vê apenas os próprios registros
@@ -76,14 +77,16 @@ namespace WebAppSystems.Controllers
                     query = query.Where(p => p.HoraFinal != null && p.HoraFinal != TimeSpan.Zero);
                 }
 
-                // Filtro de busca
+                // Filtro de busca — aplicado antes do Count para evitar full scan desnecessário
                 if (!string.IsNullOrEmpty(search))
                 {
-                    query = query.Where(p => 
-                        p.Description.Contains(search) ||
-                        p.Attorney.Name.Contains(search) ||
-                        (p.Client != null && p.Client.Name.Contains(search)) ||
-                        p.Department.Name.Contains(search));
+                    var searchLower = search.ToLower();
+                    query = query.Where(p =>
+                        p.Description.ToLower().Contains(searchLower) ||
+                        p.Attorney.Name.ToLower().Contains(searchLower) ||
+                        (p.Client != null && p.Client.Name.ToLower().Contains(searchLower)) ||
+                        p.Department.Name.ToLower().Contains(searchLower) ||
+                        (p.Solicitante != null && p.Solicitante.ToLower().Contains(searchLower)));
                 }
 
                 // Contar total
@@ -335,6 +338,14 @@ namespace WebAppSystems.Controllers
                 return NotFound();
             }
 
+            // Bloquear edição de registros em aprovação ou faturados
+            var registroAtual = await _context.ProcessRecord.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id);
+            if (registroAtual != null && (registroAtual.EmAprovacao || registroAtual.IsFaturado))
+            {
+                TempData["MensagemErro"] = "Registro com Lote gerado, não permite alterar o cliente.";
+                return RedirectToAction(nameof(Index));
+            }
+
             try
             {
                 _context.Update(processRecord);
@@ -373,6 +384,13 @@ namespace WebAppSystems.Controllers
                 return NotFound();
             }
 
+            // Aviso visual se o registro estiver em aprovação ou faturado
+            if (processRecord.EmAprovacao || processRecord.IsFaturado)
+            {
+                TempData["MensagemErro"] = "Registro com Lote gerado, não é possível excluir.";
+                return RedirectToAction(nameof(Index));
+            }
+
             return View(processRecord);
         }
 
@@ -388,6 +406,12 @@ namespace WebAppSystems.Controllers
             var processRecord = await _context.ProcessRecord.FindAsync(id);
             if (processRecord != null)
             {
+                // Bloquear exclusão se o registro estiver em aprovação ou faturado
+                if (processRecord.EmAprovacao || processRecord.IsFaturado)
+                {
+                    TempData["MensagemErro"] = "Registro com Lote gerado, não é possível excluir.";
+                    return RedirectToAction(nameof(Index));
+                }
                 _context.ProcessRecord.Remove(processRecord);
             }
 
@@ -501,6 +525,13 @@ namespace WebAppSystems.Controllers
             Attorney usuario = _isessao.BuscarSessaoDoUsuario();
             if (record.AttorneyId != usuario.Id)
                 return Forbid(); // 403 Forbidden
+
+            // Bloquear alteração de cliente em registros em aprovação ou faturados
+            if (record.EmAprovacao || record.IsFaturado)
+            {
+                if (request.ClientId.HasValue && request.ClientId != record.ClientId)
+                    return BadRequest("Registro com Lote gerado, não permite alterar o cliente.");
+            }
 
             // Atualizar horários se fornecidos
             if (!string.IsNullOrWhiteSpace(request.HoraInicial) && !string.IsNullOrWhiteSpace(request.HoraFinal))

@@ -150,11 +150,16 @@ public class ProcessRecordsApiController : ControllerBase
             if (activity == null)
                 return NotFound("Atividade não encontrada.");
 
-            // Atualiza os campos           
+            // Bloquear alteração de cliente em registros em aprovação ou faturados
+            if (activity.EmAprovacao || activity.IsFaturado)
+            {
+                if (updatedActivity.ClientId != 0 && updatedActivity.ClientId != activity.ClientId)
+                    return BadRequest(new { message = "Registro com Lote gerado, não permite alterar o cliente." });
+                updatedActivity.ClientId = activity.ClientId;
+            }
 
             activity.Description = updatedActivity.Description;
             activity.Solicitante = updatedActivity.Solicitante;
-           // activity.Date = updatedActivity.Date;
             activity.HoraInicial = updatedActivity.HoraInicial;
             activity.HoraFinal = updatedActivity.HoraFinal;
             activity.ClientId = updatedActivity.ClientId;

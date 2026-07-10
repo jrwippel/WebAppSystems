@@ -216,6 +216,7 @@
                             <tr>
                                 <th>Data</th>
                                 <th>Advogado</th>
+                                <th>Área</th>
                                 <th>Descrição</th>
                                 <th>Horas</th>
                             </tr>
@@ -225,6 +226,7 @@
                                 <tr>
                                     <td>${lanc.data}</td>
                                     <td>${lanc.advogado}</td>
+                                    <td><span style="background:#edf2f7;color:#4a5568;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:600;">${lanc.departamento || '—'}</span></td>
                                     <td class="description-cell">${lanc.descricao}</td>
                                     <td>${lanc.horas.toFixed(2)}h</td>
                                 </tr>

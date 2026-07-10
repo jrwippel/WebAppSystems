@@ -26,28 +26,27 @@
     </div>
 
     <!-- Status e Informações -->
+    @{
+        var itensComRecordGrid = Model.Itens.Where(i => i.ProcessRecord != null).ToList();
+        var horasAprovGrid = itensComRecordGrid.Where(i => i.Status == WebAppSystems.Models.StatusItemAprovacao.Aprovado).Sum(i => i.ProcessRecord.CalculoHorasDecimal());
+        var horasAbonGrid = itensComRecordGrid.Where(i => i.Status == WebAppSystems.Models.StatusItemAprovacao.Abonado).Sum(i => i.ProcessRecord.CalculoHorasDecimal());
+        var horasTotalGrid = itensComRecordGrid.Sum(i => i.ProcessRecord.CalculoHorasDecimal());
+        string FmtH(double h) { int hh2 = (int)h; int mm2 = (int)Math.Round((h - hh2) * 60); return $"{hh2}:{mm2:00}h"; }
+
+        var statusBadge = Model.Status switch {
+            WebAppSystems.Models.StatusLoteAprovacao.Pendente => ("badge-pendente", "clock-history", "Pendente"),
+            WebAppSystems.Models.StatusLoteAprovacao.Aprovado => ("badge-aprovado", "check-circle", "Aprovado"),
+            WebAppSystems.Models.StatusLoteAprovacao.ParcialmenteAprovado => ("badge-parcial", "check2-circle", "Parcialmente Aprovado"),
+            WebAppSystems.Models.StatusLoteAprovacao.Faturado => ("badge-faturado", "receipt", "Faturado"),
+            WebAppSystems.Models.StatusLoteAprovacao.Rejeitado => ("badge-rejeitado", "x-circle", "Rejeitado"),
+            _ => ("badge-pendente", "dash-circle", "Cancelado")
+        };
+    }
     <div class="info-grid">
         <div class="info-card">
             <div class="info-label">Status</div>
             <div class="info-value">
-                @switch (Model.Status)
-                {
-                    case WebAppSystems.Models.StatusLoteAprovacao.Pendente:
-                        <span class="badge badge-pendente"><i class="bi bi-clock-history"></i> Pendente</span>
-                        break;
-                    case WebAppSystems.Models.StatusLoteAprovacao.Aprovado:
-                        <span class="badge badge-aprovado"><i class="bi bi-check-circle"></i> Aprovado</span>
-                        break;
-                    case WebAppSystems.Models.StatusLoteAprovacao.Faturado:
-                        <span class="badge badge-faturado"><i class="bi bi-receipt"></i> Faturado</span>
-                        break;
-                    case WebAppSystems.Models.StatusLoteAprovacao.Rejeitado:
-                        <span class="badge badge-rejeitado"><i class="bi bi-x-circle"></i> Rejeitado</span>
-                        break;
-                    case WebAppSystems.Models.StatusLoteAprovacao.Cancelado:
-                        <span class="badge badge-cancelado"><i class="bi bi-dash-circle"></i> Cancelado</span>
-                        break;
-                }
+                <span class="badge @statusBadge.Item1"><i class="bi bi-@statusBadge.Item2"></i> @statusBadge.Item3</span>
             </div>
         </div>
 
@@ -68,17 +67,26 @@
         </div>
 
         <div class="info-card">
-            <div class="info-label">Total de Horas (Aprovadas)</div>
+            <div class="info-label">Total de Horas</div>
             <div class="info-value">
                 <i class="bi bi-clock"></i>
-                @{
-                    var totalSpan = Model.Itens
-                        .Where(i => i.ProcessRecord != null && i.Status == WebAppSystems.Models.StatusItemAprovacao.Aprovado)
-                        .Aggregate(TimeSpan.Zero, (acc, i) => acc + i.ProcessRecord.CalculoHorasTotal());
-                    var totalDias = (int)totalSpan.TotalDays;
-                    var totalHorasFormatado = $"{totalDias * 24 + totalSpan.Hours}:{totalSpan.Minutes:00}h";
-                }
-                @totalHorasFormatado
+                @FmtH(horasTotalGrid)
+            </div>
+        </div>
+
+        <div class="info-card">
+            <div class="info-label">Horas Aprovadas</div>
+            <div class="info-value" style="color: #2f855a;">
+                <i class="bi bi-check-circle-fill"></i>
+                @FmtH(horasAprovGrid)
+            </div>
+        </div>
+
+        <div class="info-card">
+            <div class="info-label">Horas Abonadas</div>
+            <div class="info-value" style="color: #e53e3e;">
+                <i class="bi bi-x-circle-fill"></i>
+                @FmtH(horasAbonGrid)
             </div>
         </div>
 
@@ -218,6 +226,19 @@
     .btn-back { display: flex; align-items: center; gap: 8px; padding: 10px 20px; background: rgba(255,255,255,0.2); color: white; border-radius: 8px; font-weight: 600; text-decoration: none; transition: all 0.3s; }
     .btn-back:hover { background: rgba(255,255,255,0.3); color: white; }
     .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 24px; }
+    .resumo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .resumo-card { background: white; border-radius: 10px; padding: 16px 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 14px; border-left: 4px solid #e2e8f0; }
+    .resumo-total { border-left-color: #667eea; }
+    .resumo-aprovado { border-left-color: #48bb78; }
+    .resumo-abonado { border-left-color: #e53e3e; }
+    .resumo-pendente { border-left-color: #ed8936; }
+    .resumo-icon { font-size: 24px; flex-shrink: 0; }
+    .resumo-total .resumo-icon { color: #667eea; }
+    .resumo-aprovado .resumo-icon { color: #48bb78; }
+    .resumo-abonado .resumo-icon { color: #e53e3e; }
+    .resumo-pendente .resumo-icon { color: #ed8936; }
+    .resumo-value { font-size: 22px; font-weight: 700; color: #2d3748; line-height: 1; margin-bottom: 4px; }
+    .resumo-label { font-size: 12px; color: #718096; }
     .info-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 15px rgba(0,0,0,0.05); }
     .info-label { font-size: 13px; color: #718096; margin-bottom: 8px; }
     .info-value { font-size: 18px; font-weight: 600; color: #2d3748; display: flex; align-items: center; gap: 8px; }

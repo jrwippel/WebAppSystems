@@ -2,6 +2,22 @@
 
 @{
     ViewData["Title"] = "Revisar Lote";
+    int aprovadorDeptId = ViewBag.AprovadorDepartmentId ?? 0;
+    string aprovadorDeptNome = ViewBag.AprovadorDepartmentNome ?? "Minha Área";
+
+    var itensMinhaArea = Model.Itens
+        .Where(i => i.ProcessRecord?.DepartmentId == aprovadorDeptId)
+        .OrderBy(i => i.ProcessRecord.Date)
+        .ToList();
+
+    var itensOutrasAreas = Model.Itens
+        .Where(i => i.ProcessRecord?.DepartmentId != aprovadorDeptId)
+        .OrderBy(i => i.ProcessRecord?.Department?.Name)
+        .ThenBy(i => i.ProcessRecord?.Date)
+        .ToList();
+
+    int totalMinhaArea = itensMinhaArea.Count;
+    int revisadosMinhaArea = itensMinhaArea.Count(i => i.Status != StatusItemAprovacao.Pendente);
 }
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
@@ -14,15 +30,25 @@
     .btn-aprovar-lote { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; }
     .btn-aprovar-lote:hover { opacity: 0.9; }
     .totalizador-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 24px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3); position: sticky; top: 0; z-index: 100; }
-    .totalizador-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; text-align: center; }
+    .totalizador-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 20px; text-align: center; }
     .totalizador-item { color: white; }
     .totalizador-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.9; margin-bottom: 8px; font-weight: 600; }
     .totalizador-value { font-size: 28px; font-weight: 700; }
     .table-card { background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
-    .table-lancamentos { width: 100%; margin: 0; }
+    .table-lancamentos { width: 100%; min-width: 1100px; margin: 0; table-layout: fixed; }
     .table-lancamentos thead { background: #f7fafc; }
-    .table-lancamentos thead th { padding: 12px 16px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #4a5568; border-bottom: 2px solid #e2e8f0; }
-    .table-lancamentos tbody td { padding: 16px; vertical-align: middle; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
+    .table-lancamentos thead th { padding: 10px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #4a5568; border-bottom: 2px solid #e2e8f0; white-space: nowrap; overflow: hidden; }
+    .table-lancamentos tbody td { padding: 10px 12px; vertical-align: middle; border-bottom: 1px solid #e2e8f0; font-size: 13px; overflow: hidden; }
+    .col-data    { width: 95px; }
+    .col-adv     { width: 120px; }
+    .col-area    { width: 80px; }
+    .col-tipo    { width: 110px; }
+    .col-desc    { width: auto; }
+    .col-inicio  { width: 80px; }
+    .col-fim     { width: 80px; }
+    .col-horas   { width: 65px; }
+    .col-status  { width: 120px; }
+    .col-acoes   { width: 150px; white-space: nowrap; }
     .table-lancamentos tbody tr:hover { background: #f7fafc; }
     .badge-area { background: #edf2f7; color: #4a5568; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 600; }
     .badge-tipo { padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; white-space: nowrap; }
@@ -35,6 +61,7 @@
     .badge-aprovado { background: #d1fae5; color: #059669; }
     .badge-abonado { background: #fee2e2; color: #dc2626; }
     .badge-editado { background: #dbeafe; color: #2563eb; }
+    .badge-desconto { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
     .acoes-btns { display: flex; gap: 4px; }
     .btn-acao { width: 32px; height: 32px; border: none; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s; }
     .btn-edit { background: #e0e7ff; color: #4f46e5; }
@@ -55,6 +82,26 @@
     .item-aprovado { background: #f0fdf4 !important; }
     .item-abonado { background: #fef2f2 !important; opacity: 0.7; }
     .valor-sub { font-size: 12px; font-weight: 400; opacity: 0.85; margin-left: 4px; }
+
+    /* Separadores de área na tabela */
+    .area-separator-row td {
+        padding: 8px 16px;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    .minha-area-header td { background: #e0e7ff; color: #3730a3; }
+    .outras-areas-header td { background: #f1f5f9; color: #64748b; }
+    .area-sub-separator td { background: #f8fafc; color: #94a3b8; font-size: 11px; padding: 5px 16px; font-weight: 600; border-bottom: 1px dashed #e2e8f0; }
+    .area-sep-badge { margin-left: 8px; padding: 2px 8px; border-radius: 10px; font-size: 10px; background: rgba(255,255,255,0.5); }
+    .area-sep-readonly { background: rgba(0,0,0,0.08); color: #64748b; }
+    .row-outra-area td { opacity: 0.55; background: #fafafa; }
+    .row-outra-area:hover td { opacity: 0.7; }
+    .time-readonly { font-size: 13px; color: #718096; }
+    .area-toggle-header:hover td { filter: brightness(0.96); }
+    .area-chevron { transition: transform 0.25s; font-size: 13px; }
 </style>
 
 <div class="container-fluid" style="padding: 20px;">
@@ -66,9 +113,6 @@
         <div style="display: flex; gap: 10px; align-items: center;">
             <button type="button" class="btn btn-secondary" onclick="window.history.back()" style="display: flex; align-items: center; gap: 8px;">
                 <i class="bi bi-arrow-left"></i> Voltar
-            </button>
-            <button type="button" class="btn-aprovar-lote" id="btnAprovarLote">
-                <i class="bi bi-check-circle"></i> Aprovar Lote
             </button>
         </div>
     </div>
@@ -82,10 +126,22 @@
                         .Where(i => i.ProcessRecord != null)
                         .Aggregate(TimeSpan.Zero, (acc, i) => acc + i.ProcessRecord.CalculoHorasTotal());
                     var totalLoteFormatado = $"{(int)totalLoteSpan.TotalHours}:{totalLoteSpan.Minutes:00}h";
+
+                    var totalAreaSpan = itensMinhaArea
+                        .Where(i => i.ProcessRecord != null)
+                        .Aggregate(TimeSpan.Zero, (acc, i) => acc + i.ProcessRecord.CalculoHorasTotal());
+                    var totalAreaFormatado = $"{(int)totalAreaSpan.TotalHours}:{totalAreaSpan.Minutes:00}h";
                 }
                 <div class="totalizador-value" id="totalLote">
                     @totalLoteFormatado
                     <span class="valor-sub" id="valorTotalLote"></span>
+                </div>
+            </div>
+            <div class="totalizador-item">
+                <div class="totalizador-label">Total da @aprovadorDeptNome</div>
+                <div class="totalizador-value" id="totalArea">
+                    @totalAreaFormatado
+                    <span class="valor-sub" id="valorTotalArea"></span>
                 </div>
             </div>
             <div class="totalizador-item">
@@ -113,100 +169,166 @@
         </div>
     </div>
 
-    <div class="table-card">
-        <div style="padding: 16px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
-            <div style="position: relative; max-width: 400px;">
-                <i class="bi bi-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #a0aec0;"></i>
-                <input type="text" id="searchInput" class="form-control" placeholder="Pesquisar por descrição, advogado, área..."
-                       style="padding-left: 36px; border-radius: 6px; border: 1px solid #e2e8f0;">
+    <div class="table-card" style="overflow-x: auto;">
+            <div style="padding: 16px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div style="position: relative; max-width: 400px;">
+                    <i class="bi bi-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #a0aec0;"></i>
+                    <input type="text" id="searchInput" class="form-control" placeholder="Pesquisar por descrição, advogado, área..."
+                           style="padding-left: 36px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <span style="display:inline-flex;align-items:center;padding:6px 12px;background:#e0e7ff;color:#4338ca;border-radius:6px;font-size:12px;font-weight:600;">
+                        <i class="bi bi-person-fill" style="margin-right:5px;"></i> @aprovadorDeptNome
+                    </span>
+                    <button type="button" id="btnAprovarTodos" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: transparent; color: #2d8a5e; border: 1.5px solid #2d8a5e; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+                        <i class="bi bi-check-circle-fill"></i> Aprovar Pendentes da @aprovadorDeptNome
+                    </button>
+                    <button type="button" id="btnAbonarTodos" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: transparent; color: #c0392b; border: 1.5px solid #c0392b; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+                        <i class="bi bi-x-circle-fill"></i> Abonar Pendentes da @aprovadorDeptNome
+                    </button>
+                </div>
             </div>
-            <div style="display: flex; gap: 8px;">
-                <button type="button" id="btnAprovarTodos" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: transparent; color: #2d8a5e; border: 1.5px solid #2d8a5e; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
-                    <i class="bi bi-check-circle-fill"></i> Aprovar Todos
-                </button>
-                <button type="button" id="btnAbonarTodos" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: transparent; color: #c0392b; border: 1.5px solid #c0392b; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
-                    <i class="bi bi-x-circle-fill"></i> Abonar Todos
-                </button>
-            </div>
-        </div>
         <table class="table table-lancamentos">
             <thead>
                 <tr>
-                    <th>DATA</th>
-                    <th>ADVOGADO</th>
-                    <th>ÁREA</th>
-                    <th>TIPO</th>
-                    <th>DESCRIÇÃO</th>
-                    <th>INÍCIO</th>
-                    <th>FIM</th>
-                    <th>HORAS</th>
-                    <th>STATUS</th>
-                    <th>AÇÕES</th>
+                    <th class="col-data">DATA</th>
+                    <th class="col-adv">ADVOGADO</th>
+                    <th class="col-area">ÁREA</th>
+                    <th class="col-tipo">TIPO</th>
+                    <th class="col-desc">DESCRIÇÃO</th>
+                    <th class="col-inicio">INÍCIO</th>
+                    <th class="col-fim">FIM</th>
+                    <th class="col-horas">HORAS</th>
+                    <th class="col-status">STATUS</th>
+                    <th class="col-acoes">AÇÕES</th>
                 </tr>
             </thead>
             <tbody id="tabelaItens">
-                @foreach (var item in Model.Itens.OrderBy(i => i.ProcessRecord.Date))
+                @* ── MINHA ÁREA ── *@
+                @if (itensMinhaArea.Any())
                 {
-                    var tipoClass = item.ProcessRecord.RecordType switch {
-                        WebAppSystems.Models.Enums.RecordType.Contencioso => "badge-tipo-contencioso",
-                        WebAppSystems.Models.Enums.RecordType.Deslocamento => "badge-tipo-deslocamento",
-                        WebAppSystems.Models.Enums.RecordType.PropostaEspecifica => "badge-tipo-proposta",
-                        _ => "badge-tipo-consultivo"
-                    };
-                    var tipoLabel = item.ProcessRecord.RecordType switch {
-                        WebAppSystems.Models.Enums.RecordType.Contencioso => "Contencioso",
-                        WebAppSystems.Models.Enums.RecordType.Deslocamento => "Deslocamento",
-                        WebAppSystems.Models.Enums.RecordType.PropostaEspecifica => "Prop. Específica",
-                        _ => "Consultivo"
-                    };
-                    <tr id="row_@item.Id" data-item-id="@item.Id" data-horas="@item.ProcessRecord.CalculoHorasDecimal().ToString("F4", System.Globalization.CultureInfo.InvariantCulture)" data-attorney-id="@item.ProcessRecord.AttorneyId">
-                        <td>@item.ProcessRecord.Date.ToString("dd/MM/yyyy")</td>
-                        <td>@item.ProcessRecord.Attorney.Name</td>
-                        <td><span class="badge-area">@item.ProcessRecord.Department.Name</span></td>
-                        <td><span class="badge-tipo @tipoClass">@tipoLabel</span></td>
-                        <td>
-                            <div class="editable-desc" contenteditable="false" data-original="@item.ProcessRecord.Description">
-                                @item.ProcessRecord.Description
-                            </div>
-                        </td>
-                        <td>
-                            <input type="text" class="time-input"
-                                   value="@string.Format("{0:D2}:{1:D2}:{2:D2}", item.ProcessRecord.HoraInicial.Hours, item.ProcessRecord.HoraInicial.Minutes, item.ProcessRecord.HoraInicial.Seconds)"
-                                   data-original="@string.Format("{0:D2}:{1:D2}", item.ProcessRecord.HoraInicial.Hours, item.ProcessRecord.HoraInicial.Minutes)"
-                                   placeholder="HH:MM:SS" disabled />
-                        </td>
-                        <td>
-                            <input type="text" class="time-input"
-                                   value="@string.Format("{0:D2}:{1:D2}:{2:D2}", item.ProcessRecord.HoraFinal.Hours, item.ProcessRecord.HoraFinal.Minutes, item.ProcessRecord.HoraFinal.Seconds)"
-                                   data-original="@string.Format("{0:D2}:{1:D2}", item.ProcessRecord.HoraFinal.Hours, item.ProcessRecord.HoraFinal.Minutes)"
-                                   placeholder="HH:MM:SS" disabled />
-                        </td>
-                        <td><span class="horas-value">@item.ProcessRecord.CalculoHoras()h</span></td>
-                        <td>
-                            <span class="badge-status badge-pendente" id="status_@item.Id">
-                                <i class="bi bi-clock"></i> Pendente
-                            </span>
-                        </td>
-                        <td>
-                            <div class="acoes-btns">
-                                <button type="button" class="btn-acao btn-edit" data-action="edit" data-id="@item.Id" title="Editar">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <button type="button" class="btn-acao btn-save" data-action="save" data-id="@item.Id" title="Salvar" style="display:none;">
-                                    <i class="bi bi-check-lg"></i>
-                                </button>
-                                <button type="button" class="btn-acao btn-cancel" data-action="cancel" data-id="@item.Id" title="Cancelar" style="display:none;">
-                                    <i class="bi bi-x-lg"></i>
-                                </button>
-                                <button type="button" class="btn-acao btn-approve" data-action="approve" data-id="@item.Id" title="Aprovar">
-                                    <i class="bi bi-check-circle"></i>
-                                </button>
-                                <button type="button" class="btn-acao btn-reject" data-action="reject" data-id="@item.Id" title="Abonar">
-                                    <i class="bi bi-x-circle"></i>
-                                </button>
-                            </div>
+                    <tr class="area-separator-row minha-area-header area-toggle-header" data-area-id="minha-area" style="cursor:pointer;" title="Clique para expandir/recolher">
+                        <td colspan="10">
+                            <i class="bi bi-person-fill"></i> @aprovadorDeptNome
+                            <span class="area-sep-badge">@revisadosMinhaArea / @totalMinhaArea revisados</span>
+                            <i class="bi bi-chevron-up area-chevron" style="float:right;margin-top:2px;"></i>
                         </td>
                     </tr>
+                    @foreach (var item in itensMinhaArea)
+                    {
+                        var tipoClass = item.ProcessRecord.RecordType switch {
+                            WebAppSystems.Models.Enums.RecordType.Contencioso => "badge-tipo-contencioso",
+                            WebAppSystems.Models.Enums.RecordType.Deslocamento => "badge-tipo-deslocamento",
+                            WebAppSystems.Models.Enums.RecordType.PropostaEspecifica => "badge-tipo-proposta",
+                            _ => "badge-tipo-consultivo"
+                        };
+                        var tipoLabel = item.ProcessRecord.RecordType switch {
+                            WebAppSystems.Models.Enums.RecordType.Contencioso => "Contencioso",
+                            WebAppSystems.Models.Enums.RecordType.Deslocamento => "Deslocamento",
+                            WebAppSystems.Models.Enums.RecordType.PropostaEspecifica => "Prop. Específica",
+                            _ => "Consultivo"
+                        };
+                        <tr id="row_@item.Id" data-item-id="@item.Id" data-minha-area="true" data-area-group="minha-area"
+                            data-horas="@item.ProcessRecord.CalculoHorasDecimal().ToString("F4", System.Globalization.CultureInfo.InvariantCulture)"
+                            data-attorney-id="@item.ProcessRecord.AttorneyId">
+                            <td class="col-data">@item.ProcessRecord.Date.ToString("dd/MM/yyyy")</td>
+                            <td class="col-adv">@item.ProcessRecord.Attorney.Name</td>
+                            <td class="col-area"><span class="badge-area">@item.ProcessRecord.Department.Name</span></td>
+                            <td class="col-tipo"><span class="badge-tipo @tipoClass">@tipoLabel</span></td>
+                            <td class="col-desc">
+                                <div class="editable-desc" contenteditable="false" data-original="@item.ProcessRecord.Description">
+                                    @item.ProcessRecord.Description
+                                </div>
+                            </td>
+                            <td class="col-inicio">
+                                <input type="text" class="time-input"
+                                       value="@string.Format("{0:D2}:{1:D2}:{2:D2}", item.ProcessRecord.HoraInicial.Hours, item.ProcessRecord.HoraInicial.Minutes, item.ProcessRecord.HoraInicial.Seconds)"
+                                       data-original="@string.Format("{0:D2}:{1:D2}", item.ProcessRecord.HoraInicial.Hours, item.ProcessRecord.HoraInicial.Minutes)"
+                                       placeholder="HH:MM:SS" disabled />
+                            </td>
+                            <td class="col-fim">
+                                <input type="text" class="time-input"
+                                       value="@string.Format("{0:D2}:{1:D2}:{2:D2}", item.ProcessRecord.HoraFinal.Hours, item.ProcessRecord.HoraFinal.Minutes, item.ProcessRecord.HoraFinal.Seconds)"
+                                       data-original="@string.Format("{0:D2}:{1:D2}", item.ProcessRecord.HoraFinal.Hours, item.ProcessRecord.HoraFinal.Minutes)"
+                                       placeholder="HH:MM:SS" disabled />
+                            </td>
+                            <td class="col-horas"><span class="horas-value">@item.ProcessRecord.CalculoHoras()h</span></td>
+                            <td class="col-status">
+                                <span class="badge-status badge-pendente" id="status_@item.Id">
+                                    <i class="bi bi-clock"></i> Pendente
+                                </span>
+                            </td>
+                            <td class="col-acoes">
+                                <div class="acoes-btns">
+                                    <button type="button" class="btn-acao btn-edit" data-action="edit" data-id="@item.Id" title="Editar"><i class="bi bi-pencil"></i></button>
+                                    <button type="button" class="btn-acao btn-save" data-action="save" data-id="@item.Id" title="Salvar" style="display:none;"><i class="bi bi-check-lg"></i></button>
+                                    <button type="button" class="btn-acao btn-cancel" data-action="cancel" data-id="@item.Id" title="Cancelar" style="display:none;"><i class="bi bi-x-lg"></i></button>
+                                    <button type="button" class="btn-acao btn-approve" data-action="approve" data-id="@item.Id" title="Aprovar"><i class="bi bi-check-circle"></i></button>
+                                    <button type="button" class="btn-acao btn-reject" data-action="reject" data-id="@item.Id" title="Abonar"><i class="bi bi-x-circle"></i></button>
+                                    <button type="button" class="btn-acao btn-desconto" data-action="desconto" data-id="@item.Id" title="Aplicar Desconto" style="background:#fef3c7;color:#92400e;"><i class="bi bi-percent"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+
+                @* ── OUTRAS ÁREAS (somente leitura) ── *@
+                @if (itensOutrasAreas.Any())
+                {
+                    <tr class="area-separator-row outras-areas-header area-toggle-header" data-area-id="outras-areas" style="cursor:pointer;" title="Clique para expandir/recolher">
+                        <td colspan="10">
+                            <i class="bi bi-lock-fill"></i> Outras Áreas
+                            <span class="area-sep-badge area-sep-readonly">somente leitura</span>
+                            <i class="bi bi-chevron-down area-chevron" style="float:right;margin-top:2px;"></i>
+                        </td>
+                    </tr>
+                    string ultimaArea = null;
+                    @foreach (var item in itensOutrasAreas)
+                    {
+                        var areaNome = item.ProcessRecord?.Department?.Name ?? "—";
+                        string areaGroupId = "outra-area-" + (item.ProcessRecord?.DepartmentId ?? 0);
+                        if (areaNome != ultimaArea)
+                        {
+                            ultimaArea = areaNome;
+                            <tr class="area-sub-separator area-toggle-header" data-area-id="@areaGroupId" data-area-group="outras-areas" style="cursor:pointer;display:none;" title="Clique para expandir/recolher">
+                                <td colspan="10"><i class="bi bi-folder2"></i> @areaNome <i class="bi bi-chevron-down area-chevron" style="float:right;margin-top:1px;font-size:10px;"></i></td>
+                            </tr>
+                        }
+                        var tipoLabel2 = item.ProcessRecord.RecordType switch {
+                            WebAppSystems.Models.Enums.RecordType.Contencioso => "Contencioso",
+                            WebAppSystems.Models.Enums.RecordType.Deslocamento => "Deslocamento",
+                            WebAppSystems.Models.Enums.RecordType.PropostaEspecifica => "Prop. Específica",
+                            _ => "Consultivo"
+                        };
+                        <tr id="row_@item.Id" data-item-id="@item.Id" data-minha-area="false"
+                            data-area-group="@areaGroupId"
+                            data-parent-group="outras-areas"
+                            data-horas="@item.ProcessRecord.CalculoHorasDecimal().ToString("F4", System.Globalization.CultureInfo.InvariantCulture)"
+                            data-attorney-id="@item.ProcessRecord.AttorneyId"
+                            class="row-outra-area" style="display:none;">
+                            <td class="col-data">@item.ProcessRecord.Date.ToString("dd/MM/yyyy")</td>
+                            <td class="col-adv">@item.ProcessRecord.Attorney.Name</td>
+                            <td class="col-area"><span class="badge-area">@item.ProcessRecord.Department.Name</span></td>
+                            <td class="col-tipo"><span class="badge-tipo badge-tipo-consultivo">@tipoLabel2</span></td>
+                            <td class="col-desc"><div class="editable-desc">@item.ProcessRecord.Description</div></td>
+                            <td class="col-inicio"><span class="time-readonly">@string.Format("{0:D2}:{1:D2}", item.ProcessRecord.HoraInicial.Hours, item.ProcessRecord.HoraInicial.Minutes)</span></td>
+                            <td class="col-fim"><span class="time-readonly">@string.Format("{0:D2}:{1:D2}", item.ProcessRecord.HoraFinal.Hours, item.ProcessRecord.HoraFinal.Minutes)</span></td>
+                            <td class="col-horas"><span class="horas-value">@item.ProcessRecord.CalculoHoras()h</span></td>
+                            <td class="col-status">
+                                @{
+                                    var statusOutra = item.Status switch {
+                                        StatusItemAprovacao.Aprovado => ("badge-aprovado", "check-circle", "Aprovado"),
+                                        StatusItemAprovacao.Abonado  => ("badge-abonado",  "x-circle",    "Abonado"),
+                                        _                            => ("badge-pendente", "clock",        "Pendente")
+                                    };
+                                }
+                                <span class="badge-status @statusOutra.Item1">
+                                    <i class="bi bi-@statusOutra.Item2"></i> @statusOutra.Item3
+                                </span>
+                            </td>
+                            <td class="col-acoes"><span style="font-size:11px;color:#a0aec0;"><i class="bi bi-lock"></i></span></td>
+                        </tr>
+                    }
                 }
             </tbody>
         </table>
@@ -263,6 +385,75 @@
     </div>
 </div>
 
+<!-- Modal Liberar Área -->
+<div class="modal fade" id="modalLiberarArea" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg,#667eea,#764ba2); color:white;">
+                <h5 class="modal-title"><i class="bi bi-check-circle-fill"></i> Liberar Área para Faturamento</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-success">
+                    <i class="bi bi-check-circle-fill"></i>
+                    Todos os lançamentos da área <strong>@aprovadorDeptNome</strong> foram revisados!
+                    O financeiro será notificado imediatamente.
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" style="font-size:13px;">Comentário (opcional)</label>
+                    <textarea id="comentarioLiberacao" class="form-control" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" id="btnConfirmarLiberacao">
+                    <i class="bi bi-send"></i> Liberar e Notificar Financeiro
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Desconto -->
+<div class="modal fade" id="modalDesconto" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: #fef3c7; border-bottom: 1px solid #fcd34d;">
+                <h5 class="modal-title" style="color:#92400e;"><i class="bi bi-percent"></i> Aplicar Desconto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="descontoItemId">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Percentual de desconto</label>
+                    <div class="input-group">
+                        <input type="number" id="descontoPercentual" class="form-control"
+                               min="1" max="100" step="1" placeholder="Ex: 50">
+                        <span class="input-group-text">%</span>
+                    </div>
+                    <div class="form-text">O valor será reduzido proporcionalmente. As horas permanecem inalteradas.</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Justificativa <span class="text-muted fw-normal">(aparecerá como nota na fatura)</span></label>
+                    <textarea id="descontoJustificativa" class="form-control" rows="3"
+                              maxlength="500"></textarea>
+                    <div class="form-text text-end"><span id="descontoCharCount">0</span>/500</div>
+                </div>
+                <div class="alert alert-warning py-2" id="descontoPreview" style="display:none;">
+                    <i class="bi bi-calculator"></i>
+                    <span id="descontoPreviewText"></span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning" id="btnConfirmarDesconto" style="color:#92400e;">
+                    <i class="bi bi-percent"></i> Aplicar Desconto e Aprovar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
 @* Dados de valor por advogado — passados via JSON seguro, fora do script *@
 <script id="dadosValores" type="application/json">
@@ -284,12 +475,61 @@
 }
 </script>
 <script>
+// ── Colapso/Expansão de Áreas ──
+(function() {
+    // Minha área começa expandida, outras áreas colapsadas (controlado pelo display:none no HTML)
+    document.querySelectorAll('.area-toggle-header').forEach(function(header) {
+        header.addEventListener('click', function() {
+            var areaId = this.dataset.areaId;
+            var chevron = this.querySelector('.area-chevron');
+            var isExpanded = chevron && chevron.classList.contains('bi-chevron-up');
+
+            if (areaId === 'outras-areas') {
+                // Toggling the "Outras Áreas" master header
+                var subHeaders = document.querySelectorAll('[data-area-group="outras-areas"]');
+                subHeaders.forEach(function(el) {
+                    el.style.display = isExpanded ? 'none' : '';
+                });
+                // Also hide/show all child rows of sub-areas
+                document.querySelectorAll('[data-parent-group="outras-areas"]').forEach(function(el) {
+                    el.style.display = 'none'; // always collapse rows when toggling master
+                });
+                // Reset sub-area chevrons
+                document.querySelectorAll('[data-area-group="outras-areas"] .area-chevron').forEach(function(c) {
+                    c.classList.remove('bi-chevron-up');
+                    c.classList.add('bi-chevron-down');
+                });
+            } else {
+                // Toggling a specific sub-area or minha-area
+                var rows = document.querySelectorAll('[data-area-group="' + areaId + '"]');
+                rows.forEach(function(el) {
+                    el.style.display = isExpanded ? 'none' : '';
+                });
+            }
+
+            if (chevron) {
+                if (isExpanded) {
+                    chevron.classList.remove('bi-chevron-up');
+                    chevron.classList.add('bi-chevron-down');
+                } else {
+                    chevron.classList.remove('bi-chevron-down');
+                    chevron.classList.add('bi-chevron-up');
+                }
+            }
+        });
+    });
+})();
+</script>
+<script>
 (function() {
     'use strict';
 
     var loteId = @Model.Id;
     var totalItens = @Model.Itens.Count;
+    var totalMinhaArea = @totalMinhaArea;
     var valorEstimadoLote = @Model.ValorEstimado.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
+    var aprovadorDeptNome = @Html.Raw(Json.Serialize(aprovadorDeptNome));
+    var areaJaNotificada = false;
     // Calcular total de horas somando cada item individualmente
     var totalHorasOriginal = 0;
     document.querySelectorAll('#tabelaItens tr[data-item-id]').forEach(function(row) {
@@ -329,6 +569,14 @@
             var hText = hTotalEl.textContent.trim().split('\n')[0].trim();
             hTotalEl.innerHTML = hText + ' <span class="valor-sub">' + fmtValor(valorTotal) + '</span>';
         }
+
+        // Calcular e mostrar total da área ao carregar
+        var horasArea = 0, valorArea = 0;
+        $('#tabelaItens tr[data-minha-area="true"]').each(function() {
+            horasArea += parseFloat($(this).data('horas')) || 0;
+            valorArea += calcValor(parseInt($(this).data('item-id')));
+        });
+        $('#totalArea').html(formatarHoras(horasArea) + ' <span class="valor-sub">' + fmtValor(valorArea) + '</span>');
     });
 
     function formatarHoras(decimal) {
@@ -341,7 +589,7 @@
     function atualizarTotalizador() {
         var revisados = aprovados.length + abonados.length;
         var progresso = totalItens > 0 ? Math.round((revisados / totalItens) * 100) : 0;
-        var horasAprov = 0, horasAbon = 0, valorAbon = 0;
+        var horasAprov = 0, horasAbon = 0, valorAbon = 0, valorAprov = 0;
 
         // Valor total fixo do servidor — evita diferença de arredondamento
         var valorTotal = valorEstimadoLote;
@@ -349,6 +597,7 @@
         $.each(aprovados, function(i, id) {
             if (abonados.indexOf(id) === -1) {
                 horasAprov += parseFloat($('#row_' + id).data('horas')) || 0;
+                valorAprov += calcValor(id);
             }
         });
 
@@ -357,16 +606,38 @@
             valorAbon += calcValor(id);
         });
 
-        // Valor aprovado = total do lote menos o que foi abonado
-        var valorAprov = valorTotal - valorAbon;
-
         var totalAtual = totalHorasOriginal - horasAbon;
 
+        // Calcular total da área
+        var horasArea = 0, valorArea = 0;
+        $('#tabelaItens tr[data-minha-area="true"]').each(function() {
+            horasArea += parseFloat($(this).data('horas')) || 0;
+            valorArea += calcValor(parseInt($(this).data('item-id')));
+        });
+
         $('#totalLote').html(formatarHoras(totalAtual) + ' <span class="valor-sub">' + fmtValor(valorTotal) + '</span>');
+        $('#totalArea').html(formatarHoras(horasArea) + ' <span class="valor-sub">' + fmtValor(valorArea) + '</span>');
         $('#horasAprovadas').html(formatarHoras(horasAprov) + ' <span class="valor-sub">' + fmtValor(valorAprov) + '</span>');
         $('#horasAbonadas').html(formatarHoras(horasAbon) + ' <span class="valor-sub">' + fmtValor(valorAbon) + '</span>');
         $('#itensRevisados').text(revisados);
         $('#progressoPercent').text(progresso + '%');
+
+        // Verificar se 100% da minha área foi revisada
+        if (!areaJaNotificada && totalMinhaArea > 0) {
+            var revisadosMinhaArea = $('#tabelaItens tr[data-minha-area="true"]').filter(function() {
+                var id = parseInt($(this).data('item-id'));
+                return aprovados.indexOf(id) > -1 || abonados.indexOf(id) > -1;
+            }).length;
+
+            if (revisadosMinhaArea === totalMinhaArea) {
+                areaJaNotificada = true;
+                setTimeout(function() {
+                    // Abre diretamente o modal de liberação
+                    $('#comentarioLiberacao').val('');
+                    new bootstrap.Modal(document.getElementById('modalLiberarArea')).show();
+                }, 500);
+            }
+        }
     }
 
     // Event delegation para botões de ação
@@ -450,18 +721,35 @@
             var modal = new bootstrap.Modal(document.getElementById('modalAbonar'));
             modal.show();
         }
+        else if (action === 'desconto') {
+            $('#descontoItemId').val(id);
+            $('#descontoPercentual').val('');
+            $('#descontoJustificativa').val('');
+            $('#descontoCharCount').text('0');
+            $('#descontoPreview').hide();
+            new bootstrap.Modal(document.getElementById('modalDesconto')).show();
+        }
     });
 
-    // Botão Aprovar Lote
-    $('#btnAprovarLote').on('click', function(e) {
-        e.preventDefault();
-        var revisados = aprovados.length + abonados.length;
-        if (revisados < totalItens) {
-            alert('Revise todos os ' + totalItens + ' lançamentos. Faltam ' + (totalItens - revisados) + '.');
-            return;
-        }
-        var modal = new bootstrap.Modal(document.getElementById('modalAprovarLote'));
-        modal.show();
+    // Confirmar liberação da área
+    $('#btnConfirmarLiberacao').on('click', function() {
+        var comentario = $('#comentarioLiberacao').val();
+        $(this).prop('disabled', true).html('<i class="bi bi-hourglass-split"></i> Enviando...');
+
+        $.post('/AprovacaoAprovador/LiberarArea', { loteId: loteId, comentario: comentario })
+            .done(function(r) {
+                bootstrap.Modal.getInstance(document.getElementById('modalLiberarArea')).hide();
+                if (r.success) {
+                    window.location.href = '/AprovacaoAprovador/Index';
+                } else {
+                    alert('Erro: ' + r.message);
+                    $('#btnConfirmarLiberacao').prop('disabled', false).html('<i class="bi bi-send"></i> Liberar e Notificar Financeiro');
+                }
+            })
+            .fail(function() {
+                alert('Erro ao comunicar com o servidor.');
+                $('#btnConfirmarLiberacao').prop('disabled', false).html('<i class="bi bi-send"></i> Liberar e Notificar Financeiro');
+            });
     });
 
     // Confirmar Abono
@@ -484,6 +772,67 @@
         }).fail(function() {
             alert('Erro ao comunicar com o servidor');
         });
+    });
+
+    // Preview em tempo real do desconto
+    $('#descontoPercentual').on('input', function() {
+        var pct = parseFloat($(this).val());
+        var id = parseInt($('#descontoItemId').val());
+        if (pct > 0 && pct <= 100 && id) {
+            var horas = parseFloat($('#row_' + id).data('horas')) || 0;
+            var attId = $('#row_' + id).data('attorney-id');
+            var valorOriginal = horas * getValorHora(attId);
+            var valorComDesconto = valorOriginal * (1 - pct / 100);
+            var economia = valorOriginal - valorComDesconto;
+            $('#descontoPreviewText').html(
+                'Valor original: <strong>' + fmtValor(valorOriginal) + '</strong> → ' +
+                'Com desconto: <strong>' + fmtValor(valorComDesconto) + '</strong> ' +
+                '(economia de ' + fmtValor(economia) + ')'
+            );
+            $('#descontoPreview').show();
+        } else {
+            $('#descontoPreview').hide();
+        }
+    });
+
+    // Contador de caracteres da justificativa
+    $('#descontoJustificativa').on('input', function() {
+        $('#descontoCharCount').text($(this).val().length);
+    });
+
+    // Confirmar Desconto
+    $('#btnConfirmarDesconto').on('click', function() {
+        var id = parseInt($('#descontoItemId').val());
+        var pct = parseFloat($('#descontoPercentual').val());
+        var just = $('#descontoJustificativa').val().trim();
+
+        if (!pct || pct <= 0 || pct > 100) {
+            alert('Informe um percentual válido entre 1 e 100.');
+            return;
+        }
+        if (!just) {
+            alert('A justificativa é obrigatória para aplicar desconto.');
+            return;
+        }
+
+        $.post('/AprovacaoAprovador/AplicarDesconto', { itemId: id, percentual: pct, justificativa: just })
+            .done(function(r) {
+                if (r.success) {
+                    // Marca como aprovado com badge especial de desconto
+                    var idx = abonados.indexOf(id);
+                    if (idx > -1) abonados.splice(idx, 1);
+                    if (aprovados.indexOf(id) === -1) aprovados.push(id);
+                    $('#row_' + id).removeClass('item-abonado').addClass('item-aprovado');
+                    $('#status_' + id)
+                        .html('<i class="bi bi-percent"></i> Aprovado c/ ' + pct + '% desc.')
+                        .removeClass().addClass('badge-status badge-desconto');
+                    bootstrap.Modal.getInstance(document.getElementById('modalDesconto')).hide();
+                    atualizarTotalizador();
+                } else {
+                    alert(r.message || 'Erro ao aplicar desconto');
+                }
+            })
+            .fail(function() { alert('Erro ao comunicar com o servidor'); });
     });
 
     // Confirmar Aprovação do Lote
@@ -509,21 +858,20 @@
         });
     });
 
-    // Aprovar Todos
+    // Aprovar Todos da Minha Área
     $('#btnAprovarTodos').on('click', function() {
-        if (!confirm('Tem certeza que deseja aprovar TODOS os lançamentos pendentes?')) return;
+        if (!confirm('Tem certeza que deseja aprovar TODOS os lançamentos pendentes da área ' + aprovadorDeptNome + '?')) return;
 
         var pendentes = [];
-        $('#tabelaItens tr').each(function() {
+        $('#tabelaItens tr[data-minha-area="true"]').each(function() {
             var id = parseInt($(this).data('item-id'));
             var statusText = $('#status_' + id).text().trim();
-            // Só aprovar itens Pendentes ou Editados — nunca Abonados
             if (statusText.indexOf('Pendente') > -1 || statusText.indexOf('Editado') > -1) {
                 pendentes.push(id);
             }
         });
 
-        if (pendentes.length === 0) { alert('Não há lançamentos pendentes.'); return; }
+        if (pendentes.length === 0) { alert('Não há lançamentos pendentes na sua área.'); return; }
 
         var total = pendentes.length, processados = 0;
         pendentes.forEach(function(id) {
@@ -535,23 +883,23 @@
                     $('#status_' + id).html('<i class="bi bi-check-circle"></i> Aprovado').removeClass().addClass('badge-status badge-aprovado');
                     $('#row_' + id).removeClass('item-abonado').addClass('item-aprovado');
                 }
-                if (++processados === total) { atualizarTotalizador(); alert('Todos aprovados!'); }
+                if (++processados === total) { atualizarTotalizador(); alert('Todos aprovados na área ' + aprovadorDeptNome + '!'); }
             });
         });
     });
 
-    // Abonar Todos
+    // Abonar Todos da Minha Área
     $('#btnAbonarTodos').on('click', function() {
-        var obs = prompt('Observação para abonar TODOS os pendentes (opcional):');
+        var obs = prompt('Observação para abonar TODOS os pendentes da área ' + aprovadorDeptNome + ' (opcional):');
         if (obs === null) return;
 
         var pendentes = [];
-        $('#tabelaItens tr').each(function() {
+        $('#tabelaItens tr[data-minha-area="true"]').each(function() {
             var id = parseInt($(this).data('item-id'));
             if ($('#status_' + id).text().trim().indexOf('Pendente') > -1) pendentes.push(id);
         });
 
-        if (pendentes.length === 0) { alert('Não há lançamentos pendentes.'); return; }
+        if (pendentes.length === 0) { alert('Não há lançamentos pendentes na sua área.'); return; }
 
         var total = pendentes.length, processados = 0;
         pendentes.forEach(function(id) {
@@ -563,8 +911,18 @@
                     $('#row_' + id).removeClass('item-aprovado').addClass('item-abonado');
                     $('#status_' + id).html('<i class="bi bi-x-circle"></i> Abonado').removeClass().addClass('badge-status badge-abonado');
                 }
-                if (++processados === total) { atualizarTotalizador(); alert('Todos abonados!'); }
+                if (++processados === total) { atualizarTotalizador(); alert('Todos abonados na área ' + aprovadorDeptNome + '!'); }
             });
+        });
+    });
+
+    // Confirmar notificação ao financeiro
+    $('#btnConfirmarNotificacao').on('click', function() {
+        $.post('/AprovacaoAprovador/NotificarAreaConcluida', { loteId: loteId }).done(function(r) {
+            bootstrap.Modal.getInstance(document.getElementById('modalNotificarFinanceiro')).hide();
+            if (r.success) {
+                alert(r.message);
+            }
         });
     });
 

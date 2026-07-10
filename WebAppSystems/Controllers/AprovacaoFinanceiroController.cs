@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebAppSystems.Data;
 using WebAppSystems.Filters;
@@ -48,19 +48,127 @@ namespace WebAppSystems.Controllers
                 return RedirectToAction("Index", "Home");
             }
 
-            // Buscar lotes criados por este usuário
+            // Buscar todos os lotes (todos os financeiros veem todos os lotes)
+            // Otimizado: não carrega ProcessRecord completo na listagem
             var lotes = await _context.LoteAprovacao
                 .Include(l => l.Cliente)
                 .Include(l => l.CriadoPor)
                 .Include(l => l.AprovadoPor)
                 .Include(l => l.FaturadoPor)
                 .Include(l => l.Itens)
-                    .ThenInclude(i => i.ProcessRecord)
-                .Where(l => l.CriadoPorId == usuarioLogado.Id)
+                .AsNoTracking()
                 .OrderByDescending(l => l.DataCriacao)
                 .ToListAsync();
 
             return View(lotes);
+        }
+
+        // GET: AprovacaoFinanceiro/ContarNotificacoes (chamado pelo layout via JS)
+        public async Task<IActionResult> ContarNotificacoes()
+        {
+            try
+            {
+                var usuarioLogado = _sessao.BuscarSessaoDoUsuario();
+                if (usuarioLogado == null)
+                    return Json(new { naoLidas = 0, lotesParaFaturar = 0 });
+
+                // Só retorna dados se for financeiro
+                var usuario = await _context.Attorney.AsNoTracking()
+                    .FirstOrDefaultAsync(a => a.Id == usuarioLogado.Id);
+
+                if (usuario == null || !usuario.IsFinanceiro || usuario.Perfil != ProfileEnum.Admin)
+                    return Json(new { naoLidas = 0, lotesParaFaturar = 0 });
+
+                var naoLidas = await _context.NotificacaoAprovacao
+                    .CountAsync(n => n.UsuarioId == usuarioLogado.Id && !n.Lida);
+
+                var lotesParaFaturar = await _context.LoteAprovacao
+                    .CountAsync(l => l.CriadoPorId == usuarioLogado.Id
+                        && (l.Status == WebAppSystems.Models.StatusLoteAprovacao.Aprovado
+                         || l.Status == WebAppSystems.Models.StatusLoteAprovacao.ParcialmenteAprovado));
+
+                return Json(new { naoLidas, lotesParaFaturar });
+            }
+            catch
+            {
+                return Json(new { naoLidas = 0, lotesParaFaturar = 0 });
+            }
+        }
+
+        // GET: AprovacaoFinanceiro/Notificacoes
+        public async Task<IActionResult> Notificacoes()
+        {
+            var usuarioLogado = _sessao.BuscarSessaoDoUsuario();
+            if (usuarioLogado == null)
+            {
+                TempData["MensagemErro"] = "Usuário não autenticado.";
+                return RedirectToAction("Index", "Home");
+            }
+
+            var usuarioAtualizado = await _context.Attorney
+                .AsNoTracking()
+                .FirstOrDefaultAsync(a => a.Id == usuarioLogado.Id);
+
+            if (usuarioAtualizado == null || !usuarioAtualizado.IsFinanceiro || usuarioAtualizado.Perfil != ProfileEnum.Admin)
+            {
+                TempData["MensagemErro"] = "Acesso negado.";
+                return RedirectToAction("Index", "Home");
+            }
+
+            var notificacoes = await _context.NotificacaoAprovacao
+                .Include(n => n.LoteAprovacao)
+                    .ThenInclude(l => l.Cliente)
+                .Where(n => n.UsuarioId == usuarioLogado.Id)
+                .OrderByDescending(n => n.DataCriacao)
+                .ToListAsync();
+
+            // Contar não lidas para o ViewBag
+            ViewBag.NaoLidas = notificacoes.Count(n => !n.Lida);
+
+            return View(notificacoes);
+        }
+
+        // POST: AprovacaoFinanceiro/MarcarNotificacaoLida
+        [HttpPost]
+        public async Task<IActionResult> MarcarNotificacaoLida(int id)
+        {
+            var usuarioLogado = _sessao.BuscarSessaoDoUsuario();
+            if (usuarioLogado == null)
+                return Json(new { success = false, message = "Usuário não autenticado" });
+
+            var notificacao = await _context.NotificacaoAprovacao
+                .FirstOrDefaultAsync(n => n.Id == id && n.UsuarioId == usuarioLogado.Id);
+
+            if (notificacao == null)
+                return Json(new { success = false, message = "Notificação não encontrada" });
+
+            notificacao.Lida = true;
+            notificacao.DataLeitura = DateTime.Now;
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true });
+        }
+
+        // POST: AprovacaoFinanceiro/MarcarTodasLidas
+        [HttpPost]
+        public async Task<IActionResult> MarcarTodasLidas()
+        {
+            var usuarioLogado = _sessao.BuscarSessaoDoUsuario();
+            if (usuarioLogado == null)
+                return Json(new { success = false, message = "Usuário não autenticado" });
+
+            var naoLidas = await _context.NotificacaoAprovacao
+                .Where(n => n.UsuarioId == usuarioLogado.Id && !n.Lida)
+                .ToListAsync();
+
+            foreach (var n in naoLidas)
+            {
+                n.Lida = true;
+                n.DataLeitura = DateTime.Now;
+            }
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, count = naoLidas.Count });
         }
 
         // GET: AprovacaoFinanceiro/CriarLote
@@ -422,12 +530,7 @@ namespace WebAppSystems.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // Verificar se o usuário é o criador do lote
-            if (lote.CriadoPorId != usuarioLogado.Id)
-            {
-                TempData["MensagemErro"] = "Você não tem permissão para visualizar este lote.";
-                return RedirectToAction(nameof(Index));
-            }
+
 
             return View(lote);
         }
@@ -464,13 +567,6 @@ namespace WebAppSystems.Controllers
             if (lote == null)
             {
                 TempData["MensagemErro"] = "Lote não encontrado.";
-                return RedirectToAction(nameof(Index));
-            }
-
-            // Verificar se o usuário é o criador do lote
-            if (lote.CriadoPorId != usuarioLogado.Id)
-            {
-                TempData["MensagemErro"] = "Você não tem permissão para gerar Excel deste lote.";
                 return RedirectToAction(nameof(Index));
             }
 
@@ -598,13 +694,6 @@ namespace WebAppSystems.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // Verificar se o usuário é o criador do lote
-            if (lote.CriadoPorId != usuarioLogado.Id)
-            {
-                TempData["MensagemErro"] = "Você não tem permissão para gerar Pré-Fatura deste lote.";
-                return RedirectToAction(nameof(Index));
-            }
-
             // Filtrar apenas itens aprovados
             var itensAprovados = lote.Itens
                 .Where(i => i.Status == StatusItemAprovacao.Aprovado)
@@ -652,6 +741,47 @@ namespace WebAppSystems.Controllers
             });
         }
 
+        // POST: AprovacaoFinanceiro/FecharLote
+        [HttpPost]
+        public async Task<IActionResult> FecharLote(int id)
+        {
+            var usuarioLogado = _sessao.BuscarSessaoDoUsuario();
+            if (usuarioLogado == null)
+                return Json(new { success = false, message = "Usuário não autenticado" });
+
+            var lote = await _context.LoteAprovacao
+                .Include(l => l.Itens)
+                .FirstOrDefaultAsync(l => l.Id == id);
+
+            if (lote == null)
+                return Json(new { success = false, message = "Lote não encontrado" });
+
+            if (lote.Status == StatusLoteAprovacao.Faturado)
+                return Json(new { success = false, message = "Lote já está faturado" });
+
+            // Verifica se todos os itens estão abonados
+            var todosAbonados = lote.Itens.Any() && lote.Itens.All(i => i.Status == StatusItemAprovacao.Abonado);
+            if (!todosAbonados)
+                return Json(new { success = false, message = "Nem todos os itens estão abonados" });
+
+            lote.Status = StatusLoteAprovacao.Faturado;
+            lote.DataFaturamento = DateTime.Now;
+            lote.FaturadoPorId = usuarioLogado.Id;
+
+            var historico = new HistoricoAprovacao
+            {
+                LoteAprovacaoId = lote.Id,
+                DataHora = DateTime.Now,
+                UsuarioId = usuarioLogado.Id,
+                TipoAcao = "Faturamento",
+                Detalhes = "Lote fechado sem faturamento — todos os lançamentos foram abonados."
+            };
+            _context.HistoricoAprovacao.Add(historico);
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true });
+        }
+
         // POST: AprovacaoFinanceiro/ExcluirLote/5
         [HttpPost]
         public async Task<IActionResult> ExcluirLote(int id)
@@ -686,13 +816,6 @@ namespace WebAppSystems.Controllers
             if (lote == null)
             {
                 TempData["MensagemErro"] = "Lote não encontrado.";
-                return RedirectToAction(nameof(Index));
-            }
-
-            // Verificar se o usuário é o criador do lote
-            if (lote.CriadoPorId != usuarioLogado.Id)
-            {
-                TempData["MensagemErro"] = "Você não tem permissão para excluir este lote.";
                 return RedirectToAction(nameof(Index));
             }
 

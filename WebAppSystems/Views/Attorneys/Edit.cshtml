@@ -122,6 +122,84 @@
                 </div>
             </div>
 
+            <!-- Fluxo de Aprovação (apenas para Admin) -->
+            @if (ViewBag.CurrentUserPerfil == ProfileEnum.Admin)
+            {
+                <div class="form-section">
+                    <h3 class="section-title">
+                        <i class="bi bi-check2-square"></i>
+                        Fluxo de Aprovação de Faturamento
+                    </h3>
+                    
+                    <div class="alert alert-info" style="background: #e6f7ff; border: 2px solid #91d5ff; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px;">
+                        <i class="bi bi-info-circle" style="color: #1890ff;"></i>
+                        <span style="color: #0050b3; font-size: 13px; margin-left: 8px;">
+                            Selecione apenas uma opção. Usuários Financeiros criam lotes de aprovação, e Aprovadores revisam e aprovam os lotes.
+                        </span>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="margin-bottom: 12px;">
+                            <i class="bi bi-person-check"></i>
+                            Função no Fluxo de Aprovação
+                        </label>
+                        
+                        <div class="radio-group">
+                            <div class="radio-card">
+                                <input type="radio" 
+                                       name="ApprovalRole" 
+                                       id="roleNone" 
+                                       value="none" 
+                                       checked="@(!Model.Attorney.IsFinanceiro && !Model.Attorney.IsAprovador ? "checked" : null)"
+                                       onchange="updateApprovalFlags(this.value)">
+                                <label for="roleNone">
+                                    <i class="bi bi-dash-circle"></i>
+                                    <div>
+                                        <strong>Nenhuma</strong>
+                                        <span>Não participa do fluxo de aprovação</span>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div class="radio-card">
+                                <input type="radio" 
+                                       name="ApprovalRole" 
+                                       id="roleFinanceiro" 
+                                       value="financeiro" 
+                                       checked="@(Model.Attorney.IsFinanceiro ? "checked" : null)"
+                                       onchange="updateApprovalFlags(this.value)">
+                                <label for="roleFinanceiro">
+                                    <i class="bi bi-cash-stack"></i>
+                                    <div>
+                                        <strong>Financeiro</strong>
+                                        <span>Cria lotes de aprovação para clientes</span>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div class="radio-card">
+                                <input type="radio" 
+                                       name="ApprovalRole" 
+                                       id="roleAprovador" 
+                                       value="aprovador" 
+                                       checked="@(Model.Attorney.IsAprovador ? "checked" : null)"
+                                       onchange="updateApprovalFlags(this.value)">
+                                <label for="roleAprovador">
+                                    <i class="bi bi-check-circle"></i>
+                                    <div>
+                                        <strong>Aprovador</strong>
+                                        <span>Revisa e aprova lotes de faturamento</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <input type="hidden" asp-for="Attorney.IsFinanceiro" id="hiddenIsFinanceiro" />
+                        <input type="hidden" asp-for="Attorney.IsAprovador" id="hiddenIsAprovador" />
+                    </div>
+                </div>
+            }
+
             <!-- Preferências -->
             <div class="form-section">
                 <h3 class="section-title">
@@ -182,6 +260,43 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        function updateApprovalFlags(role) {
+            const isFinanceiro = document.getElementById('hiddenIsFinanceiro');
+            const isAprovador = document.getElementById('hiddenIsAprovador');
+            
+            switch(role) {
+                case 'financeiro':
+                    isFinanceiro.value = 'true';
+                    isAprovador.value = 'false';
+                    break;
+                case 'aprovador':
+                    isFinanceiro.value = 'false';
+                    isAprovador.value = 'true';
+                    break;
+                default: // 'none'
+                    isFinanceiro.value = 'false';
+                    isAprovador.value = 'false';
+                    break;
+            }
+        }
+        
+        // Inicializar os valores hidden ao carregar a página
+        document.addEventListener('DOMContentLoaded', function() {
+            const roleNone = document.getElementById('roleNone');
+            const roleFinanceiro = document.getElementById('roleFinanceiro');
+            const roleAprovador = document.getElementById('roleAprovador');
+            
+            if (roleFinanceiro && roleFinanceiro.checked) {
+                updateApprovalFlags('financeiro');
+            } else if (roleAprovador && roleAprovador.checked) {
+                updateApprovalFlags('aprovador');
+            } else if (roleNone && roleNone.checked) {
+                updateApprovalFlags('none');
+            }
+        });
+    </script>
 }
 
 
@@ -470,6 +585,77 @@
 
     .btn-cancel i {
         font-size: 18px;
+    }
+
+    /* Radio Group Styles */
+    .radio-group {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px;
+    }
+
+    .radio-card {
+        position: relative;
+        background: #f7fafc;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 16px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .radio-card:hover {
+        border-color: #cbd5e0;
+        background: #edf2f7;
+    }
+
+    .radio-card:has(input:checked) {
+        background: rgba(102, 126, 234, 0.05);
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .radio-card input[type="radio"] {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        accent-color: #667eea;
+    }
+
+    .radio-card label {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        cursor: pointer;
+        padding-right: 32px;
+        margin: 0;
+    }
+
+    .radio-card label i {
+        font-size: 24px;
+        color: #667eea;
+        flex-shrink: 0;
+    }
+
+    .radio-card label div {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .radio-card label strong {
+        font-size: 14px;
+        font-weight: 600;
+        color: #2d3748;
+    }
+
+    .radio-card label span {
+        font-size: 12px;
+        color: #718096;
+        line-height: 1.4;
     }
 
     @@media (max-width: 768px) {

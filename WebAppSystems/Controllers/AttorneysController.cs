@@ -50,6 +50,10 @@ namespace WebAppSystems.Controllers
        
         public async Task<IActionResult> Create()
         {
+            // Buscar usuário logado para verificar permissões
+            Attorney usuario = _isessao.BuscarSessaoDoUsuario();
+            ViewBag.CurrentUserPerfil = usuario.Perfil;
+            
             var departments = await _departmentService.FindAllAsync();
             var viewModel = new AttorneyFormViewModel { Departments = departments };
             return View(viewModel);
@@ -140,6 +144,11 @@ namespace WebAppSystems.Controllers
             {
                 return RedirectToAction(nameof(Error), new { message = "Id not found" });
             }
+            
+            // Buscar usuário logado para verificar permissões
+            Attorney usuario = _isessao.BuscarSessaoDoUsuario();
+            ViewBag.CurrentUserPerfil = usuario.Perfil;
+            
             List<Department> departments = await _departmentService.FindAllAsync();
             bool useBorder = obj.UseBorder;
             AttorneyFormViewModel viewModel = new AttorneyFormViewModel { Attorney = obj, Departments = departments };

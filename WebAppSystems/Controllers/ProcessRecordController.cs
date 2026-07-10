@@ -196,6 +196,23 @@ namespace WebAppSystems.Controllers
             {
                 var workbook = new XSSFWorkbook();
 
+                // Buscar descontos para os registros filtrados
+                var xlsxRecordIds = filteredRecords.Select(r => r.Id).ToList();
+                var xlsxDescontos = await _context.LoteAprovacaoItem
+                    .Where(i => xlsxRecordIds.Contains(i.ProcessRecordId)
+                             && i.PercentualDesconto != null
+                             && i.PercentualDesconto > 0
+                             && i.Status == StatusItemAprovacao.Aprovado)
+                    .Select(i => new { i.ProcessRecordId, i.PercentualDesconto, i.JustificativaDesconto })
+                    .ToListAsync();
+                var xlsxDescontoMap = xlsxDescontos.ToDictionary(d => d.ProcessRecordId, d => d.PercentualDesconto ?? 0);
+
+                // Lista ordenada de IDs com desconto (para numeração *1, *2, *3...)
+                var itensComDescontoOrdenados = filteredRecords
+                    .Where(r => xlsxDescontoMap.ContainsKey(r.Id))
+                    .Select(r => r.Id)
+                    .ToList();
+
                 string startDateString = minDate?.ToString("ddMMyyyy") ?? "NoStart";
                 string endDateString = maxDate?.ToString("ddMMyyyy") ?? "NoEnd";
                 string sheetName = $"{startDateString}_{endDateString}";
@@ -279,7 +296,7 @@ namespace WebAppSystems.Controllers
                 var rowTotal = sheet.CreateRow(rowNum);  // Crie a linha do total
                 double totalHoras = 0;
 
-                Dictionary<string, (double hours, double value)> departmentSummary = new Dictionary<string, (double hours, double value)>();
+                Dictionary<string, (double hours, double value, double hoursSemValor)> departmentSummary = new Dictionary<string, (double hours, double value, double hoursSemValor)>();
 
 
                 // Cria um estilo para as células com texto justificado e centralizado (para as outras colunas)
@@ -337,41 +354,31 @@ namespace WebAppSystems.Controllers
 
                     // Definindo o valor da célula na coluna 5 e aplicando o estilo justificado à esquerda e no topo
                     ICell descriptionCell = row.GetCell(columnIndex);
-                    descriptionCell.SetCellValue(item.Description);
+                    // Adicionar asterisco numerado se houver desconto
+                    string descricaoExcel = item.Description;
+                    if (xlsxDescontoMap.ContainsKey(item.Id))
+                    {
+                        // Calcular número do asterisco baseado na posição entre os itens com desconto
+                        int numAsterisco = itensComDescontoOrdenados.IndexOf(item.Id) + 1;
+                        descricaoExcel += $" *{numAsterisco}";
+                    }
+                    descriptionCell.SetCellValue(descricaoExcel);
 
                     row.GetCell(6).SetCellValue(item.HoraInicial.ToString(@"hh\:mm"));
                     row.GetCell(7).SetCellValue(item.HoraFinal.ToString(@"hh\:mm"));
 
-                    // Verifica se o tipo de registro é "Deslocamento" para considerar apenas 50% das horas
+                    // Converter horas para formato hh:mm
                     double horasCalculadas = item.CalculoHorasDecimal();
-                    if (item.RecordType.ToString().Equals("Deslocamento", StringComparison.OrdinalIgnoreCase))
-                    {
-                        horasCalculadas *= 0.5;
-                    }
-
-                    // Converter horas decimais para formato hh:mm
                     int horasItem = (int)horasCalculadas;
                     int minutosItem = (int)Math.Round((horasCalculadas - horasItem) * 60);
                     string horasFormatadas = string.Format("{0}:{1:00}", horasItem, minutosItem);
                     row.GetCell(8).SetCellValue(horasFormatadas);
 
-
-                    //row.GetCell(7).SetCellValue(item.Department.Name);
                     string departmentName = item.Department != null ? item.Department.Name : "N/A";
                     row.GetCell(9).SetCellValue(departmentName);
 
-                    //totalHoras += item.CalculoHorasDecimal();
-
-                    double totalHorasCalculadas = item.CalculoHorasDecimal();
-
-                    // Se for "Deslocamento", aplica 50% apenas para esse item
-                    if (item.RecordType.ToString().Equals("Deslocamento", StringComparison.OrdinalIgnoreCase))
-                    {
-                        totalHorasCalculadas *= 0.5;
-                    }
-
-                    // Adiciona ao total corretamente
-                    totalHoras += totalHorasCalculadas;
+                    // Adiciona ao total
+                    totalHoras += horasCalculadas;
 
 
 
@@ -406,30 +413,40 @@ namespace WebAppSystems.Controllers
 
                     if (!departmentSummary.ContainsKey(departmentName))
                     {
-                        departmentSummary[departmentName] = (0, 0);
+                        departmentSummary[departmentName] = (0, 0, 0);
                     }
 
                     double hours = item.CalculoHorasDecimal();
 
-                    if (item.RecordType.ToString().Equals("Deslocamento", StringComparison.OrdinalIgnoreCase))
-                    {
-                        hours *= 0.5;
-                    }
-
-                    var valorCliente = await _valorClienteService.GetValorForClienteAndUserAsync(item.ClientId, item.Attorney.Id); // supondo que haja um método que retorna o valor baseado no Cliente e Usuario
+                    var valorCliente = await _valorClienteService.GetValorForClienteAndUserAsync(item.ClientId, item.Attorney.Id);
                     double value = 0;
+                    double hoursSemValor = 0;
                     if (valorCliente != null)
                     {
                         double valuePerHour = valorCliente.Valor;
                         value = hours * valuePerHour;
+                        // Aplicar desconto se existir
+                        if (xlsxDescontoMap.TryGetValue(item.Id, out var pctDesconto))
+                            value *= (1.0 - pctDesconto / 100.0);
                     }
-                    departmentSummary[departmentName] = (departmentSummary[departmentName].hours + hours, departmentSummary[departmentName].value + value);
+                    else
+                    {
+                        hoursSemValor = hours;
+                    }
+                    departmentSummary[departmentName] = (
+                        departmentSummary[departmentName].hours + hours,
+                        departmentSummary[departmentName].value + value,
+                        departmentSummary[departmentName].hoursSemValor + hoursSemValor
+                    );
 
                     rowNum++;
                 }
 
                 // Define where the summary should start
                 int summaryStartRow = rowNum + 2;
+
+                // Verificar antecipadamente se há horas sem valor no resumo
+                bool temHorasSemValor = departmentSummary.Values.Any(v => v.hoursSemValor > 0);
 
                 // Create the header row for the summary
                 IRow summaryHeaderRow = sheet.CreateRow(summaryStartRow);
@@ -495,14 +512,25 @@ namespace WebAppSystems.Controllers
                 summaryHeaderRow.GetCell(0).CellStyle = headerStyle;
                 summaryHeaderRow.CreateCell(1).SetCellValue("Horas");
                 summaryHeaderRow.GetCell(1).CellStyle = headerStyle;
-                summaryHeaderRow.CreateCell(2).SetCellValue("Valor");
-                summaryHeaderRow.GetCell(2).CellStyle = headerStyle;
+                if (temHorasSemValor)
+                {
+                    summaryHeaderRow.CreateCell(2).SetCellValue("Horas s/ Valor");
+                    summaryHeaderRow.GetCell(2).CellStyle = headerStyle;
+                    summaryHeaderRow.CreateCell(3).SetCellValue("Valor");
+                    summaryHeaderRow.GetCell(3).CellStyle = headerStyle;
+                }
+                else
+                {
+                    summaryHeaderRow.CreateCell(2).SetCellValue("Valor");
+                    summaryHeaderRow.GetCell(2).CellStyle = headerStyle;
+                }
 
                 // Print the summary data
                 int summaryDataRow = summaryStartRow + 1;
 
                 double totalHoursSummary = 0;
                 double totalValueSummary = 0;
+                double totalHoursSemValorSummary = 0;
 
                 // Estilo centralizado para dados do sumário
                 ICellStyle summaryCellStyle = workbook.CreateCellStyle();
@@ -529,15 +557,36 @@ namespace WebAppSystems.Controllers
                     double value = kvp.Value.value;
                     totalValueSummary += value;
 
-                    row.CreateCell(2).SetCellValue(value.ToString("N2", brazilianCulture));
-                    row.GetCell(2).CellStyle = summaryCellStyle;
+                    if (temHorasSemValor)
+                    {
+                        double hsvArea = kvp.Value.hoursSemValor;
+                        totalHoursSemValorSummary += hsvArea;
+                        if (hsvArea > 0)
+                        {
+                            int hsvMin = (int)Math.Round(hsvArea * 60);
+                            row.CreateCell(2).SetCellValue(string.Format("{0}:{1:00} *", hsvMin / 60, hsvMin % 60));
+                        }
+                        else
+                        {
+                            row.CreateCell(2).SetCellValue("-");
+                        }
+                        row.GetCell(2).CellStyle = summaryCellStyle;
+                        row.CreateCell(3).SetCellValue(value.ToString("N2", brazilianCulture));
+                        row.GetCell(3).CellStyle = summaryCellStyle;
+                    }
+                    else
+                    {
+                        row.CreateCell(2).SetCellValue(value.ToString("N2", brazilianCulture));
+                        row.GetCell(2).CellStyle = summaryCellStyle;
+                    }
+
                     summaryDataRow++;
                 }
 
                 // Print the total summary
                 IRow totalSummaryRow = sheet.CreateRow(summaryDataRow);
                 totalSummaryRow.CreateCell(0).SetCellValue("Total");
-                totalSummaryRow.GetCell(0).CellStyle = headerStyle;  // Apply the header style to total row
+                totalSummaryRow.GetCell(0).CellStyle = headerStyle;
 
                 double totalHours = Math.Round(totalHoursSummary * 60) / 60;
                 int totalMinutesSummary = (int)Math.Round(totalHours * 60);
@@ -545,12 +594,61 @@ namespace WebAppSystems.Controllers
                 int remainingMinutesSummary = totalMinutesSummary % 60;
                 string formattedTotalHours = string.Format("{0}:{1:00}", wholeHoursSummary, remainingMinutesSummary);
                 totalSummaryRow.CreateCell(1).SetCellValue(formattedTotalHours);
-                totalSummaryRow.GetCell(1).CellStyle = headerStyle;  // Apply the header style to total row
+                totalSummaryRow.GetCell(1).CellStyle = headerStyle;
 
-                //totalSummaryRow.CreateCell(2).SetCellValue(totalValueSummary);
-                totalSummaryRow.CreateCell(2).SetCellValue(totalValueSummary.ToString("N2", brazilianCulture));
+                if (temHorasSemValor)
+                {
+                    int hsvTotalMin = (int)Math.Round(totalHoursSemValorSummary * 60);
+                    totalSummaryRow.CreateCell(2).SetCellValue(string.Format("{0}:{1:00} *", hsvTotalMin / 60, hsvTotalMin % 60));
+                    totalSummaryRow.GetCell(2).CellStyle = headerStyle;
+                    totalSummaryRow.CreateCell(3).SetCellValue(totalValueSummary.ToString("N2", brazilianCulture));
+                    totalSummaryRow.GetCell(3).CellStyle = headerStyle;
 
-                totalSummaryRow.GetCell(2).CellStyle = headerStyle;  // Apply the header style to total row
+                    // Nota explicativa
+                    IRow notaRow = sheet.CreateRow(summaryDataRow + 2);
+                    ICellStyle notaStyle = workbook.CreateCellStyle();
+                    IFont notaFont = workbook.CreateFont();
+                    notaFont.IsItalic = true;
+                    notaFont.FontHeightInPoints = 9;
+                    notaStyle.SetFont(notaFont);
+                    notaRow.CreateCell(0).SetCellValue("* Horas sem valor/hora cadastrado para o responsável neste cliente.");
+                    notaRow.GetCell(0).CellStyle = notaStyle;
+                }
+                else
+                {
+                    totalSummaryRow.CreateCell(2).SetCellValue(totalValueSummary.ToString("N2", brazilianCulture));
+                    totalSummaryRow.GetCell(2).CellStyle = headerStyle;
+                }
+
+                // Notas de desconto
+                var itensComDesconto = filteredRecords
+                    .Where(r => xlsxDescontoMap.ContainsKey(r.Id))
+                    .ToList();
+
+                if (itensComDesconto.Any())
+                {
+                    ICellStyle notaDescontoStyle = workbook.CreateCellStyle();
+                    IFont notaDescontoFont = workbook.CreateFont();
+                    notaDescontoFont.IsItalic = true;
+                    notaDescontoFont.FontHeightInPoints = 8;
+                    notaDescontoFont.Color = NPOI.HSSF.Util.HSSFColor.Orange.Index;
+                    notaDescontoStyle.SetFont(notaDescontoFont);
+
+                    int notaRowIdx = summaryDataRow + (temHorasSemValor ? 3 : 2);
+                    foreach (var rec in itensComDesconto)
+                    {
+                        var pct = xlsxDescontoMap[rec.Id];
+                        var justText = xlsxDescontos
+                            .FirstOrDefault(d => d.ProcessRecordId == rec.Id)?.JustificativaDesconto ?? "";
+                        int numAst = itensComDescontoOrdenados.IndexOf(rec.Id) + 1;
+
+                        IRow notaRow2 = sheet.CreateRow(notaRowIdx);
+                        notaRow2.CreateCell(0).SetCellValue($"*{numAst} Desconto de {pct:0}% em {rec.Date:dd/MM/yyyy} ({rec.Attorney.Name}): {justText}");
+                        notaRow2.GetCell(0).CellStyle = notaDescontoStyle;
+                        sheet.AddMergedRegion(new NPOI.SS.Util.CellRangeAddress(notaRowIdx, notaRowIdx, 0, 9));
+                        notaRowIdx++;
+                    }
+                }
                 /*
                 var imagePath = System.IO.Path.Combine(_env.WebRootPath, "images", "LogoRelatorio.png");
                 byte[] imageBytes = System.IO.File.ReadAllBytes(imagePath);
@@ -962,6 +1060,27 @@ namespace WebAppSystems.Controllers
                 ? allRecords.Where(r => !ignoredIdList.Contains(r.Id)).ToList()
                 : allRecords;
 
+            // Buscar descontos aplicados nos itens de lote para os ProcessRecords filtrados
+            var processRecordIds = filteredRecords.Select(r => r.Id).ToList();
+            var descontosPorProcessRecord = await _context.LoteAprovacaoItem
+                .Where(i => processRecordIds.Contains(i.ProcessRecordId)
+                         && i.PercentualDesconto != null
+                         && i.PercentualDesconto > 0
+                         && i.Status == StatusItemAprovacao.Aprovado)
+                .Select(i => new {
+                    i.ProcessRecordId,
+                    i.PercentualDesconto,
+                    i.JustificativaDesconto
+                })
+                .ToListAsync();
+
+            var descontoMap = descontosPorProcessRecord
+                .GroupBy(d => d.ProcessRecordId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => (percentual: g.First().PercentualDesconto ?? 0, justificativa: g.First().JustificativaDesconto ?? "")
+                );
+
             // Buscar logo da empresa
             byte[] logoData = null;
             string logoMimeType = null;
@@ -983,7 +1102,7 @@ namespace WebAppSystems.Controllers
             TimeSpan totalGeralHoras = TimeSpan.Zero;
             double totalGeralValor = 0;
 
-            // Pré-calcular horas e valores por grupo
+            // Pré-calcular horas e valores por grupo (aplicando descontos)
             var clientData = new List<(Client client, List<ProcessRecord> records, TimeSpan totalHoras, double totalValor)>();
             foreach (var group in groupedByClient)
             {
@@ -995,7 +1114,14 @@ namespace WebAppSystems.Controllers
                     horasCliente += duracao;
                     var valorReg = await _valorClienteService.GetValorForClienteAndUserAsync(rec.ClientId, rec.AttorneyId);
                     if (valorReg != null)
-                        valorCliente += valorReg.Valor * duracao.TotalHours;
+                    {
+                        double horasDecimal = duracao.Hours + (duracao.Minutes / 60.0);
+                        double valorBase = valorReg.Valor * horasDecimal;
+                        // Aplicar desconto se existir
+                        if (descontoMap.TryGetValue(rec.Id, out var desconto))
+                            valorBase *= (1.0 - desconto.percentual / 100.0);
+                        valorCliente += valorBase;
+                    }
                 }
                 totalGeralHoras += horasCliente;
                 totalGeralValor += valorCliente;
@@ -1003,6 +1129,36 @@ namespace WebAppSystems.Controllers
             }
 
             string totalHorasFormatted = $"{(int)totalGeralHoras.TotalHours}:{totalGeralHoras.Minutes:00}h";
+
+            // Pré-calcular valor por linha (fora do lambda QuestPDF que não suporta async)
+            var valorPorLinha = new Dictionary<int, string>(); // ProcessRecordId → valor formatado
+            var notasPorCliente = new Dictionary<int, List<string>>(); // ClientId → lista de notas
+
+            foreach (var (client, records, _, _) in clientData)
+            {
+                var notas = new List<string>();
+                int notaNumPre = 1;
+                foreach (var rec in records)
+                {
+                    var duracao = rec.CalculoHorasTotal();
+                    var valorReg2 = await _valorClienteService.GetValorForClienteAndUserAsync(rec.ClientId, rec.AttorneyId);
+                    string valorTexto = "—";
+                    if (valorReg2 != null)
+                    {
+                        double horasDecimal = duracao.Hours + (duracao.Minutes / 60.0);
+                        double valorLinha = valorReg2.Valor * horasDecimal;
+                        if (descontoMap.TryGetValue(rec.Id, out var d))
+                        {
+                            valorLinha *= (1.0 - d.percentual / 100.0);
+                            notas.Add($"*{notaNumPre} Desconto de {d.percentual:0}%: {d.justificativa}");
+                            notaNumPre++;
+                        }
+                        valorTexto = $"R$ {valorLinha:N2}";
+                    }
+                    valorPorLinha[rec.Id] = valorTexto;
+                }
+                notasPorCliente[client.Id] = notas;
+            }
 
             var document = Document.Create(container =>
             {
@@ -1094,18 +1250,45 @@ namespace WebAppSystems.Controllers
                                     });
 
                                     int idx = 0;
+                                    int notaNum = 1;
+
                                     foreach (var rec in records)
                                     {
                                         var bg = idx % 2 == 0 ? Colors.White : Colors.Grey.Lighten5;
                                         var duracao = rec.CalculoHorasTotal();
                                         string horasRec = $"{(int)duracao.TotalHours}:{duracao.Minutes:00}";
 
+                                        bool temDesconto = descontoMap.ContainsKey(rec.Id);
+                                        string asterisco = temDesconto ? $" *{notaNum}" : "";
+                                        if (temDesconto) notaNum++;
+
+                                        string valorTexto = valorPorLinha.TryGetValue(rec.Id, out var vt) ? vt : "—";
+
                                         table.Cell().Background(bg).Padding(4).Text(rec.Date.ToString("dd/MM/yy")).FontSize(8);
                                         table.Cell().Background(bg).Padding(4).Text(rec.Attorney.Name).FontSize(8);
-                                        table.Cell().Background(bg).Padding(4).Text(rec.Description).FontSize(8);
+                                        table.Cell().Background(bg).Padding(4).Text(t =>
+                                        {
+                                            t.Span(rec.Description).FontSize(8);
+                                            if (temDesconto)
+                                                t.Span(asterisco).FontSize(7).FontColor("#b45309").Bold();
+                                        });
                                         table.Cell().Background(bg).Padding(4).Text(horasRec).FontSize(8);
-                                        table.Cell().Background(bg).Padding(4).Text("—").FontSize(8).AlignCenter();
+                                        table.Cell().Background(bg).Padding(4).Text(valorTexto).FontSize(8).AlignRight();
                                         idx++;
+                                    }
+
+                                    // Notas de desconto pré-calculadas
+                                    var notasCliente = notasPorCliente.TryGetValue(client.Id, out var nc) ? nc : new List<string>();
+                                    if (notasCliente.Any())
+                                    {
+                                        clientBlock.Item().PaddingTop(4).PaddingLeft(4).Column(notasCol =>
+                                        {
+                                            foreach (var texto in notasCliente)
+                                            {
+                                                notasCol.Item().Text(texto)
+                                                    .FontSize(7).Italic().FontColor("#92400e");
+                                            }
+                                        });
                                     }
                                 });
                             });

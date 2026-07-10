@@ -3,8 +3,38 @@
 
 @{
     ViewData["Title"] = "Lotes de Aprovação";
-    var lotesPendentes = Model.Where(l => l.Status == StatusLoteAprovacao.Pendente).ToList();
-    var lotesRevisados = Model.Where(l => l.Status == StatusLoteAprovacao.Aprovado || l.Status == StatusLoteAprovacao.Rejeitado || l.Status == StatusLoteAprovacao.Faturado).ToList();
+    int aprovadorDeptId = ViewBag.AprovadorDepartmentId ?? 0;
+    string aprovadorDeptNome = ViewBag.AprovadorDepartmentNome ?? "Minha Área";
+
+    // Lotes onde minha área ainda não foi liberada
+    var lotesPendentes = Model.Where(l =>
+        (l.Status == StatusLoteAprovacao.Pendente || l.Status == StatusLoteAprovacao.ParcialmenteAprovado)
+        && !l.IsAreaLiberada(aprovadorDeptId)
+    ).ToList();
+
+    // Revisados = minha área já liberada (parcial ou total) + aprovados + faturados
+    var lotesRevisados = Model.Where(l =>
+        l.Status == StatusLoteAprovacao.Aprovado
+        || l.Status == StatusLoteAprovacao.Rejeitado
+        || l.Status == StatusLoteAprovacao.Faturado
+        || (l.Status == StatusLoteAprovacao.ParcialmenteAprovado && l.IsAreaLiberada(aprovadorDeptId))
+    ).ToList();
+
+    // Função local: progresso por área de um lote
+    Dictionary<string, (int total, int revisados, string nome)> ProgressoPorArea(WebAppSystems.Models.LoteAprovacao lote)
+    {
+        return lote.Itens
+            .Where(i => i.ProcessRecord?.Department != null)
+            .GroupBy(i => i.ProcessRecord.DepartmentId)
+            .ToDictionary(
+                g => g.Key.ToString(),
+                g => (
+                    total: g.Count(),
+                    revisados: g.Count(i => i.Status != StatusItemAprovacao.Pendente),
+                    nome: g.First().ProcessRecord.Department.Name
+                )
+            );
+    }
 }
 
 <div class="aprovador-container">
@@ -48,6 +78,13 @@
                     <option value="@cliente">@cliente</option>
                 }
             </select>
+        </div>
+        <div class="filter-group" style="margin-left: 8px;">
+            <label class="filter-toggle-label" id="labelFiltroArea">
+                <input type="checkbox" id="filtroMinhaArea" style="margin-right:5px;">
+                <i class="bi bi-person-fill" style="color:#667eea;"></i>
+                Apenas lotes com itens da <strong>@aprovadorDeptNome</strong>
+            </label>
         </div>
         <button class="filter-clear" id="btnLimparFiltro" style="display:none;">
             <i class="bi bi-x-circle"></i> Limpar
@@ -112,8 +149,9 @@
                 {
                     var diasPendente = (DateTime.Now - lote.DataCriacao).TotalDays;
                     var isAtrasado = diasPendente > 3;
+                    var temMinhaArea = lote.Itens.Any(i => i.ProcessRecord?.DepartmentId == aprovadorDeptId);
 
-                    <div class="lote-card @(isAtrasado ? "lote-atrasado" : "")">
+                    <div class="lote-card @(isAtrasado ? "lote-atrasado" : "")" data-tem-minha-area="@temMinhaArea.ToString().ToLower()">
                         @if (isAtrasado)
                         {
                             <div class="lote-alert">
@@ -123,7 +161,7 @@
                         }
                         <div class="lote-header">
                             <div class="lote-info">
-                                <h5><i class="bi bi-building"></i> @lote.Cliente.Name</h5>
+                                <h5><i class="bi bi-building"></i> <span class="lote-numero-badge">#@lote.Id</span> @lote.Cliente.Name</h5>
                                 <p class="lote-periodo">
                                     <i class="bi bi-calendar-range"></i>
                                     @lote.PeriodoInicio.ToString("dd/MM/yyyy") - @lote.PeriodoFim.ToString("dd/MM/yyyy")
@@ -167,11 +205,54 @@
                                     <i class="bi bi-calendar"></i> @lote.DataCriacao.ToString("dd/MM/yyyy HH:mm")
                                 </small>
                             </div>
+                            <!-- Progresso por área -->
+                            @{
+                                var progressoAreas = ProgressoPorArea(lote);
+                            }
+                            @if (progressoAreas.Any())
+                            {
+                                <div class="area-progress-container">
+                                    @foreach (var area in progressoAreas.OrderBy(a => a.Value.nome))
+                                    {
+                                        var pct = area.Value.total > 0 ? (int)Math.Round((double)area.Value.revisados / area.Value.total * 100) : 0;
+                                        var isMinhaArea = area.Key == aprovadorDeptId.ToString();
+                                        var corClass = pct == 100 ? "area-verde" : pct > 0 ? "area-amarelo" : "area-vermelho";
+                                        var icone = pct == 100 ? "check-circle-fill" : pct > 0 ? "clock-history" : "circle";
+                                        <div class="area-progress-item @(isMinhaArea ? "minha-area" : "")">
+                                            <div class="area-progress-header">
+                                                <span class="area-nome @(isMinhaArea ? "fw-bold" : "")">
+                                                    @if (isMinhaArea) { <i class="bi bi-person-fill" style="font-size:10px;"></i> }
+                                                    @area.Value.nome
+                                                </span>
+                                                <span class="area-pct @corClass">
+                                                    <i class="bi bi-@icone"></i> @pct%
+                                                </span>
+                                            </div>
+                                            <div class="area-progress-bar-bg">
+                                                <div class="area-progress-bar-fill @corClass" style="width: @pct%"></div>
+                                            </div>
+                                            <div class="area-progress-counts">
+                                                @area.Value.revisados / @area.Value.total revisados
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
                         </div>
                         <div class="lote-footer">
-                            <a asp-action="Revisar" asp-route-id="@lote.Id" class="btn-revisar">
-                                <i class="bi bi-eye-fill"></i> Revisar Agora
-                            </a>
+                            @if (lote.IsAreaLiberada(aprovadorDeptId))
+                            {
+                                <a asp-action="DetalhesLote" asp-route-id="@lote.Id"
+                                   style="display:inline-flex;align-items:center;gap:7px;padding:8px 16px;background:transparent;color:#667eea;border:1.5px solid #667eea;border-radius:7px;font-size:13px;font-weight:500;text-decoration:none;">
+                                    <i class="bi bi-eye"></i> Ver Detalhes
+                                </a>
+                            }
+                            else
+                            {
+                                <a asp-action="Revisar" asp-route-id="@lote.Id" class="btn-revisar">
+                                    <i class="bi bi-eye-fill"></i> Revisar Agora
+                                </a>
+                            }
                         </div>
                     </div>
                 }
@@ -237,18 +318,21 @@
                 {
                     var statusClass = lote.Status == StatusLoteAprovacao.Aprovado ? "badge-aprovado"
                                    : lote.Status == StatusLoteAprovacao.Faturado ? "badge-faturado"
+                                   : lote.Status == StatusLoteAprovacao.ParcialmenteAprovado ? "badge-parcial"
                                    : "badge-rejeitado";
                     var statusIcon = lote.Status == StatusLoteAprovacao.Aprovado ? "check-circle-fill"
                                    : lote.Status == StatusLoteAprovacao.Faturado ? "receipt-cutoff"
+                                   : lote.Status == StatusLoteAprovacao.ParcialmenteAprovado ? "check2-circle"
                                    : "x-circle-fill";
                     var statusText = lote.Status == StatusLoteAprovacao.Aprovado ? "Aprovado"
                                    : lote.Status == StatusLoteAprovacao.Faturado ? "Faturado"
+                                   : lote.Status == StatusLoteAprovacao.ParcialmenteAprovado ? "Parcialmente Aprovado"
                                    : "Rejeitado";
 
                     <div class="lote-card lote-revisado">
                         <div class="lote-header">
                             <div class="lote-info">
-                                <h5><i class="bi bi-building"></i> @lote.Cliente.Name</h5>
+                                <h5><i class="bi bi-building"></i> <span class="lote-numero-badge">#@lote.Id</span> @lote.Cliente.Name</h5>
                                 <p class="lote-periodo">
                                     <i class="bi bi-calendar-range"></i>
                                     @lote.PeriodoInicio.ToString("dd/MM/yyyy") - @lote.PeriodoFim.ToString("dd/MM/yyyy")
@@ -504,6 +588,22 @@
         opacity: 0.95;
     }
 
+    .lote-numero-badge {
+        display: inline-flex;
+        align-items: center;
+        background: rgba(102, 126, 234, 0.12);
+        color: #667eea;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 10px;
+        letter-spacing: 0.3px;
+        margin-right: 6px;
+        vertical-align: middle;
+    }
+
+    .lote-card { position: relative; }
+
     .lote-alert {
         background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
         color: white;
@@ -572,6 +672,12 @@
         background: rgba(102, 126, 234, 0.15);
         color: #667eea;
         border: 1px solid rgba(102, 126, 234, 0.3);
+    }
+
+    .badge-parcial {
+        background: rgba(245, 158, 11, 0.1);
+        color: #b45309;
+        border: 1px solid rgba(245, 158, 11, 0.3);
     }
 
     .badge-rejeitado {
@@ -772,6 +878,37 @@
         background: white;
         border-radius: 10px;
     }
+
+    /* Indicadores de progresso por área */
+    .area-progress-container {
+        margin-top: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 10px 12px;
+        background: #f8fafc;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .area-progress-item { display: flex; flex-direction: column; gap: 3px; }
+    .area-progress-item.minha-area { background: #f0f4ff; border-radius: 6px; padding: 6px 8px; border-left: 3px solid #667eea; }
+
+    .area-progress-header { display: flex; justify-content: space-between; align-items: center; }
+    .area-nome { font-size: 12px; color: #4a5568; }
+    .area-pct { font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 3px; }
+
+    .area-verde { color: #2f855a; }
+    .area-amarelo { color: #b7791f; }
+    .area-vermelho { color: #c53030; }
+
+    .area-progress-bar-bg { height: 5px; background: #e2e8f0; border-radius: 3px; overflow: hidden; }
+    .area-progress-bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+    .area-progress-bar-fill.area-verde { background: #48bb78; }
+    .area-progress-bar-fill.area-amarelo { background: #ed8936; }
+    .area-progress-bar-fill.area-vermelho { background: #fc8181; }
+
+    .area-progress-counts { font-size: 10px; color: #a0aec0; text-align: right; }
 </style>
 
 <script>
@@ -782,10 +919,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- Filtro por cliente ---
     const filtroCliente = document.getElementById('filtroCliente');
     const btnLimpar = document.getElementById('btnLimparFiltro');
+    const filtroMinhaArea = document.getElementById('filtroMinhaArea');
 
     filtroCliente.addEventListener('change', function() {
         const val = this.value;
-        btnLimpar.style.display = val ? 'flex' : 'none';
+        btnLimpar.style.display = (val || filtroMinhaArea.checked) ? 'flex' : 'none';
         ['pendentes', 'revisados'].forEach(tab => {
             state[tab].filter = val;
             state[tab].page = 1;
@@ -793,8 +931,15 @@ document.addEventListener('DOMContentLoaded', function() {
         renderActiveTab();
     });
 
+    filtroMinhaArea.addEventListener('change', function() {
+        btnLimpar.style.display = (filtroCliente.value || this.checked) ? 'flex' : 'none';
+        ['pendentes', 'revisados'].forEach(tab => { state[tab].page = 1; });
+        renderActiveTab();
+    });
+
     btnLimpar.addEventListener('click', function() {
         filtroCliente.value = '';
+        filtroMinhaArea.checked = false;
         this.style.display = 'none';
         ['pendentes', 'revisados'].forEach(tab => {
             state[tab].filter = '';
@@ -828,12 +973,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const allCards = getCards(tabId);
         if (!allCards.length) return;
 
-        const filtered = s.filter
+        // Filtrar por cliente
+        let filtered = s.filter
             ? allCards.filter(card => {
                 const h5 = card.querySelector('.lote-info h5');
                 return h5 && h5.textContent.trim().toLowerCase().includes(s.filter.toLowerCase());
               })
             : allCards;
+
+        // Filtrar por minha área
+        if (filtroMinhaArea && filtroMinhaArea.checked) {
+            filtered = filtered.filter(card => card.dataset.temMinhaArea === 'true');
+        }
 
         allCards.forEach(c => c.style.display = 'none');
 

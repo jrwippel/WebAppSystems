@@ -5,6 +5,7 @@
 @{
     ViewData["Title"] = "Editar Atividade";
     var userId = ViewBag.LoggedUserId as int?;
+    var clienteBloqueado = Model.ProcessRecord.EmAprovacao || Model.ProcessRecord.IsFaturado;
 }
 
 <div class="activity-create-container">
@@ -98,8 +99,22 @@
                         <label asp-for="ProcessRecord.ClientId" class="form-label">
                             <i class="bi bi-briefcase"></i>
                             <span data-i18n="activity.field.client">Cliente</span>
+                            @if (clienteBloqueado)
+                            {
+                                <span style="margin-left:6px;font-size:11px;color:#e53e3e;font-weight:600;">
+                                    Registro com Lote gerado, não permite alterar o cliente
+                                </span>
+                            }
                         </label>
-                        <select asp-for="ProcessRecord.ClientId" class="modern-select" asp-items="Model.ClientsOptions"></select>
+                        @if (clienteBloqueado)
+                        {
+                            <input type="hidden" asp-for="ProcessRecord.ClientId" />
+                            <input class="modern-select" disabled value="@Model.ClientsOptions.FirstOrDefault(o => o.Value == Model.ProcessRecord.ClientId.ToString())?.Text" style="background:#f7fafc;color:#718096;cursor:not-allowed;" />
+                        }
+                        else
+                        {
+                            <select asp-for="ProcessRecord.ClientId" class="modern-select" asp-items="Model.ClientsOptions"></select>
+                        }
                         <span asp-validation-for="ProcessRecord.ClientId" class="field-error"></span>
                     </div>
 
