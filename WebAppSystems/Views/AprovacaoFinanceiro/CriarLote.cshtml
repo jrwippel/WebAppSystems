@@ -50,6 +50,17 @@
                         <i class="bi bi-building"></i>
                         Clientes (opcional - deixe em branco para buscar todos)
                     </label>
+                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                        <button type="button" class="btn-favoritos" onclick="selecionarFavoritos()" title="Selecionar todos os clientes da lista de favoritos">
+                            <i class="bi bi-star-fill"></i> Selecionar Favoritos
+                        </button>
+                        <button type="button" class="btn-gerenciar-fav" onclick="toggleGerenciarFavoritos()" title="Adicionar ou remover clientes dos favoritos">
+                            <i class="bi bi-gear"></i> Gerenciar Favoritos
+                        </button>
+                        <button type="button" class="btn-limpar-sel" onclick="limparSelecao()" title="Limpar seleção">
+                            <i class="bi bi-x-circle"></i> Limpar
+                        </button>
+                    </div>
                     <select id="clientesSelect" class="form-control" multiple="multiple">
                         @foreach (var cliente in ViewBag.Clientes)
                         {
@@ -57,6 +68,16 @@
                         }
                     </select>
                     <small class="form-text">Digite para buscar e selecione múltiplos clientes</small>
+
+                    <!-- Painel de gerenciamento de favoritos -->
+                    <div id="painelFavoritos" style="display:none; margin-top: 12px; padding: 16px; background: #fefce8; border: 1px solid #fde047; border-radius: 8px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <strong style="font-size:13px; color:#92400e;"><i class="bi bi-star-fill" style="color:#f59e0b;"></i> Clientes Favoritos</strong>
+                            <button type="button" onclick="toggleGerenciarFavoritos()" style="background:none;border:none;color:#92400e;cursor:pointer;font-size:16px;"><i class="bi bi-x"></i></button>
+                        </div>
+                        <div id="listaFavoritos" style="max-height:200px; overflow-y:auto;"></div>
+                        <small style="color:#92400e; font-size:11px;">Clique na estrela ao lado do nome para adicionar/remover dos favoritos.</small>
+                    </div>
                 </div>
             </div>
 
@@ -125,6 +146,58 @@
             }
         });
     });
+
+    // ── Favoritos ──
+    function getFavoritos() {
+        try { return JSON.parse(localStorage.getItem('clientesFavoritos') || '[]'); } catch(e) { return []; }
+    }
+    function setFavoritos(arr) {
+        localStorage.setItem('clientesFavoritos', JSON.stringify(arr));
+    }
+
+    function selecionarFavoritos() {
+        var favs = getFavoritos();
+        if (favs.length === 0) { alert('Nenhum cliente favorito definido. Clique em "Gerenciar Favoritos" para configurar.'); return; }
+        var sel = $('#clientesSelect');
+        sel.val(favs).trigger('change');
+    }
+
+    function limparSelecao() {
+        $('#clientesSelect').val(null).trigger('change');
+    }
+
+    function toggleGerenciarFavoritos() {
+        var painel = document.getElementById('painelFavoritos');
+        if (painel.style.display === 'none') {
+            painel.style.display = 'block';
+            renderizarListaFavoritos();
+        } else {
+            painel.style.display = 'none';
+        }
+    }
+
+    function renderizarListaFavoritos() {
+        var favs = getFavoritos();
+        var options = document.querySelectorAll('#clientesSelect option');
+        var html = '';
+        options.forEach(function(opt) {
+            var isFav = favs.indexOf(opt.value) > -1;
+            html += '<div class="fav-item">' +
+                '<span class="fav-star ' + (isFav ? 'active' : '') + '" onclick="toggleFavorito(\'' + opt.value + '\')">' +
+                '<i class="bi bi-star' + (isFav ? '-fill' : '') + '"></i></span>' +
+                '<span style="font-size:13px;">' + opt.text + '</span></div>';
+        });
+        document.getElementById('listaFavoritos').innerHTML = html;
+    }
+
+    function toggleFavorito(clienteId) {
+        var favs = getFavoritos();
+        var idx = favs.indexOf(clienteId);
+        if (idx > -1) favs.splice(idx, 1);
+        else favs.push(clienteId);
+        setFavoritos(favs);
+        renderizarListaFavoritos();
+    }
 
     async function buscarLancamentos() {
         const dataInicio = document.getElementById('dataInicio').value;
@@ -545,6 +618,29 @@
         transform: translateY(-2px);
         box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
     }
+
+    .btn-favoritos {
+        display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px;
+        background: #fef3c7; color: #92400e; border: 1.5px solid #fcd34d; border-radius: 6px;
+        font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-favoritos:hover { background: #fde047; }
+    .btn-gerenciar-fav {
+        display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px;
+        background: transparent; color: #718096; border: 1.5px solid #e2e8f0; border-radius: 6px;
+        font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-gerenciar-fav:hover { border-color: #667eea; color: #667eea; }
+    .btn-limpar-sel {
+        display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px;
+        background: transparent; color: #718096; border: 1.5px solid #e2e8f0; border-radius: 6px;
+        font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-limpar-sel:hover { border-color: #e53e3e; color: #e53e3e; }
+    .fav-item { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 4px; }
+    .fav-item:hover { background: rgba(0,0,0,0.03); }
+    .fav-star { cursor: pointer; font-size: 16px; color: #d1d5db; transition: color 0.2s; }
+    .fav-star.active { color: #f59e0b; }
 
     .loading-card {
         background: white;

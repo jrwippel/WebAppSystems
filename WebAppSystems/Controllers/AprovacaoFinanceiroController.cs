@@ -590,7 +590,7 @@ namespace WebAppSystems.Controllers
             }
 
             // Marcar lote como Faturado ao gerar o Excel (apenas na primeira vez)
-            if (lote.Status == StatusLoteAprovacao.Aprovado)
+            if (lote.Status == StatusLoteAprovacao.Aprovado || lote.Status == StatusLoteAprovacao.ParcialmenteAprovado)
             {
                 lote.Status = StatusLoteAprovacao.Faturado;
                 lote.DataFaturamento = DateTime.Now;
