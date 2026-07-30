@@ -3,7 +3,7 @@
     public class Department
     {
         public int Id { get; set; }
-        public string Name { get; set; } 
+        public string Name { get; set; }
   
         public ICollection<Attorney> Attorneys { get; set; } = new List<Attorney>();
         public ICollection<ProcessRecord> ProcessRecords { get; set; } = new List<ProcessRecord>();

@@ -15,26 +15,55 @@
     </div>
 
     <div class="form-card">
-        <form asp-action="Create" method="post" enctype="multipart/form-data" novalidate>
+        <form asp-action="Create" method="post" enctype="multipart/form-data" novalidate id="formCreateCliente">
             <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+            <input type="hidden" name="forcar" id="forcarSalvar" value="false" />
+
+            @if (ViewBag.ErroDuplicado != null)
+            {
+                <div class="alert alert-danger" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:8px;background:#fee2e2;border:1px solid #fca5a5;color:#991b1b;margin-bottom:16px;">
+                    <i class="bi bi-x-circle-fill" style="font-size:20px;flex-shrink:0;"></i>
+                    <div style="flex:1;">
+                        <strong>Bloqueado:</strong> @ViewBag.ErroDuplicado
+                    </div>
+                    <a asp-action="Index" class="btn btn-secondary btn-sm">
+                        <i class="bi bi-arrow-left"></i> Voltar
+                    </a>
+                </div>
+            }
+
+            @if (ViewBag.AlertaDuplicado != null)
+            {
+                <div class="alert alert-warning" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:8px;background:#fef3c7;border:1px solid #fcd34d;color:#92400e;margin-bottom:16px;">
+                    <i class="bi bi-exclamation-triangle-fill" style="font-size:20px;flex-shrink:0;"></i>
+                    <div style="flex:1;">
+                        <strong>Atenção:</strong> @ViewBag.AlertaDuplicado
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <button type="button" class="btn btn-warning btn-sm" onclick="confirmarDuplicado()" style="font-weight:600;">
+                            <i class="bi bi-check-lg"></i> Sim, cadastrar
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary btn-sm">
+                            <i class="bi bi-x-lg"></i> Cancelar
+                        </a>
+                    </div>
+                </div>
+            }
 
             <div class="form-grid">
                 <div class="form-field">
                     <label asp-for="Name">Nome</label>
-                    <input asp-for="Name" class="form-control" />
+                    <input asp-for="Name" class="form-control" id="clienteNome" style="text-transform:capitalize;" />
                     <span asp-validation-for="Name" class="text-danger"></span>
                 </div>
                 <div class="form-field">
-                    <label asp-for="Document">Documento</label>
-                    <input asp-for="Document" class="form-control" data-val="false" />
+                    <label asp-for="Document">Documento (CPF/CNPJ) <span style="color:#e53e3e;">*</span></label>
+                    <input asp-for="Document" class="form-control" placeholder="00.000.000/0000-00" required />
+                    <span asp-validation-for="Document" class="text-danger"></span>
                 </div>
                 <div class="form-field">
                     <label asp-for="Email">Email</label>
                     <input asp-for="Email" class="form-control" data-val="false" />
-                </div>
-                <div class="form-field">
-                    <label asp-for="Telephone">Telefone</label>
-                    <input asp-for="Telephone" class="form-control" data-val="false" />
                 </div>
                 <div class="form-field">
                     <label asp-for="Solicitante">Solicitante Padrão</label>
@@ -67,4 +96,10 @@
 
 @section Scripts {
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <script>
+        function confirmarDuplicado() {
+            document.getElementById('forcarSalvar').value = 'true';
+            document.getElementById('formCreateCliente').submit();
+        }
+    </script>
 }

@@ -56,23 +56,6 @@
                 </div>
 
                 <div class="form-row">
-                    <div class="form-group">
-                        <label asp-for="Attorney.BirthDate">
-                            <i class="bi bi-calendar3"></i>
-                            Data de Nascimento
-                        </label>
-                        <input asp-for="Attorney.BirthDate" type="date" class="form-control">
-                        <span asp-validation-for="Attorney.BirthDate" class="text-danger"></span>
-                    </div>
-
-                    <div class="form-group">
-                        <label asp-for="Attorney.Phone">
-                            <i class="bi bi-telephone"></i>
-                            Telefone
-                        </label>
-                        <input asp-for="Attorney.Phone" class="form-control" placeholder="(00) 00000-0000">
-                        <span asp-validation-for="Attorney.Phone" class="text-danger"></span>
-                    </div>
                 </div>
             </div>
 
@@ -197,6 +180,15 @@
                         <input type="hidden" asp-for="Attorney.IsFinanceiro" id="hiddenIsFinanceiro" />
                         <input type="hidden" asp-for="Attorney.IsAprovador" id="hiddenIsAprovador" />
                     </div>
+
+                    <!-- Gestor de Área -->
+                    <div style="margin-top:16px; padding:14px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; display:flex; align-items:center; gap:12px;">
+                        <input type="checkbox" asp-for="Attorney.IsGestor" id="isGestor" style="width:20px;height:20px;cursor:pointer;accent-color:#166534;">
+                        <label for="isGestor" style="cursor:pointer;margin:0;">
+                            <strong style="font-size:14px;color:#166534;"><i class="bi bi-person-check-fill"></i> Gestor de Área</strong>
+                            <div style="font-size:12px;color:#4ade80;">Recebe alertas quando membros da equipe estão sem lançamentos</div>
+                        </label>
+                    </div>
                 </div>
             }
 
@@ -208,17 +200,6 @@
                 </h3>
                 
                 <div class="preferences-grid">
-                    <div class="form-check-card">
-                        <input type="checkbox" asp-for="Attorney.UseBorder" class="form-check-input" id="useBorder">
-                        <label for="useBorder" class="form-check-label">
-                            <i class="bi bi-border-all"></i>
-                            <div>
-                                <strong>Utiliza Borda</strong>
-                                <span>Exibir borda na interface</span>
-                            </div>
-                        </label>
-                    </div>
-
                     <div class="form-check-card">
                         <input type="checkbox" asp-for="Attorney.UseCronometroAlwaysOnTop" class="form-check-input" id="useAlwaysOnTop">
                         <label for="useAlwaysOnTop" class="form-check-label">

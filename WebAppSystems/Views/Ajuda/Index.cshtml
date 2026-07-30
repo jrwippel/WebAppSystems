@@ -1,0 +1,602 @@
+@{
+    ViewData["Title"] = "Central de Ajuda";
+}
+
+<div class="ajuda-container">
+    <!-- Header -->
+    <div class="ajuda-header">
+        <div class="header-content">
+            <div class="header-icon">
+                <i class="bi bi-question-circle"></i>
+            </div>
+            <div class="header-text">
+                <h1>Central de Ajuda — TimeSheet</h1>
+                <p>Guia completo do sistema de controle de horas</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fluxo Visual do Sistema -->
+    <div class="fluxo-sistema">
+        <h3 style="font-size:15px;font-weight:600;color:#2d3748;margin:0 0 16px;text-align:center;">
+            <i class="bi bi-diagram-3" style="color:#667eea;"></i> Fluxo do Sistema TimeSheet
+        </h3>
+        <div class="fluxo-visual">
+            <div class="fluxo-etapa">
+                <div class="fluxo-icone" style="background:#f0fdf4;color:#166534;"><i class="bi bi-box-arrow-in-right"></i></div>
+                <div class="fluxo-label">Login</div>
+                <div class="fluxo-desc">Acessar o sistema</div>
+            </div>
+            <div class="fluxo-seta"><i class="bi bi-arrow-right"></i></div>
+            <div class="fluxo-etapa">
+                <div class="fluxo-icone" style="background:#e0e7ff;color:#4338ca;"><i class="bi bi-stopwatch"></i></div>
+                <div class="fluxo-label">Lançar Horas</div>
+                <div class="fluxo-desc">TimeTracker, Atividades ou Calendário</div>
+            </div>
+            <div class="fluxo-seta"><i class="bi bi-arrow-right"></i></div>
+            <div class="fluxo-etapa">
+                <div class="fluxo-icone" style="background:#d1fae5;color:#065f46;"><i class="bi bi-check-circle"></i></div>
+                <div class="fluxo-label">Aprovar</div>
+                <div class="fluxo-desc">Aprovador revisa e libera a área</div>
+            </div>
+            <div class="fluxo-seta"><i class="bi bi-arrow-right"></i></div>
+            <div class="fluxo-etapa">
+                <div class="fluxo-icone" style="background:#fee2e2;color:#991b1b;"><i class="bi bi-bar-chart"></i></div>
+                <div class="fluxo-label">Analisar</div>
+                <div class="fluxo-desc">Relatórios, Painel e Resultados</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Busca -->
+    <div class="ajuda-search">
+        <i class="bi bi-search"></i>
+        <input type="text" id="searchFaq" placeholder="Pesquisar por palavra-chave..." onkeyup="filtrarFaq()">
+    </div>
+
+    <!-- Navegação rápida -->
+    <div class="nav-rapida">
+        <a href="#sec-primeiros" class="nav-btn" onclick="navegar(event, 'sec-primeiros')"><i class="bi bi-rocket-takeoff"></i> Primeiros Passos</a>
+        <a href="#sec-timetracker" class="nav-btn" onclick="navegar(event, 'sec-timetracker')"><i class="bi bi-stopwatch"></i> Time Tracker</a>
+        <a href="#sec-atividades" class="nav-btn" onclick="navegar(event, 'sec-atividades')"><i class="bi bi-list-check"></i> Atividades</a>
+        <a href="#sec-calendario" class="nav-btn" onclick="navegar(event, 'sec-calendario')"><i class="bi bi-calendar-week"></i> Calendário</a>
+        <a href="#sec-relatorios" class="nav-btn" onclick="navegar(event, 'sec-relatorios')"><i class="bi bi-bar-chart"></i> Relatórios</a>
+        <a href="#sec-painel" class="nav-btn" onclick="navegar(event, 'sec-painel')"><i class="bi bi-speedometer2"></i> Painel de Gestão</a>
+        @if (ViewBag.CurrentUserPerfil == WebAppSystems.Models.Enums.ProfileEnum.Admin)
+        {
+            <a href="#sec-aprovacao" class="nav-btn" onclick="navegar(event, 'sec-aprovacao')"><i class="bi bi-check-circle"></i> Aprovação</a>
+            <a href="#sec-resultados" class="nav-btn" onclick="navegar(event, 'sec-resultados')"><i class="bi bi-trophy"></i> Resultados</a>
+        }
+    </div>
+
+    <!-- ═══════════ SEÇÕES ═══════════ -->
+    <div class="faq-sections">
+
+        <!-- ──── PRIMEIROS PASSOS ──── -->
+        <div class="faq-section" id="sec-primeiros">
+            <div class="section-header" onclick="toggleSection(this)">
+                <div class="section-title"><i class="bi bi-rocket-takeoff"></i><h2>Primeiros Passos</h2></div>
+                <i class="bi bi-chevron-down section-chevron"></i>
+            </div>
+            <div class="section-content">
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)"><span>Como faço login no sistema?</span><i class="bi bi-plus-lg"></i></div>
+                    <div class="faq-answer"><p>Acesse o endereço do sistema, informe seu <strong>usuário</strong> e <strong>senha</strong> e clique em "Sign In". Caso não tenha suas credenciais, solicite ao administrador.</p></div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)"><span>Esqueci minha senha. O que fazer?</span><i class="bi bi-plus-lg"></i></div>
+                    <div class="faq-answer">
+                        <p>Na tela de login, clique em <strong>"Forgot your password?"</strong>. Informe seu email e login — uma nova senha temporária será enviada para o email cadastrado.</p>
+                        <div class="help-screenshot">
+                            <img src="~/images/ajuda/Esquecisenha.png" alt="Tela de redefinição de senha" />
+                            <p class="screenshot-caption">Tela para solicitar nova senha — informe email e login</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)"><span>Como alterar minha senha?</span><i class="bi bi-plus-lg"></i></div>
+                    <div class="faq-answer">
+                        <p>Clique no seu nome no canto superior direito e selecione <strong>"Alterar Senha"</strong>. Informe a senha atual e a nova senha desejada. A nova senha deve ter no mínimo 6 caracteres.</p>
+                        <div class="help-screenshot">
+                            <img src="~/images/ajuda/TrocaSenha.png" alt="Tela de alteração de senha" />
+                            <p class="screenshot-caption">Tela de alteração de senha — informe a senha atual e a nova senha</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)"><span>Qual a obrigatoriedade de lançamento?</span><i class="bi bi-plus-lg"></i></div>
+                    <div class="faq-answer"><p>Todos os colaboradores devem registrar suas horas diariamente. O sistema envia alertas automáticos caso fique <strong>mais de 48 horas</strong> sem lançamentos.</p></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ──── TIME TRACKER ──── -->
+        <div class="faq-section" id="sec-timetracker">
+            <div class="section-header" onclick="toggleSection(this)">
+                <div class="section-title"><i class="bi bi-stopwatch"></i><h2>Time Tracker (Cronômetro)</h2></div>
+                <i class="bi bi-chevron-down section-chevron"></i>
+            </div>
+            <div class="section-content">
+                <div class="help-screenshot">
+                    <img src="~/images/ajuda/TimeTracker.png" alt="Tela do Time Tracker" />
+                    <p class="screenshot-caption">Tela principal do Time Tracker com cronômetro e histórico de lançamentos</p>
+                </div>
+
+                <div class="help-flow">
+                    <h4><i class="bi bi-diagram-3"></i> Fluxo de Uso</h4>
+                    <p style="font-size:13px;color:#4a5568;margin:0 0 12px;">O objetivo principal do Time Tracker é dar <strong>agilidade no dia a dia</strong> — inicie o cronômetro e trabalhe normalmente. Antes de parar, você pode alterar a descrição e demais campos a qualquer momento.</p>
+                    <div class="flow-steps">
+                        <div class="flow-step"><span class="step-num">1</span><span>Selecione <strong>Cliente</strong>, <strong>Área</strong> e preencha a <strong>Descrição</strong></span></div>
+                        <div class="flow-step"><span class="step-num">2</span><span>Clique em <strong>Play ▶</strong> para iniciar o cronômetro</span></div>
+                        <div class="flow-step"><span class="step-num">3</span><span>Enquanto o cronômetro roda, <strong>você pode alterar</strong> a descrição, cliente, área e solicitante a qualquer momento</span></div>
+                        <div class="flow-step"><span class="step-num">4</span><span>Ao finalizar, clique em <strong>Stop ⏹</strong> — o lançamento é salvo automaticamente com os dados atualizados</span></div>
+                        <div class="flow-step"><span class="step-num">5</span><span>O registro aparece na tabela abaixo, onde pode ser editado inline</span></div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)"><span>Posso editar um lançamento depois?</span><i class="bi bi-plus-lg"></i></div>
+                    <div class="faq-answer"><p>Sim! Na tabela de registros, clique no campo que deseja editar (descrição, horário, cliente, área). As alterações são salvas automaticamente.</p></div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)"><span>O cronômetro continua se eu fechar o navegador?</span><i class="bi bi-plus-lg"></i></div>
+                    <div class="faq-answer"><p>Sim. O cronômetro é salvo no servidor. Ao retornar, ele aparece rodando com o tempo correto.</p></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ──── ATIVIDADES ──── -->
+        <div class="faq-section" id="sec-atividades">
+            <div class="section-header" onclick="toggleSection(this)">
+                <div class="section-title"><i class="bi bi-list-check"></i><h2>Registro de Atividades</h2></div>
+                <i class="bi bi-chevron-down section-chevron"></i>
+            </div>
+            <div class="section-content">
+                <div class="help-screenshot">
+                    <img src="~/images/ajuda/Atividades.png" alt="Listagem de Atividades" />
+                    <p class="screenshot-caption">Listagem de atividades com edição inline e filtros</p>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)"><span>Como criar um lançamento manual?</span><i class="bi bi-plus-lg"></i></div>
+                    <div class="faq-answer"><p>Clique em <strong>"Novo Registro"</strong>, preencha data, horários, cliente, área e descrição. Clique em Salvar.</p></div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)"><span>Por que não consigo alterar o cliente?</span><i class="bi bi-plus-lg"></i></div>
+                    <div class="faq-answer"><p>Se o lançamento já faz parte de um <strong>Lote de Aprovação</strong>, o cliente fica bloqueado para garantir a integridade do faturamento.</p></div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)"><span>Posso excluir um lançamento?</span><i class="bi bi-plus-lg"></i></div>
+                    <div class="faq-answer"><p>Sim, desde que o lançamento <strong>não esteja em um lote de aprovação</strong>. Caso esteja, o botão excluir exibirá uma mensagem de bloqueio.</p></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ──── CALENDÁRIO ──── -->
+        <div class="faq-section" id="sec-calendario">
+            <div class="section-header" onclick="toggleSection(this)">
+                <div class="section-title"><i class="bi bi-calendar-week"></i><h2>Calendário</h2></div>
+                <i class="bi bi-chevron-down section-chevron"></i>
+            </div>
+            <div class="section-content">
+                <div class="help-screenshot">
+                    <img src="~/images/ajuda/Calendario.png" alt="Calendário" />
+                    <p class="screenshot-caption">Calendário semanal com visualização de todos os lançamentos</p>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)"><span>Como criar um lançamento pelo calendário?</span><i class="bi bi-plus-lg"></i></div>
+                    <div class="faq-answer"><p>Clique em um horário vazio no calendário. Um formulário abre para preencher os dados. Também pode clicar em um evento existente para editá-lo.</p></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ──── RELATÓRIOS ──── -->
+        <div class="faq-section" id="sec-relatorios">
+            <div class="section-header" onclick="toggleSection(this)">
+                <div class="section-title"><i class="bi bi-bar-chart"></i><h2>Relatórios</h2></div>
+                <i class="bi bi-chevron-down section-chevron"></i>
+            </div>
+            <div class="section-content">
+                <div class="help-screenshot">
+                    <img src="~/images/ajuda/Relatorio.png" alt="Relatórios" />
+                    <p class="screenshot-caption">Relatórios com gráficos por cliente, tipo, área e evolução temporal</p>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)"><span>Quais tipos de relatório estão disponíveis?</span><i class="bi bi-plus-lg"></i></div>
+                    <div class="faq-answer">
+                        <p>O sistema oferece relatórios com gráficos interativos:</p>
+                        <ul>
+                            <li><strong>Por Cliente</strong> — distribuição de horas por cliente</li>
+                            <li><strong>Por Tipo</strong> — consultivo, contencioso, deslocamento</li>
+                            <li><strong>Por Área</strong> — horas por departamento</li>
+                            <li><strong>Evolução</strong> — timeline de horas por dia, semana ou mês</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ──── PAINEL DE GESTÃO ──── -->
+        <div class="faq-section" id="sec-painel">
+            <div class="section-header" onclick="toggleSection(this)">
+                <div class="section-title"><i class="bi bi-speedometer2"></i><h2>Painel de Gestão</h2></div>
+                <i class="bi bi-chevron-down section-chevron"></i>
+            </div>
+            <div class="section-content">
+                <div class="help-screenshot">
+                    <img src="~/images/ajuda/Painel-Gestao-kpis-horas-top-clientes.png" alt="Painel de Gestão - KPIs" />
+                    <p class="screenshot-caption">KPIs, ranking de horas e top clientes por advogado</p>
+                </div>
+                <div class="help-screenshot">
+                    <img src="~/images/ajuda/PainelGestao-rankingadvogados.png" alt="Painel de Gestão - Ranking" />
+                    <p class="screenshot-caption">Ranking de advogados por horas no período</p>
+                </div>
+                <div class="help-screenshot">
+                    <img src="~/images/ajuda/PainelGestao-Consistenciaadvogados-horasdia.png" alt="Painel de Gestão - Consistência" />
+                    <p class="screenshot-caption">Consistência de lançamentos e horas por dia</p>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)"><span>Quem tem acesso ao Painel de Gestão?</span><i class="bi bi-plus-lg"></i></div>
+                    <div class="faq-answer"><p>Apenas usuários com perfil <strong>Administrador</strong> podem acessar o Painel de Gestão completo.</p></div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)"><span>O que significam os indicadores?</span><i class="bi bi-plus-lg"></i></div>
+                    <div class="faq-answer">
+                        <ul>
+                            <li><strong>Ranking de Advogados</strong> — horas totais por colaborador no período</li>
+                            <li><strong>Top Clientes</strong> — principais clientes de cada advogado</li>
+                            <li><strong>Consistência</strong> — percentual de dias com lançamento vs dias úteis</li>
+                            <li><strong>Colaboradores sem lançamento</strong> — quem não lançou recentemente</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ──── APROVAÇÃO DE LOTES (só admin) ──── -->
+        @if (ViewBag.CurrentUserPerfil == WebAppSystems.Models.Enums.ProfileEnum.Admin)
+        {
+        <div class="faq-section" id="sec-aprovacao">
+            <div class="section-header" onclick="toggleSection(this)">
+                <div class="section-title"><i class="bi bi-check-circle"></i><h2>Aprovação e Faturamento</h2></div>
+                <i class="bi bi-chevron-down section-chevron"></i>
+            </div>
+            <div class="section-content">
+                <div class="help-flow">
+                    <h4><i class="bi bi-diagram-3"></i> Fluxo Completo de Faturamento</h4>
+                    <div class="flow-steps">
+                        <div class="flow-step"><span class="step-num">1</span><span><strong>Financeiro</strong> cria o lote selecionando período e clientes</span></div>
+                        <div class="flow-step"><span class="step-num">2</span><span><strong>Aprovador</strong> revisa os lançamentos da sua área (aprova, abona ou aplica desconto)</span></div>
+                        <div class="flow-step"><span class="step-num">3</span><span><strong>Aprovador</strong> libera a área para faturamento</span></div>
+                        <div class="flow-step"><span class="step-num">4</span><span><strong>Financeiro</strong> recebe notificação e gera Excel/Pré-fatura</span></div>
+                    </div>
+                </div>
+
+                <div class="help-screenshot">
+                    <img src="~/images/ajuda/CriacaoLotes.png" alt="Criação de Lotes" />
+                    <p class="screenshot-caption">Tela de criação de lotes pelo financeiro</p>
+                </div>
+                <div class="help-screenshot">
+                    <img src="~/images/ajuda/ListaAprovaoLotes.png" alt="Lista de Lotes" />
+                    <p class="screenshot-caption">Lista de lotes pendentes para o aprovador</p>
+                </div>
+                <div class="help-screenshot">
+                    <img src="~/images/ajuda/AprovaoLote-Revisaohonorarios.png" alt="Revisão de Lote" />
+                    <p class="screenshot-caption">Tela de revisão com botões de aprovar, abonar e desconto</p>
+                </div>
+                <div class="help-screenshot">
+                    <img src="~/images/ajuda/AprovaoLote-aprovacaoLoteenviomensagem.png" alt="Liberação de Área" />
+                    <p class="screenshot-caption">Liberação da área e envio de notificação ao financeiro</p>
+                </div>
+                <div class="help-screenshot">
+                    <img src="~/images/ajuda/Prefatura.png" alt="Pré-fatura" />
+                    <p class="screenshot-caption">Exemplo de Pré-fatura gerada pelo sistema</p>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)"><span>O que significa "Abonar"?</span><i class="bi bi-plus-lg"></i></div>
+                    <div class="faq-answer"><p><strong>Abonar</strong> = não cobrar do cliente. As horas abonadas são descontadas do valor total.</p></div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)"><span>Como aplicar desconto?</span><i class="bi bi-plus-lg"></i></div>
+                    <div class="faq-answer"><p>Clique no botão <strong>%</strong> ao lado do lançamento. Informe o percentual e a justificativa. O valor é reduzido proporcionalmente.</p></div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)"><span>Posso usar favoritos na criação de lotes?</span><i class="bi bi-plus-lg"></i></div>
+                    <div class="faq-answer"><p>Sim! Clique em <strong>"⭐ Selecionar Favoritos"</strong> para marcar rapidamente os clientes recorrentes. Gerencie a lista de favoritos clicando em "⚙ Gerenciar Favoritos".</p></div>
+                </div>
+            </div>
+        </div>
+        }
+
+        <!-- ──── RESULTADOS (só admin) ──── -->
+        @if (ViewBag.CurrentUserPerfil == WebAppSystems.Models.Enums.ProfileEnum.Admin)
+        {
+        <div class="faq-section" id="sec-resultados">
+            <div class="section-header" onclick="toggleSection(this)">
+                <div class="section-title"><i class="bi bi-trophy"></i><h2>Resultados (Rentabilidade)</h2></div>
+                <i class="bi bi-chevron-down section-chevron"></i>
+            </div>
+            <div class="section-content">
+                <div class="help-flow">
+                    <h4><i class="bi bi-bullseye"></i> Objetivo da Tela de Resultados</h4>
+                    <p style="font-size:13px;color:#4a5568;margin:0 0 12px;">A tela de Resultados oferece uma <strong>visão financeira da rentabilidade do escritório por cliente</strong>. Permite comparar o quanto o escritório investe em horas (custo) versus o quanto o cliente paga (receita), identificando se há clientes deficitários — especialmente em contratos de mensalidade.</p>
+                    <div class="flow-steps">
+                        <div class="flow-step"><span class="step-num">1</span><span>O administrador cadastra os <strong>valores de hora</strong> e <strong>percentuais por área</strong> nos parâmetros do sistema</span></div>
+                        <div class="flow-step"><span class="step-num">2</span><span>Na tela de Resultados, filtre por <strong>período, cliente e área</strong> para analisar a rentabilidade</span></div>
+                        <div class="flow-step"><span class="step-num">3</span><span>O sistema mostra se o escritório está gastando <strong>mais horas/valor</strong> do que o cliente paga — essencial para <strong>mensalistas</strong> e <strong>propostas específicas</strong></span></div>
+                    </div>
+                </div>
+
+                <div class="help-screenshot">
+                    <img src="~/images/ajuda/ResultadoFiltrosClienteArea.png" alt="Resultados - Filtros" />
+                    <p class="screenshot-caption">Filtros por período, cliente e área para análise de rentabilidade</p>
+                </div>
+                <div class="help-screenshot">
+                    <img src="~/images/ajuda/ResultadoGrafico.png" alt="Resultados - Gráfico" />
+                    <p class="screenshot-caption">Gráfico comparativo: horas gastas vs valor recebido por cliente</p>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)"><span>Para que serve a tela de Resultados?</span><i class="bi bi-plus-lg"></i></div>
+                    <div class="faq-answer">
+                        <p>Serve para responder à pergunta: <strong>"Estamos gastando mais com esse cliente do que ele nos paga?"</strong></p>
+                        <ul>
+                            <li><strong>Clientes mensalistas</strong> — verifica se as horas gastas ultrapassam o valor da mensalidade</li>
+                            <li><strong>Propostas específicas</strong> — verifica se o esforço está dentro do orçamento</li>
+                            <li><strong>Visão geral</strong> — identifica clientes rentáveis e deficitários</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)"><span>Quais parâmetros preciso configurar?</span><i class="bi bi-plus-lg"></i></div>
+                    <div class="faq-answer">
+                        <p>Em <strong>Gerenciar → Parâmetros</strong>, configure:</p>
+                        <ul>
+                            <li><strong>Valores de hora por advogado/cliente</strong> — quanto custa a hora de cada profissional para cada cliente</li>
+                            <li><strong>Percentual por área</strong> — distribuição de custos entre departamentos</li>
+                        </ul>
+                        <p>Sem esses parâmetros, o sistema não consegue calcular a rentabilidade.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)"><span>Quais filtros posso aplicar?</span><i class="bi bi-plus-lg"></i></div>
+                    <div class="faq-answer">
+                        <ul>
+                            <li><strong>Período</strong> — data início e fim da análise</li>
+                            <li><strong>Cliente</strong> — analisar um cliente específico ou todos</li>
+                            <li><strong>Área</strong> — filtrar por departamento (Cível, Tributária, Trabalhista, etc.)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        }
+
+        <!-- ──── ALERTAS POR EMAIL ──── -->
+        <div class="faq-section" id="sec-alertas">
+            <div class="section-header" onclick="toggleSection(this)">
+                <div class="section-title"><i class="bi bi-envelope-exclamation"></i><h2>Alertas por Email</h2></div>
+                <i class="bi bi-chevron-down section-chevron"></i>
+            </div>
+            <div class="section-content">
+                <div class="help-screenshot">
+                    <img src="~/images/ajuda/Email48horassemlancartemo.png" alt="Email de alerta de lançamento" />
+                    <p class="screenshot-caption">Exemplo de email recebido pelo colaborador após 48 horas sem lançamentos</p>
+                </div>
+
+                <div class="help-flow">
+                    <h4><i class="bi bi-bell"></i> Como funcionam os alertas automáticos</h4>
+                    <p style="font-size:13px;color:#4a5568;margin:0 0 12px;">O sistema monitora automaticamente os lançamentos de todos os colaboradores. Quando um usuário fica <strong>mais de 48 horas</strong> sem registrar atividades, o sistema envia um email de lembrete.</p>
+                    <div class="flow-steps">
+                        <div class="flow-step"><span class="step-num">1</span><span>O sistema verifica diariamente (às 8h) quem está sem lançar há mais de 48 horas</span></div>
+                        <div class="flow-step"><span class="step-num">2</span><span>O colaborador recebe um <strong>email de lembrete</strong> informando a data do último lançamento e os dias pendentes</span></div>
+                        <div class="flow-step"><span class="step-num">3</span><span>O <strong>Gestor da Área</strong> recebe uma cópia (CC) do mesmo email, permitindo o acompanhamento da equipe</span></div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)"><span>Quem recebe os alertas?</span><i class="bi bi-plus-lg"></i></div>
+                    <div class="faq-answer">
+                        <p>Apenas colaboradores de <strong>áreas que possuem um Gestor cadastrado</strong>. Se a área não tem gestor configurado, nenhum email é enviado para os membros daquela área.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)"><span>Posso desativar os alertas?</span><i class="bi bi-plus-lg"></i></div>
+                    <div class="faq-answer">
+                        <p>Os alertas são controlados pela configuração de <strong>Gestor de Área</strong>. Se o administrador não marcar nenhum usuário como gestor de uma área, os membros daquela área não receberão alertas.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ──── CONFIGURAÇÕES DE USUÁRIO (só admin) ──── -->
+        @if (ViewBag.CurrentUserPerfil == WebAppSystems.Models.Enums.ProfileEnum.Admin)
+        {
+        <div class="faq-section" id="sec-config-usuario">
+            <div class="section-header" onclick="toggleSection(this)">
+                <div class="section-title"><i class="bi bi-person-gear"></i><h2>Configurações de Usuário</h2></div>
+                <i class="bi bi-chevron-down section-chevron"></i>
+            </div>
+            <div class="section-content">
+                <div class="help-screenshot">
+                    <img src="~/images/ajuda/ConfiguraçõesUsuarios.png" alt="Configurações de Usuário" />
+                    <p class="screenshot-caption">Painel de configurações disponíveis no cadastro de cada usuário</p>
+                </div>
+
+                <p style="font-size:14px;color:#4a5568;line-height:1.7;margin-bottom:20px;">
+                    As configurações abaixo são definidas pelo administrador no cadastro de cada usuário e controlam permissões e comportamentos específicos no sistema.
+                </p>
+
+                <div class="config-grid">
+                    <div class="config-card">
+                        <div class="config-icon" style="background:#f0fdf4;color:#166534;"><i class="bi bi-person-check-fill"></i></div>
+                        <div class="config-info">
+                            <h5>Gestor de Área</h5>
+                            <p>Quando marcado, o usuário é definido como gestor da sua área. Todos os colaboradores da mesma área que ficarem mais de 48 horas sem lançar horas receberão um email de alerta, com <strong>cópia (CC) para o gestor</strong>. Isso permite o acompanhamento e gestão da equipe.</p>
+                        </div>
+                    </div>
+                    <div class="config-card">
+                        <div class="config-icon" style="background:#ede9fe;color:#5b21b6;"><i class="bi bi-cash-stack"></i></div>
+                        <div class="config-info">
+                            <h5>Financeiro</h5>
+                            <p>Ao habilitar esta opção, o usuário terá acesso à funcionalidade de <strong>criação de lotes financeiros</strong> para faturamento de clientes. Apenas administradores podem ativar esta permissão. O usuário financeiro poderá criar lotes, gerar Excel e pré-faturas.</p>
+                        </div>
+                    </div>
+                    <div class="config-card">
+                        <div class="config-icon" style="background:#d1fae5;color:#065f46;"><i class="bi bi-check-circle"></i></div>
+                        <div class="config-info">
+                            <h5>Aprovador</h5>
+                            <p>Ao ativar esta opção, o usuário poderá <strong>revisar, aprovar, abonar e editar lançamentos</strong> dos demais colaboradores da sua área dentro dos lotes de faturamento. O aprovador é responsável pela validação das horas antes do envio ao cliente.</p>
+                        </div>
+                    </div>
+                    <div class="config-card">
+                        <div class="config-icon" style="background:#e0e7ff;color:#4338ca;"><i class="bi bi-pin-angle"></i></div>
+                        <div class="config-info">
+                            <h5>Cronômetro Always on Top</h5>
+                            <p>Quando ativado, o cronômetro do Time Tracker permanece <strong>visível em formato flutuante</strong> no canto da tela, mesmo ao navegar por outras páginas do sistema. Permite acompanhar o tempo sem precisar voltar à tela do Time Tracker.</p>
+                        </div>
+                    </div>
+                    <div class="config-card">
+                        <div class="config-icon" style="background:#fee2e2;color:#991b1b;"><i class="bi bi-person-x"></i></div>
+                        <div class="config-info">
+                            <h5>Usuário Inativo</h5>
+                            <p>Desativa <strong>apenas o acesso ao sistema</strong> — o usuário não conseguirá fazer login. Todos os registros de lançamentos e histórico permanecem preservados na base de dados para consultas e relatórios.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        }
+
+        <!-- ──── DÚVIDAS GERAIS ──── -->
+        <div class="faq-section" id="sec-geral">
+            <div class="section-header" onclick="toggleSection(this)">
+                <div class="section-title"><i class="bi bi-info-circle"></i><h2>Dúvidas Gerais</h2></div>
+                <i class="bi bi-chevron-down section-chevron"></i>
+            </div>
+            <div class="section-content">
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)"><span>Recebo alertas de lançamentos pendentes?</span><i class="bi bi-plus-lg"></i></div>
+                    <div class="faq-answer"><p>Sim. Se ficar mais de 48 horas sem lançar, você recebe um email com os dias pendentes. O gestor da sua área é copiado.</p></div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)"><span>O que é o campo "Solicitante"?</span><i class="bi bi-plus-lg"></i></div>
+                    <div class="faq-answer"><p>É a pessoa do cliente que solicitou o trabalho. Ajuda a identificar quem demandou a atividade. Se o cliente tiver um solicitante padrão, ele é preenchido automaticamente.</p></div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)"><span>Como entrar em contato com o suporte?</span><i class="bi bi-plus-lg"></i></div>
+                    <div class="faq-answer"><p>Entre em contato com o administrador do sistema ou envie um email para o suporte técnico.</p></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    .ajuda-container { max-width: 920px; margin: 0 auto; padding: 20px; }
+
+    .ajuda-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; padding: 28px 32px; margin-bottom: 24px; box-shadow: 0 6px 25px rgba(102,126,234,0.25); }
+    .header-content { display: flex; align-items: center; gap: 16px; }
+    .header-icon { width: 50px; height: 50px; background: rgba(255,255,255,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: white; }
+    .header-text h1 { font-size: 22px; font-weight: 700; color: white; margin: 0 0 4px; }
+    .header-text p { font-size: 14px; color: rgba(255,255,255,0.9); margin: 0; }
+
+    .ajuda-search { background: white; border-radius: 10px; padding: 14px 20px; margin-bottom: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 12px; }
+
+    .fluxo-sistema { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
+    .fluxo-visual { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
+    .fluxo-etapa { text-align: center; min-width: 110px; }
+    .fluxo-icone { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin: 0 auto 8px; }
+    .fluxo-label { font-size: 13px; font-weight: 600; color: #2d3748; }
+    .fluxo-desc { font-size: 11px; color: #718096; margin-top: 2px; max-width: 120px; margin-left: auto; margin-right: auto; }
+    .fluxo-seta { color: #a0aec0; font-size: 18px; }
+    @@media (max-width: 768px) { .fluxo-visual { flex-direction: column; } .fluxo-seta { transform: rotate(90deg); } }
+    .ajuda-search i { color: #a0aec0; font-size: 18px; }
+    .ajuda-search input { border: none; outline: none; flex: 1; font-size: 15px; color: #2d3748; }
+    .ajuda-search input::placeholder { color: #cbd5e0; }
+
+    .nav-rapida { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+    .nav-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: white; color: #4a5568; border-radius: 8px; font-size: 12px; font-weight: 600; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: all 0.2s; }
+    .nav-btn:hover { background: #667eea; color: white; transform: translateY(-1px); }
+    .nav-btn i { font-size: 14px; }
+
+    .faq-sections { display: grid; gap: 16px; }
+    .faq-section { background: white; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); overflow: hidden; }
+    .section-header { padding: 18px 24px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; }
+    .section-header:hover { background: #f7fafc; }
+    .section-title { display: flex; align-items: center; gap: 12px; }
+    .section-title i { font-size: 22px; color: #667eea; }
+    .section-title h2 { font-size: 16px; font-weight: 600; color: #2d3748; margin: 0; }
+    .section-chevron { color: #a0aec0; transition: transform 0.3s; }
+    .section-header.active .section-chevron { transform: rotate(180deg); }
+    .section-content { display: none; padding: 0 24px 24px; }
+    .section-content.active { display: block; }
+
+    .faq-item { border-bottom: 1px solid #f0f4f8; }
+    .faq-item:last-child { border-bottom: none; }
+    .faq-question { padding: 14px 0; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 500; color: #4a5568; transition: color 0.2s; }
+    .faq-question:hover { color: #667eea; }
+    .faq-question i { color: #a0aec0; transition: transform 0.3s; font-size: 14px; }
+    .faq-question.active i { transform: rotate(45deg); color: #667eea; }
+    .faq-answer { display: none; padding: 0 0 14px; }
+    .faq-answer.active { display: block; }
+    .faq-answer p, .faq-answer li { font-size: 14px; color: #4a5568; line-height: 1.7; }
+    .faq-answer ul { margin: 8px 0; padding-left: 20px; }
+
+    /* Screenshots */
+    .help-screenshot { margin: 16px 0; text-align: center; }
+    .help-screenshot img { max-width: 100%; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+    .screenshot-caption { font-size: 12px; color: #718096; margin-top: 8px; font-style: italic; }
+
+    /* Fluxo */
+    .help-flow { margin: 20px 0; padding: 20px; background: #f0f4ff; border-radius: 10px; border: 1px solid #c7d2fe; }
+    .help-flow h4 { font-size: 14px; font-weight: 600; color: #3730a3; margin: 0 0 14px; display: flex; align-items: center; gap: 8px; }
+    .flow-steps { display: grid; gap: 10px; }
+    .flow-step { display: flex; align-items: center; gap: 12px; font-size: 13px; color: #4a5568; }
+    .step-num { width: 26px; height: 26px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+
+    /* Config cards */
+    .config-grid { display: grid; gap: 14px; }
+    .config-card { display: flex; gap: 14px; padding: 16px; background: #f7fafc; border-radius: 10px; border: 1px solid #e2e8f0; }
+    .config-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    .config-info h5 { font-size: 14px; font-weight: 600; color: #2d3748; margin: 0 0 6px; }
+    .config-info p { font-size: 13px; color: #4a5568; line-height: 1.6; margin: 0; }
+</style>
+
+<script>
+    function toggleSection(el) {
+        el.classList.toggle('active');
+        el.nextElementSibling.classList.toggle('active');
+    }
+    function toggleFaq(el) {
+        el.classList.toggle('active');
+        el.nextElementSibling.classList.toggle('active');
+    }
+    function navegar(event, secId) {
+        event.preventDefault();
+        var section = document.getElementById(secId);
+        if (!section) return;
+        var header = section.querySelector('.section-header');
+        var content = section.querySelector('.section-content');
+        if (header && content && !content.classList.contains('active')) {
+            header.classList.add('active');
+            content.classList.add('active');
+        }
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    function filtrarFaq() {
+        var termo = document.getElementById('searchFaq').value.toLowerCase();
+        document.querySelectorAll('.faq-item').forEach(function(item) {
+            item.style.display = item.textContent.toLowerCase().includes(termo) ? '' : 'none';
+        });
+        if (termo.length > 0) {
+            document.querySelectorAll('.faq-section').forEach(function(s) {
+                var temResultado = s.querySelector('.faq-item:not([style*="display: none"])');
+                if (temResultado) { s.querySelector('.section-header').classList.add('active'); s.querySelector('.section-content').classList.add('active'); }
+            });
+        }
+    }
+</script>

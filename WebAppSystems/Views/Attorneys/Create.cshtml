@@ -31,14 +31,6 @@
                     <span asp-validation-for="Attorney.Email" class="text-danger"></span>
                 </div>
                 <div class="form-field">
-                    <label asp-for="Attorney.BirthDate">Data de Nascimento</label>
-                    <input asp-for="Attorney.BirthDate" class="form-control" type="date" />
-                </div>
-                <div class="form-field">
-                    <label asp-for="Attorney.Phone">Telefone</label>
-                    <input asp-for="Attorney.Phone" class="form-control" />
-                </div>
-                <div class="form-field">
                     <label asp-for="Attorney.DepartmentId">Área</label>
                     <select asp-for="Attorney.DepartmentId" asp-items="@(new SelectList(Model.Departments,"Id","Name"))" class="form-control"></select>
                 </div>
@@ -108,14 +100,19 @@
                     
                     <input type="hidden" asp-for="Attorney.IsFinanceiro" id="hiddenIsFinanceiro" value="false" />
                     <input type="hidden" asp-for="Attorney.IsAprovador" id="hiddenIsAprovador" value="false" />
+
+                    <!-- Gestor de Área -->
+                    <div style="margin-top:16px; padding:14px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; display:flex; align-items:center; gap:12px;">
+                        <input type="checkbox" asp-for="Attorney.IsGestor" id="isGestorCreate" class="form-check-input" style="width:18px;height:18px;cursor:pointer;">
+                        <label for="isGestorCreate" style="cursor:pointer;margin:0;">
+                            <strong style="font-size:14px;color:#166534;"><i class="bi bi-person-check-fill"></i> Gestor de Área</strong>
+                            <div style="font-size:12px;color:#4ade80;">Recebe alertas quando membros da equipe estão sem lançamentos</div>
+                        </label>
+                    </div>
                 </div>
             }
 
             <div class="form-checks">
-                <label class="check-item">
-                    <input type="checkbox" asp-for="Attorney.UseBorder" />
-                    <span>Utiliza borda</span>
-                </label>
                 <label class="check-item">
                     <input type="checkbox" asp-for="Attorney.UseCronometroAlwaysOnTop" />
                     <span>Cronômetro Always on Top</span>

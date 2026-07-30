@@ -17,8 +17,7 @@ namespace WebAppSystems.Models
         [DataType(DataType.EmailAddress)]
         public string Email { get; set; }
 
-        [Required(ErrorMessage = "{0} required")]
-        public string Phone { get; set; }
+        public string? Phone { get; set; }
 
         [Display(Name = "Data de Nascimento")]
         [DataType(DataType.Date)]
@@ -39,6 +38,7 @@ namespace WebAppSystems.Models
         // Flags para fluxo de aprovação de faturamento (mutuamente exclusivas)
         public bool IsFinanceiro { get; set; } = false;
         public bool IsAprovador { get; set; } = false;
+        public bool IsGestor { get; set; } = false;
         
         public Attorney()
         {

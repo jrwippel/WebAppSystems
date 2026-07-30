@@ -60,26 +60,6 @@
         <div class="details-grid">
             <div class="detail-item">
                 <div class="detail-icon">
-                    <i class="bi bi-calendar3"></i>
-                </div>
-                <div class="detail-content">
-                    <label>Data de Nascimento</label>
-                    <span>@Model.BirthDate.ToString("dd/MM/yyyy")</span>
-                </div>
-            </div>
-
-            <div class="detail-item">
-                <div class="detail-icon">
-                    <i class="bi bi-telephone"></i>
-                </div>
-                <div class="detail-content">
-                    <label>Telefone</label>
-                    <span>@Model.Phone</span>
-                </div>
-            </div>
-
-            <div class="detail-item">
-                <div class="detail-icon">
                     <i class="bi bi-building"></i>
                 </div>
                 <div class="detail-content">
@@ -105,11 +85,6 @@
                 Preferências
             </h3>
             <div class="preferences-grid">
-                <div class="preference-item">
-                    <i class="bi bi-@(Model.UseBorder ? "check-circle-fill" : "x-circle-fill")"></i>
-                    <span>Utiliza Borda</span>
-                    <span class="preference-value">@(Model.UseBorder ? "Sim" : "Não")</span>
-                </div>
                 <div class="preference-item">
                     <i class="bi bi-@(Model.UseCronometroAlwaysOnTop ? "check-circle-fill" : "x-circle-fill")"></i>
                     <span>Cronômetro Always on Top</span>

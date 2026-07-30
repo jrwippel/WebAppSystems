@@ -196,37 +196,44 @@ namespace WebAppSystems.Services
         public ChartData GetChartData()
         {
             var m = DateTime.Now.Month; var y = DateTime.Now.Year;
+
             var clientHours = _context.ProcessRecord
                .Where(pr => pr.Date.Month == m && pr.Date.Year == y && pr.HoraFinal != TimeSpan.Zero)
-               .ToList().GroupBy(pr => pr.ClientId)
-               .Select(g => new { ClientId = g.Key, TotalHours = g.Sum(pr => (pr.HoraFinal - pr.HoraInicial).TotalHours) })
+               .Join(_context.Client.Where(c => !c.ClienteInterno),
+                     pr => pr.ClientId, c => c.Id,
+                     (pr, c) => new { c.Name, pr.HoraInicial, pr.HoraFinal })
+               .AsEnumerable()
+               .GroupBy(x => x.Name)
+               .Select(g => new { ClientName = g.Key, TotalHours = g.Sum(x => (x.HoraFinal - x.HoraInicial).TotalHours) })
+               .OrderByDescending(x => x.TotalHours)
                .ToList();
 
-            var clientNames = new List<string>(); var clientValues = new List<double>();
-            foreach (var item in clientHours)
+            return new ChartData
             {
-                var client = _context.Client.FirstOrDefault(c => c.Id == item.ClientId && !c.ClienteInterno);
-                if (client != null) { clientNames.Add(client.Name); clientValues.Add(Math.Round(item.TotalHours, 2)); }
-            }
-            return new ChartData { ClientNames = clientNames, ClientValues = clientValues };
+                ClientNames = clientHours.Select(x => x.ClientName).ToList(),
+                ClientValues = clientHours.Select(x => Math.Round(x.TotalHours, 2)).ToList()
+            };
         }
 
         public ChartData GetChartDataByArea()
         {
             var m = DateTime.Now.Month; var y = DateTime.Now.Year;
+
             var areaHours = _context.ProcessRecord
                 .Where(pr => pr.Date.Month == m && pr.Date.Year == y && pr.HoraFinal != TimeSpan.Zero)
-                .ToList().GroupBy(pr => pr.DepartmentId)
-                .Select(g => new { AreaId = g.Key, TotalHours = g.Sum(pr => (pr.HoraFinal - pr.HoraInicial).TotalHours) })
+                .Join(_context.Department, pr => pr.DepartmentId, d => d.Id,
+                      (pr, d) => new { d.Name, pr.HoraInicial, pr.HoraFinal })
+                .AsEnumerable()
+                .GroupBy(x => x.Name)
+                .Select(g => new { AreaName = g.Key, TotalHours = g.Sum(x => (x.HoraFinal - x.HoraInicial).TotalHours) })
+                .OrderByDescending(x => x.TotalHours)
                 .ToList();
 
-            var areaNames = new List<string>(); var areaValues = new List<double>();
-            foreach (var item in areaHours)
+            return new ChartData
             {
-                var area = _context.Department.FirstOrDefault(d => d.Id == item.AreaId);
-                if (area != null) { areaNames.Add(area.Name); areaValues.Add(Math.Round(item.TotalHours, 2)); }
-            }
-            return new ChartData { ClientNames = areaNames, ClientValues = areaValues };
+                ClientNames = areaHours.Select(x => x.AreaName).ToList(),
+                ClientValues = areaHours.Select(x => Math.Round(x.TotalHours, 2)).ToList()
+            };
         }
 
         public ChartData GetChartDataByRecordType()
@@ -234,7 +241,8 @@ namespace WebAppSystems.Services
             var m = DateTime.Now.Month; var y = DateTime.Now.Year;
             var data = _context.ProcessRecord
                 .Where(pr => pr.Date.Month == m && pr.Date.Year == y && pr.HoraFinal != TimeSpan.Zero)
-                .ToList().GroupBy(pr => pr.RecordType)
+                .AsEnumerable()
+                .GroupBy(pr => pr.RecordType)
                 .Select(g => new { RecordType = g.Key, TotalHours = g.Sum(pr => (pr.HoraFinal - pr.HoraInicial).TotalHours) })
                 .ToList();
 
@@ -252,32 +260,48 @@ namespace WebAppSystems.Services
 
             if (period == "day")
             {
+                var from = now.AddDays(-29).Date;
+                var records = _context.ProcessRecord
+                    .Where(pr => pr.Date.Date >= from && pr.HoraFinal != TimeSpan.Zero)
+                    .Select(pr => new { pr.Date, pr.HoraInicial, pr.HoraFinal })
+                    .AsEnumerable().ToList();
+
                 for (int i = 29; i >= 0; i--)
                 {
-                    var date = now.AddDays(-i);
-                    var hours = _context.ProcessRecord.Where(pr => pr.Date.Date == date.Date && pr.HoraFinal != TimeSpan.Zero)
-                        .ToList().Sum(pr => (pr.HoraFinal - pr.HoraInicial).TotalHours);
+                    var date = now.AddDays(-i).Date;
+                    var hours = records.Where(pr => pr.Date.Date == date).Sum(pr => (pr.HoraFinal - pr.HoraInicial).TotalHours);
                     labels.Add(date.ToString("dd/MM")); values.Add(Math.Round(hours, 2));
                 }
             }
             else if (period == "week")
             {
+                var from = now.AddDays(-11 * 7 - (int)now.DayOfWeek).Date;
+                var records = _context.ProcessRecord
+                    .Where(pr => pr.Date.Date >= from && pr.HoraFinal != TimeSpan.Zero)
+                    .Select(pr => new { pr.Date, pr.HoraInicial, pr.HoraFinal })
+                    .AsEnumerable().ToList();
+
                 for (int i = 11; i >= 0; i--)
                 {
-                    var start = now.AddDays(-i * 7 - (int)now.DayOfWeek);
+                    var start = now.AddDays(-i * 7 - (int)now.DayOfWeek).Date;
                     var end = start.AddDays(6);
-                    var hours = _context.ProcessRecord.Where(pr => pr.Date >= start && pr.Date <= end && pr.HoraFinal != TimeSpan.Zero)
-                        .ToList().Sum(pr => (pr.HoraFinal - pr.HoraInicial).TotalHours);
+                    var hours = records.Where(pr => pr.Date.Date >= start && pr.Date.Date <= end).Sum(pr => (pr.HoraFinal - pr.HoraInicial).TotalHours);
                     labels.Add("Sem " + (12 - i)); values.Add(Math.Round(hours, 2));
                 }
             }
             else
             {
+                var from = now.AddMonths(-11);
+                var fromDate = new DateTime(from.Year, from.Month, 1);
+                var records = _context.ProcessRecord
+                    .Where(pr => pr.Date >= fromDate && pr.HoraFinal != TimeSpan.Zero)
+                    .Select(pr => new { pr.Date, pr.HoraInicial, pr.HoraFinal })
+                    .AsEnumerable().ToList();
+
                 for (int i = 11; i >= 0; i--)
                 {
                     var date = now.AddMonths(-i);
-                    var hours = _context.ProcessRecord.Where(pr => pr.Date.Month == date.Month && pr.Date.Year == date.Year && pr.HoraFinal != TimeSpan.Zero)
-                        .ToList().Sum(pr => (pr.HoraFinal - pr.HoraInicial).TotalHours);
+                    var hours = records.Where(pr => pr.Date.Month == date.Month && pr.Date.Year == date.Year).Sum(pr => (pr.HoraFinal - pr.HoraInicial).TotalHours);
                     labels.Add(date.ToString("MMM/yy")); values.Add(Math.Round(hours, 2));
                 }
             }

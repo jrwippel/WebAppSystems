@@ -14,7 +14,7 @@ namespace WebAppSystems.Helper
             _configuration = configuration;
         }
 
-        public async Task<bool> EnviarAsync(string email, string assunto, string mensagem, string anexoPath = null, string htmlBody = null)
+        public async Task<bool> EnviarAsync(string email, string assunto, string mensagem, string anexoPath = null, string htmlBody = null, string emailCc = null)
         {
             try
             {
@@ -23,6 +23,11 @@ namespace WebAppSystems.Helper
 
                 var emailClient = new EmailClient(connectionString);
 
+                var recipients = new EmailRecipients(
+                    to: new List<EmailAddress> { new EmailAddress(email) },
+                    cc: !string.IsNullOrEmpty(emailCc) ? new List<EmailAddress> { new EmailAddress(emailCc) } : null
+                );
+
                 var emailMessage = new EmailMessage(
                     senderAddress: senderAddress,
                     content: new EmailContent(assunto)
@@ -30,7 +35,7 @@ namespace WebAppSystems.Helper
                         PlainText = mensagem,
                         Html = htmlBody ?? $@"<html><body><h1>{assunto}</h1><p>{mensagem}</p></body></html>"
                     },
-                    recipients: new EmailRecipients(new List<EmailAddress> { new EmailAddress(email) })
+                    recipients: recipients
                 );
 
                 if (!string.IsNullOrEmpty(anexoPath))

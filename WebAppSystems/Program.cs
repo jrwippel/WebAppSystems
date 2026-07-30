@@ -63,7 +63,7 @@ namespace WebAppSystems
                 o.Cookie.IsEssential = true;
                 o.Cookie.SecurePolicy = CookieSecurePolicy.Always;
                 o.Cookie.SameSite = SameSiteMode.Strict;
-                o.IdleTimeout = TimeSpan.FromMinutes(60);
+                o.IdleTimeout = TimeSpan.FromMinutes(240);
             });
 
             builder.Services.AddControllersWithViews();
@@ -102,6 +102,9 @@ namespace WebAppSystems
 
             // Registra o serviço KeepAlive
             builder.Services.AddHostedService<KeepAliveService>();
+
+            // Registra o serviço de alertas de lançamento (roda diariamente às 8h)
+            builder.Services.AddHostedService<AlertaLancamentoService>();
 
             var app = builder.Build();
 
@@ -151,6 +154,17 @@ namespace WebAppSystems
                         )
                         BEGIN
                             ALTER TABLE [dbo].[ValorCliente] ALTER COLUMN [AttorneyId] INT NULL;
+                        END
+                    ");
+
+                    // Garante que a coluna IsGestor existe na tabela Attorney
+                    myDbContext.Database.ExecuteSqlRaw(@"
+                        IF NOT EXISTS (
+                            SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+                            WHERE TABLE_NAME = 'Attorney' AND COLUMN_NAME = 'IsGestor'
+                        )
+                        BEGIN
+                            ALTER TABLE [dbo].[Attorney] ADD [IsGestor] BIT NOT NULL DEFAULT 0;
                         END
                     ");
                 }

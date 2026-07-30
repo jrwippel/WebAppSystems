@@ -63,7 +63,6 @@ namespace WebAppSystems.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Attorney attorney) 
         {
-
             Attorney usuario = _isessao.BuscarSessaoDoUsuario();
             ViewBag.LoggedUserId = usuario.Id;
             ViewBag.CurrentUserPerfil = usuario.Perfil;
@@ -77,13 +76,9 @@ namespace WebAppSystems.Controllers
                 return View(viewModel);
             }
 
-            if (ModelState.IsValid)
-            {
-   
-                var departments = await _departmentService.FindAllAsync();
-                var viewModel = new AttorneyFormViewModel { Attorney = attorney, Departments = departments };
-                return View(viewModel);
-            }
+            // Garantir valores padrão para campos removidos do formulário
+            attorney.Phone = attorney.Phone ?? string.Empty;
+            if (attorney.BirthDate == default) attorney.BirthDate = new DateTime(1900, 1, 1);
 
             await _attorneyService.InsertAsync(attorney);
             return RedirectToAction(nameof(Index));
@@ -173,18 +168,15 @@ namespace WebAppSystems.Controllers
                 return View(viewModel);
             }
 
-
-            if (ModelState.IsValid)
-            {
-                var departments = await _departmentService.FindAllAsync();
-                var viewModel = new AttorneyFormViewModel { Attorney = attorney, Departments = departments };
-                return View(viewModel);
-            }
-
             if (id != attorney.Id) 
             { 
                 return RedirectToAction(nameof(Error), new { message = "Id not mismatch" });
             }
+
+            // Garantir valores padrão para campos removidos do formulário
+            attorney.Phone = attorney.Phone ?? string.Empty;
+            if (attorney.BirthDate == default) attorney.BirthDate = new DateTime(1900, 1, 1);
+
             try
             {                
                 await _attorneyService.UpdateAsync(attorney);

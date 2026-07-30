@@ -119,15 +119,41 @@ namespace WebAppSystems.Controllers
 
         
         // POST: Clients/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        //public async Task<IActionResult> Create(Client client, IFormFile image)
-        public async Task<IActionResult> Create(int id, [Bind("Id,Name,Document,Email,Telephone,ImageData,ImageMimeType,Solicitante,ClienteInterno, ClienteInativo")] Client client, IFormFile imageData)
+        public async Task<IActionResult> Create(int id, [Bind("Id,Name,Document,Email,Telephone,ImageData,ImageMimeType,Solicitante,ClienteInterno, ClienteInativo")] Client client, IFormFile imageData, bool forcar = false)
         {
-            //if (ModelState.IsValid)
-            //{
+            // Normalizar nome para Title Case (primeira letra de cada palavra em maiúscula)
+            if (!string.IsNullOrWhiteSpace(client.Name))
+                client.Name = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(client.Name.Trim().ToLower());
+            // Verificar duplicidade pelo nome — só bloqueia se não foi confirmado pelo usuário
+            if (!forcar)
+            {
+                var nomeNorm = NormalizarNome(client.Name);
+                var todos = await _context.Client.Select(c => new { c.Id, c.Name }).ToListAsync();
+                var clienteDuplicado = todos.FirstOrDefault(c => NormalizarNome(c.Name) == nomeNorm);
+                if (clienteDuplicado != null)
+                {
+                    ViewBag.AlertaDuplicado = $"Já existe um cliente cadastrado com o nome \"{clienteDuplicado.Name}\". Deseja cadastrar mesmo assim?";
+                    return View(client);
+                }
+
+                // Verificar duplicidade pelo Documento (CPF/CNPJ) — BLOQUEIA, não permite prosseguir
+                if (!string.IsNullOrWhiteSpace(client.Document))
+                {
+                    var docLimpo = new string(client.Document.Where(char.IsDigit).ToArray());
+                    if (docLimpo.Length >= 11) // CPF ou CNPJ
+                    {
+                        var clienteDocDuplicado = await _context.Client
+                            .FirstOrDefaultAsync(c => c.Document != null && c.Document.Replace(".", "").Replace("-", "").Replace("/", "").Replace(" ", "") == docLimpo);
+                        if (clienteDocDuplicado != null)
+                        {
+                            ViewBag.ErroDuplicado = $"Não é possível cadastrar. Já existe um cliente com o documento informado: \"{clienteDocDuplicado.Name}\" ({clienteDocDuplicado.Document}).";
+                            return View(client);
+                        }
+                    }
+                }
+            }
 
             if (client.ImageData == null && imageData == null)
             {
@@ -304,6 +330,20 @@ namespace WebAppSystems.Controllers
             return NotFound(); // Retorna NotFound se o cliente não for encontrado
         }
 
+        // Normaliza string removendo acentos para comparação de duplicidade
+        private static string NormalizarNome(string nome)
+        {
+            if (string.IsNullOrEmpty(nome)) return string.Empty;
+            var normalized = nome.Trim().ToLower();
+            var sb = new System.Text.StringBuilder();
+            foreach (var c in normalized.Normalize(System.Text.NormalizationForm.FormD))
+            {
+                if (System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c) != System.Globalization.UnicodeCategory.NonSpacingMark)
+                    sb.Append(c);
+            }
+            return sb.ToString().Normalize(System.Text.NormalizationForm.FormC);
+        }
+
         private bool ClientExists(int id)
         {
           return (_context.Client?.Any(e => e.Id == id)).GetValueOrDefault();
@@ -311,12 +351,35 @@ namespace WebAppSystems.Controllers
 
         // POST: Clients/CreateCliente
         [HttpPost]
-        public async Task<IActionResult> CreateCliente([Bind("Name,Document,Email,Telephone,ImageData,ImageMimeType,Solicitante,ClienteInterno")] Client client, IFormFile imageData)
+        public async Task<IActionResult> CreateCliente([Bind("Name,Document,Email,Telephone,ImageData,ImageMimeType,Solicitante,ClienteInterno")] Client client, IFormFile imageData, bool forcar = false)
         {
+            // Normalizar nome para Title Case
+            if (!string.IsNullOrWhiteSpace(client.Name))
+                client.Name = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(client.Name.Trim().ToLower());
+            // Verificar duplicidade — avisa mas permite continuar se forcar=true
+            if (!forcar)
+            {
+                var nomeNorm = NormalizarNome(client.Name);
+                var todos = await _context.Client.Select(c => new { c.Id, c.Name }).ToListAsync();
+                var clienteDuplicado = todos.FirstOrDefault(c => NormalizarNome(c.Name) == nomeNorm);
+                if (clienteDuplicado != null)
+                    return Json(new { success = false, duplicado = true, message = $"Já existe um cliente cadastrado com o nome \"{clienteDuplicado.Name}\". Deseja cadastrar mesmo assim?" });
 
-            //if (ModelState.IsValid)
-            //{
-                if (client.ImageData == null && imageData == null)
+                // Verificar duplicidade pelo Documento (CPF/CNPJ) — BLOQUEIA
+                if (!string.IsNullOrWhiteSpace(client.Document))
+                {
+                    var docLimpo = new string(client.Document.Where(char.IsDigit).ToArray());
+                    if (docLimpo.Length >= 11)
+                    {
+                        var allDocs = await _context.Client.Where(c => c.Document != null).Select(c => new { c.Id, c.Name, c.Document }).ToListAsync();
+                        var clienteDocDup = allDocs.FirstOrDefault(c => new string(c.Document.Where(char.IsDigit).ToArray()) == docLimpo);
+                        if (clienteDocDup != null)
+                            return Json(new { success = false, message = $"Não é possível cadastrar. Já existe um cliente com o documento informado: \"{clienteDocDup.Name}\" ({clienteDocDup.Document})." });
+                    }
+                }
+            }
+
+            if (client.ImageData == null && imageData == null)
                 {
                     // Caminho da imagem padrão no sistema de arquivos
                     string defaultImagePath = Path.Combine(_webHostEnvironment.WebRootPath, "images", "default-image.jpg");
