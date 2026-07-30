@@ -204,10 +204,10 @@
             <!-- Por Cliente -->
             <div class="table-card">
                 <div class="table-card-header">
-                    <h5><i class="bi bi-briefcase"></i> Por Cliente</h5>
+                    <h5><i class="bi bi-briefcase"></i> Por Cliente <span class="badge-count">@Model.PorCliente.Count</span></h5>
                 </div>
                 <div class="table-card-body">
-                    <table class="pivot-table">
+                    <table class="pivot-table" id="tabelaClientes">
                         <thead>
                             <tr>
                                 <th>Cliente</th>
@@ -217,9 +217,10 @@
                             </tr>
                         </thead>
                         <tbody>
+                            @{ var indexCli = 0; }
                             @foreach (var cli in Model.PorCliente)
                             {
-                                <tr class="expandable-row" onclick="toggleSubRows(this)">
+                                <tr class="expandable-row @(indexCli >= 10 ? "cliente-extra" : "")" onclick="toggleSubRows(this)" style="@(indexCli >= 10 ? "display:none;" : "")">
                                     <td>
                                         <i class="bi bi-chevron-right expand-icon"></i>
                                         <strong>@cli.Nome</strong>
@@ -235,16 +236,25 @@
                                 </tr>
                                 @foreach (var adv in cli.Advogados)
                                 {
-                                    <tr class="sub-row" style="display:none;">
+                                    <tr class="sub-row @(indexCli >= 10 ? "cliente-extra" : "")" style="display:none;">
                                         <td class="sub-cell">↳ @adv.Nome</td>
                                         <td>@adv.TotalHoras.ToString("N1")</td>
                                         <td>@adv.QuantidadeAtividades</td>
                                         <td></td>
                                     </tr>
                                 }
+                                indexCli++;
                             }
                         </tbody>
                     </table>
+                    @if (Model.PorCliente.Count > 10)
+                    {
+                        <div class="ver-todos-wrapper" id="verTodosClientesWrapper">
+                            <button type="button" class="btn-ver-todos" onclick="mostrarTodosClientes()">
+                                <i class="bi bi-chevron-down"></i> Ver todos (@Model.PorCliente.Count clientes)
+                            </button>
+                        </div>
+                    }
                 </div>
             </div>
         </div>
@@ -737,6 +747,67 @@
         min-width: 32px;
     }
 
+    /* Ver Todos / Scroll */
+    .ver-todos-wrapper {
+        padding: 12px 20px;
+        text-align: center;
+        border-top: 1px solid #f0f0f0;
+    }
+
+    .btn-ver-todos {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 20px;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(118, 75, 162, 0.08));
+        color: #667eea;
+        border: 1px solid rgba(102, 126, 234, 0.2);
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .btn-ver-todos:hover {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15));
+        border-color: #667eea;
+        transform: translateY(-1px);
+    }
+
+    .table-card-body.scrollable {
+        max-height: 500px;
+        overflow-y: auto;
+    }
+
+    .table-card-body.scrollable::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .table-card-body.scrollable::-webkit-scrollbar-track {
+        background: #f7fafc;
+        border-radius: 3px;
+    }
+
+    .table-card-body.scrollable::-webkit-scrollbar-thumb {
+        background: #cbd5e0;
+        border-radius: 3px;
+    }
+
+    .table-card-body.scrollable::-webkit-scrollbar-thumb:hover {
+        background: #a0aec0;
+    }
+
+    .badge-count {
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 600;
+        margin-left: 8px;
+    }
+
     /* Empty State */
     .empty-state {
         text-align: center;
@@ -936,6 +1007,18 @@
                 next.style.display = isExpanding ? '' : 'none';
                 next = next.nextElementSibling;
             }
+        }
+
+        function mostrarTodosClientes() {
+            // Mostrar todas as linhas ocultas
+            document.querySelectorAll('.cliente-extra.expandable-row').forEach(function (row) {
+                row.style.display = '';
+            });
+            // Esconder o botão
+            document.getElementById('verTodosClientesWrapper').style.display = 'none';
+            // Adicionar scroll ao container
+            var tableBody = document.querySelector('#tabelaClientes').closest('.table-card-body');
+            tableBody.classList.add('scrollable');
         }
 
         function toggleFilters() {
