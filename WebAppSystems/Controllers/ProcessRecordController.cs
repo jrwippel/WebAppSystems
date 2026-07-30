@@ -21,6 +21,7 @@ using WebAppSystems.Filters;
 using WebAppSystems.Helper;
 using WebAppSystems.Models;
 using WebAppSystems.Models.Enums;
+using WebAppSystems.Models.ViewModels;
 using WebAppSystems.Services;
 using static WebAppSystems.Helper.Sessao;
 using QuestPDF.Fluent;
@@ -1352,6 +1353,202 @@ namespace WebAppSystems.Controllers
             ViewData["clientIds"] = clientIds != null && clientIds.Any() ? string.Join(",", clientIds) : null;
             ViewData["attorneyId"] = attorneyId;
             ViewData["selectedRecordType"] = recordType;
+        }
+
+        // ── Relatório Gerencial ─────────────────────────────────────────────
+
+        public async Task<IActionResult> RelatorioGerencial(
+            DateTime? dataInicio, DateTime? dataFim,
+            string? advogadoIds, string? clienteIds, string? areaIds, string? tiposRegistro)
+        {
+            try
+            {
+                var usuario = _isessao.BuscarSessaoDoUsuario();
+                if (usuario.Perfil != Models.Enums.ProfileEnum.Admin)
+                {
+                    TempData["MensagemErro"] = "Acesso restrito a administradores.";
+                    return RedirectToAction("Index", "Home");
+                }
+
+                // Defaults: último mês
+                if (!dataInicio.HasValue)
+                    dataInicio = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+                if (!dataFim.HasValue)
+                    dataFim = DateTime.Now.Date;
+
+                // Parsear filtros
+                var advIds = ParseIds(advogadoIds);
+                var cliIds = ParseIds(clienteIds);
+                var aIds = ParseIds(areaIds);
+                var tipos = ParseRecordTypes(tiposRegistro);
+
+                // Query base
+                var query = _context.ProcessRecord
+                    .Include(p => p.Attorney)
+                    .Include(p => p.Client)
+                    .Include(p => p.Department)
+                    .Where(p => p.Date >= dataInicio && p.Date <= dataFim);
+
+                if (advIds != null && advIds.Any())
+                    query = query.Where(p => advIds.Contains(p.AttorneyId));
+                if (cliIds != null && cliIds.Any())
+                    query = query.Where(p => cliIds.Contains(p.ClientId));
+                if (aIds != null && aIds.Any())
+                    query = query.Where(p => aIds.Contains(p.DepartmentId));
+                if (tipos != null && tipos.Any())
+                    query = query.Where(p => tipos.Contains(p.RecordType));
+
+                var records = await query.ToListAsync();
+
+                // Calcular horas (Deslocamento conta 50%)
+                double calcHoras(ProcessRecord r)
+                {
+                    var mins = r.CalculoHorasTotal().TotalMinutes;
+                    if (r.RecordType == RecordType.Deslocamento) mins *= 0.5;
+                    return mins / 60.0;
+                }
+
+                double totalHoras = records.Sum(r => calcHoras(r));
+                int diasComLancamento = records.Select(r => r.Date.Date).Distinct().Count();
+
+                // Indicadores
+                var viewModel = new Models.ViewModels.RelatorioGerencialViewModel
+                {
+                    DataInicio = dataInicio.Value,
+                    DataFim = dataFim.Value,
+                    AdvogadoIds = advIds,
+                    ClienteIds = cliIds,
+                    AreaIds = aIds,
+                    TiposRegistro = tipos,
+                    TotalHoras = totalHoras,
+                    MediaHorasDiaUtil = diasComLancamento > 0 ? totalHoras / diasComLancamento : 0,
+                    QuantidadeAtividades = records.Count,
+                    QuantidadeClientes = records.Select(r => r.ClientId).Distinct().Count(),
+                    QuantidadeAdvogados = records.Select(r => r.AttorneyId).Distinct().Count(),
+                    DiasComLancamento = diasComLancamento,
+
+                    // Por Advogado
+                    PorAdvogado = records
+                        .GroupBy(r => r.Attorney)
+                        .Select(g => new Models.ViewModels.GrupoAdvogado
+                        {
+                            AdvogadoId = g.Key.Id,
+                            Nome = g.Key.Name,
+                            TotalHoras = g.Sum(r => calcHoras(r)),
+                            QuantidadeAtividades = g.Count(),
+                            DiasComLancamento = g.Select(r => r.Date.Date).Distinct().Count(),
+                            MediaHorasDia = g.Select(r => r.Date.Date).Distinct().Count() > 0
+                                ? g.Sum(r => calcHoras(r)) / g.Select(r => r.Date.Date).Distinct().Count()
+                                : 0,
+                            PercentualTotal = totalHoras > 0 ? (g.Sum(r => calcHoras(r)) / totalHoras) * 100 : 0,
+                            Clientes = g.GroupBy(r => r.Client.Name)
+                                .Select(cg => new Models.ViewModels.SubGrupoCliente
+                                {
+                                    Nome = cg.Key,
+                                    TotalHoras = cg.Sum(r => calcHoras(r)),
+                                    QuantidadeAtividades = cg.Count()
+                                })
+                                .OrderByDescending(c => c.TotalHoras)
+                                .Take(5)
+                                .ToList()
+                        })
+                        .OrderByDescending(a => a.TotalHoras)
+                        .ToList(),
+
+                    // Por Cliente
+                    PorCliente = records
+                        .GroupBy(r => r.Client)
+                        .Select(g => new Models.ViewModels.GrupoCliente
+                        {
+                            ClienteId = g.Key.Id,
+                            Nome = g.Key.Name,
+                            TotalHoras = g.Sum(r => calcHoras(r)),
+                            QuantidadeAtividades = g.Count(),
+                            PercentualTotal = totalHoras > 0 ? (g.Sum(r => calcHoras(r)) / totalHoras) * 100 : 0,
+                            Advogados = g.GroupBy(r => r.Attorney.Name)
+                                .Select(ag => new Models.ViewModels.SubGrupoAdvogado
+                                {
+                                    Nome = ag.Key,
+                                    TotalHoras = ag.Sum(r => calcHoras(r)),
+                                    QuantidadeAtividades = ag.Count()
+                                })
+                                .OrderByDescending(a => a.TotalHoras)
+                                .ToList()
+                        })
+                        .OrderByDescending(c => c.TotalHoras)
+                        .ToList(),
+
+                    // Por Área
+                    PorArea = records
+                        .GroupBy(r => r.Department)
+                        .Select(g => new Models.ViewModels.GrupoArea
+                        {
+                            AreaId = g.Key.Id,
+                            Nome = g.Key.Name,
+                            TotalHoras = g.Sum(r => calcHoras(r)),
+                            QuantidadeAtividades = g.Count(),
+                            PercentualTotal = totalHoras > 0 ? (g.Sum(r => calcHoras(r)) / totalHoras) * 100 : 0
+                        })
+                        .OrderByDescending(a => a.TotalHoras)
+                        .ToList(),
+
+                    // Por Tipo
+                    PorTipo = records
+                        .GroupBy(r => r.RecordType)
+                        .Select(g => new Models.ViewModels.GrupoTipo
+                        {
+                            Tipo = g.Key,
+                            Nome = g.Key.ToString(),
+                            TotalHoras = g.Sum(r => calcHoras(r)),
+                            QuantidadeAtividades = g.Count(),
+                            PercentualTotal = totalHoras > 0 ? (g.Sum(r => calcHoras(r)) / totalHoras) * 100 : 0
+                        })
+                        .OrderByDescending(t => t.TotalHoras)
+                        .ToList(),
+
+                    // Evolução Diária
+                    EvolucaoDiaria = records
+                        .GroupBy(r => r.Date.Date)
+                        .OrderBy(g => g.Key)
+                        .Select(g => new Models.ViewModels.EvolucaoDiaria
+                        {
+                            Data = g.Key.ToString("dd/MM"),
+                            Horas = Math.Round(g.Sum(r => calcHoras(r)), 2),
+                            Atividades = g.Count()
+                        })
+                        .ToList(),
+
+                    // Dropdowns
+                    Advogados = (await _attorneyService.FindAllAsync()).Where(a => !a.Inativo).OrderBy(a => a.Name).ToList(),
+                    Clientes = (await _clientService.FindAllAsync()).Where(c => !c.ClienteInativo).OrderBy(c => c.Name).ToList(),
+                    Areas = (await _departmentService.FindAllAsync()).OrderBy(d => d.Name).ToList()
+                };
+
+                return View(viewModel);
+            }
+            catch (SessionExpiredException)
+            {
+                TempData["MensagemAviso"] = "A sessão expirou. Por favor, faça login novamente.";
+                return RedirectToAction("Index", "Login");
+            }
+        }
+
+        private List<int>? ParseIds(string? ids)
+        {
+            if (string.IsNullOrWhiteSpace(ids)) return null;
+            return ids.Split(',')
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Select(id => int.Parse(id.Trim()))
+                .ToList();
+        }
+
+        private List<RecordType>? ParseRecordTypes(string? tipos)
+        {
+            if (string.IsNullOrWhiteSpace(tipos)) return null;
+            return tipos.Split(',')
+                .Where(t => !string.IsNullOrWhiteSpace(t))
+                .Select(t => Enum.Parse<RecordType>(t.Trim(), true))
+                .ToList();
         }
 
         private async Task PopulateViewBag()

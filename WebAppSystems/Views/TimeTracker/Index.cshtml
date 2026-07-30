@@ -224,6 +224,66 @@
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
+        /* Select2 Custom Styles for TimeTracker */
+        .form-field .select2-container {
+            width: 100% !important;
+        }
+
+        .form-field .select2-container .select2-selection--single {
+            height: 46px;
+            padding: 8px 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #2d3748;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .form-field .select2-container .select2-selection--single .select2-selection__rendered {
+            line-height: 28px;
+            color: #2d3748;
+            padding-left: 0;
+        }
+
+        .form-field .select2-container .select2-selection--single .select2-selection__arrow {
+            height: 44px;
+        }
+
+        .form-field .select2-container--focus .select2-selection--single,
+        .form-field .select2-container--open .select2-selection--single {
+            border-color: #667eea !important;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+        }
+
+        .select2-container .select2-dropdown {
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .select2-container .select2-results__option--highlighted[aria-selected] {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+        }
+
+        .select2-container .select2-search--dropdown .select2-search__field {
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+
+        .select2-container .select2-search--dropdown .select2-search__field:focus {
+            border-color: #667eea;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .select2-container .select2-selection__placeholder {
+            color: #a0aec0;
+        }
+
         .records-card {
             background: white;
             border-radius: 12px;
@@ -615,6 +675,28 @@
         ];
 
         document.addEventListener("DOMContentLoaded", function () {
+            // Inicializar Select2 no campo de cliente
+            $('select[name="ProcessRecord.ClientId"]').select2({
+                placeholder: 'Digite para buscar cliente...',
+                allowClear: true,
+                width: '100%',
+                language: {
+                    noResults: function() { return 'Nenhum cliente encontrado'; },
+                    searching: function() { return 'Buscando...'; }
+                },
+                matcher: function(params, data) {
+                    if ($.trim(params.term) === '') {
+                        return data;
+                    }
+                    var term = params.term.toLowerCase();
+                    var text = data.text.toLowerCase();
+                    if (text.indexOf(term) > -1) {
+                        return data;
+                    }
+                    return null;
+                }
+            });
+
             const clientField = document.querySelector('select[name="ProcessRecord.ClientId"]');
             const solicitanteField = document.getElementById("solicitante");
             const descriptionField = document.getElementById("description");
@@ -622,9 +704,9 @@
             const recordTypeField = document.querySelector('select[name="ProcessRecord.RecordType"]');
             const startStopButton = document.getElementById("startStopButton");
 
-            // Auto-fill solicitante when client changes
-            clientField.addEventListener('change', async function () {
-                const clientId = clientField.value;
+            // Auto-fill solicitante when client changes (via Select2 change event)
+            $('select[name="ProcessRecord.ClientId"]').on('change', async function () {
+                const clientId = $(this).val();
                 if (clientId && clientId !== "0") {
                     try {
                         const response = await fetch(`/TimeTracker/GetSolicitanteByClientId?clientId=${clientId}`);
@@ -937,7 +1019,7 @@
                         document.querySelectorAll(".btn-play").forEach(btn => btn.disabled = true);
                         
                         document.getElementById("description").value = data.description;
-                        document.querySelector('select[name="ProcessRecord.ClientId"]').value = data.clientId;
+                        $('select[name="ProcessRecord.ClientId"]').val(data.clientId).trigger('change');
                         document.querySelector('select[name="ProcessRecord.DepartmentId"]').value = data.departmentId;
                         document.getElementById("solicitante").value = data.solicitante;
                         document.querySelector('select[name="ProcessRecord.RecordType"]').value = data.recordType;
@@ -1091,7 +1173,7 @@
                     
                     // Apenas copia os dados do registro (não a hora)
                     document.getElementById("description").value = record.description;
-                    document.querySelector('select[name="ProcessRecord.ClientId"]').value = record.clientId;
+                    $('select[name="ProcessRecord.ClientId"]').val(record.clientId).trigger('change');
                     document.querySelector('select[name="ProcessRecord.DepartmentId"]').value = record.departmentId;
                     document.getElementById("solicitante").value = record.solicitante;
                     document.querySelector('select[name="ProcessRecord.RecordType"]').value = record.recordType;
@@ -1229,7 +1311,7 @@
                 }
 
                 document.getElementById("description").value = "";
-                document.querySelector('select[name="ProcessRecord.ClientId"]').value = "0";
+                $('select[name="ProcessRecord.ClientId"]').val("0").trigger('change');
                 document.querySelector('select[name="ProcessRecord.DepartmentId"]').value = "0";
                 document.getElementById("solicitante").value = "";
                 document.querySelector('select[name="ProcessRecord.RecordType"]').value = "0";

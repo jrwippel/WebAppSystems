@@ -1,0 +1,953 @@
+@model WebAppSystems.Models.ViewModels.RelatorioGerencialViewModel
+@using WebAppSystems.Models.Enums
+
+@{
+    ViewData["Title"] = "Relatório Gerencial";
+}
+
+<div class="gerencial-container">
+    <!-- Header -->
+    <div class="page-banner">
+        <div class="banner-content">
+            <div class="banner-icon">
+                <i class="bi bi-graph-up-arrow"></i>
+            </div>
+            <div class="banner-text">
+                <h1>Relatório Gerencial</h1>
+                <p>Visão consolidada com filtros cruzados para tomada de decisão</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filters-card">
+        <div class="filters-header">
+            <h5><i class="bi bi-funnel-fill"></i> Filtros Cruzados</h5>
+            <button type="button" class="btn-collapse-filters" onclick="toggleFilters()">
+                <i class="bi bi-chevron-up" id="filtersChevron"></i>
+            </button>
+        </div>
+        <div class="filters-body" id="filtersBody">
+            <form method="get" id="filterForm">
+                <div class="filter-row">
+                    <div class="filter-field">
+                        <label><i class="bi bi-calendar-event"></i> Data Início</label>
+                        <input type="date" name="dataInicio" class="form-control" value="@Model.DataInicio.ToString("yyyy-MM-dd")" />
+                    </div>
+                    <div class="filter-field">
+                        <label><i class="bi bi-calendar-check"></i> Data Fim</label>
+                        <input type="date" name="dataFim" class="form-control" value="@Model.DataFim.ToString("yyyy-MM-dd")" />
+                    </div>
+                </div>
+                <div class="filter-row">
+                    <div class="filter-field filter-field-large">
+                        <label><i class="bi bi-person"></i> Advogado(s)</label>
+                        <select name="advogadoIds" id="advogadoSelect" class="form-control" multiple>
+                            @foreach (var adv in Model.Advogados)
+                            {
+                                <option value="@adv.Id" selected="@(Model.AdvogadoIds != null && Model.AdvogadoIds.Contains(adv.Id))">@adv.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="filter-field filter-field-large">
+                        <label><i class="bi bi-briefcase"></i> Cliente(s)</label>
+                        <select name="clienteIds" id="clienteSelect" class="form-control" multiple>
+                            @foreach (var cli in Model.Clientes)
+                            {
+                                <option value="@cli.Id" selected="@(Model.ClienteIds != null && Model.ClienteIds.Contains(cli.Id))">@cli.Name</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="filter-row">
+                    <div class="filter-field">
+                        <label><i class="bi bi-diagram-3"></i> Área(s)</label>
+                        <select name="areaIds" id="areaSelect" class="form-control" multiple>
+                            @foreach (var area in Model.Areas)
+                            {
+                                <option value="@area.Id" selected="@(Model.AreaIds != null && Model.AreaIds.Contains(area.Id))">@area.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="filter-field">
+                        <label><i class="bi bi-tag"></i> Tipo(s) de Registro</label>
+                        <select name="tiposRegistro" id="tipoSelect" class="form-control" multiple>
+                            @foreach (var tipo in Enum.GetValues<RecordType>())
+                            {
+                                <option value="@tipo" selected="@(Model.TiposRegistro != null && Model.TiposRegistro.Contains(tipo))">@tipo</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="filter-field filter-button">
+                        <button type="submit" class="btn-search">
+                            <i class="bi bi-search"></i> Gerar Relatório
+                        </button>
+                        <a href="@Url.Action("RelatorioGerencial")" class="btn-clear">
+                            <i class="bi bi-arrow-counterclockwise"></i> Limpar
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (Model.QuantidadeAtividades > 0)
+    {
+        <!-- Cards de Indicadores -->
+        <div class="indicators-grid">
+            <div class="indicator-card">
+                <div class="indicator-icon"><i class="bi bi-clock-history"></i></div>
+                <div class="indicator-data">
+                    <span class="indicator-value">@Model.TotalHoras.ToString("N1")h</span>
+                    <span class="indicator-label">Total de Horas</span>
+                </div>
+            </div>
+            <div class="indicator-card">
+                <div class="indicator-icon"><i class="bi bi-speedometer2"></i></div>
+                <div class="indicator-data">
+                    <span class="indicator-value">@Model.MediaHorasDiaUtil.ToString("N1")h</span>
+                    <span class="indicator-label">Média/Dia Útil</span>
+                </div>
+            </div>
+            <div class="indicator-card">
+                <div class="indicator-icon"><i class="bi bi-list-check"></i></div>
+                <div class="indicator-data">
+                    <span class="indicator-value">@Model.QuantidadeAtividades</span>
+                    <span class="indicator-label">Atividades</span>
+                </div>
+            </div>
+            <div class="indicator-card">
+                <div class="indicator-icon"><i class="bi bi-building"></i></div>
+                <div class="indicator-data">
+                    <span class="indicator-value">@Model.QuantidadeClientes</span>
+                    <span class="indicator-label">Clientes</span>
+                </div>
+            </div>
+            <div class="indicator-card">
+                <div class="indicator-icon"><i class="bi bi-people"></i></div>
+                <div class="indicator-data">
+                    <span class="indicator-value">@Model.QuantidadeAdvogados</span>
+                    <span class="indicator-label">Advogados</span>
+                </div>
+            </div>
+            <div class="indicator-card">
+                <div class="indicator-icon"><i class="bi bi-calendar-week"></i></div>
+                <div class="indicator-data">
+                    <span class="indicator-value">@Model.DiasComLancamento</span>
+                    <span class="indicator-label">Dias com Lançamento</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráfico de Evolução Diária -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h5><i class="bi bi-bar-chart-line"></i> Evolução Diária de Horas</h5>
+            </div>
+            <div class="chart-body">
+                <canvas id="evolucaoChart" height="80"></canvas>
+            </div>
+        </div>
+
+        <!-- Tabelas Pivot -->
+        <div class="tables-grid">
+            <!-- Por Advogado -->
+            <div class="table-card">
+                <div class="table-card-header">
+                    <h5><i class="bi bi-person-badge"></i> Por Advogado</h5>
+                </div>
+                <div class="table-card-body">
+                    <table class="pivot-table">
+                        <thead>
+                            <tr>
+                                <th>Advogado</th>
+                                <th>Horas</th>
+                                <th>Ativid.</th>
+                                <th>Média/Dia</th>
+                                <th>%</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var adv in Model.PorAdvogado)
+                            {
+                                <tr class="expandable-row" onclick="toggleSubRows(this)">
+                                    <td>
+                                        <i class="bi bi-chevron-right expand-icon"></i>
+                                        <strong>@adv.Nome</strong>
+                                    </td>
+                                    <td><span class="hours-badge">@adv.TotalHoras.ToString("N1")</span></td>
+                                    <td>@adv.QuantidadeAtividades</td>
+                                    <td>@adv.MediaHorasDia.ToString("N1")</td>
+                                    <td>
+                                        <div class="percent-bar">
+                                            <div class="percent-fill" style="width: @adv.PercentualTotal.ToString("N0")%"></div>
+                                            <span>@adv.PercentualTotal.ToString("N0")%</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                @foreach (var cli in adv.Clientes)
+                                {
+                                    <tr class="sub-row" style="display:none;">
+                                        <td class="sub-cell">↳ @cli.Nome</td>
+                                        <td>@cli.TotalHoras.ToString("N1")</td>
+                                        <td>@cli.QuantidadeAtividades</td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Por Cliente -->
+            <div class="table-card">
+                <div class="table-card-header">
+                    <h5><i class="bi bi-briefcase"></i> Por Cliente</h5>
+                </div>
+                <div class="table-card-body">
+                    <table class="pivot-table">
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Horas</th>
+                                <th>Ativid.</th>
+                                <th>%</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var cli in Model.PorCliente)
+                            {
+                                <tr class="expandable-row" onclick="toggleSubRows(this)">
+                                    <td>
+                                        <i class="bi bi-chevron-right expand-icon"></i>
+                                        <strong>@cli.Nome</strong>
+                                    </td>
+                                    <td><span class="hours-badge">@cli.TotalHoras.ToString("N1")</span></td>
+                                    <td>@cli.QuantidadeAtividades</td>
+                                    <td>
+                                        <div class="percent-bar">
+                                            <div class="percent-fill" style="width: @cli.PercentualTotal.ToString("N0")%"></div>
+                                            <span>@cli.PercentualTotal.ToString("N0")%</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                @foreach (var adv in cli.Advogados)
+                                {
+                                    <tr class="sub-row" style="display:none;">
+                                        <td class="sub-cell">↳ @adv.Nome</td>
+                                        <td>@adv.TotalHoras.ToString("N1")</td>
+                                        <td>@adv.QuantidadeAtividades</td>
+                                        <td></td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Por Área e Por Tipo lado a lado -->
+        <div class="tables-grid">
+            <div class="table-card">
+                <div class="table-card-header">
+                    <h5><i class="bi bi-diagram-3"></i> Por Área</h5>
+                </div>
+                <div class="table-card-body">
+                    <table class="pivot-table">
+                        <thead>
+                            <tr>
+                                <th>Área</th>
+                                <th>Horas</th>
+                                <th>Ativid.</th>
+                                <th>%</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var area in Model.PorArea)
+                            {
+                                <tr>
+                                    <td><strong>@area.Nome</strong></td>
+                                    <td><span class="hours-badge">@area.TotalHoras.ToString("N1")</span></td>
+                                    <td>@area.QuantidadeAtividades</td>
+                                    <td>
+                                        <div class="percent-bar">
+                                            <div class="percent-fill" style="width: @area.PercentualTotal.ToString("N0")%"></div>
+                                            <span>@area.PercentualTotal.ToString("N0")%</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="table-card">
+                <div class="table-card-header">
+                    <h5><i class="bi bi-tag"></i> Por Tipo de Registro</h5>
+                </div>
+                <div class="table-card-body">
+                    <table class="pivot-table">
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Horas</th>
+                                <th>Ativid.</th>
+                                <th>%</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var tipo in Model.PorTipo)
+                            {
+                                <tr>
+                                    <td><span class="type-badge type-@tipo.Nome.ToLower()">@tipo.Nome</span></td>
+                                    <td><span class="hours-badge">@tipo.TotalHoras.ToString("N1")</span></td>
+                                    <td>@tipo.QuantidadeAtividades</td>
+                                    <td>
+                                        <div class="percent-bar">
+                                            <div class="percent-fill" style="width: @tipo.PercentualTotal.ToString("N0")%"></div>
+                                            <span>@tipo.PercentualTotal.ToString("N0")%</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <i class="bi bi-graph-up"></i>
+            <h4>Nenhum dado encontrado</h4>
+            <p>Ajuste os filtros acima para visualizar o relatório gerencial.</p>
+        </div>
+    }
+</div>
+
+<style>
+    .gerencial-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    /* Banner */
+    .page-banner {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        padding: 24px 28px;
+        margin-bottom: 20px;
+        box-shadow: 0 6px 25px rgba(102, 126, 234, 0.25);
+    }
+
+    .banner-content {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .banner-icon {
+        width: 50px;
+        height: 50px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: white;
+    }
+
+    .banner-text h1 {
+        font-size: 22px;
+        font-weight: 700;
+        color: white;
+        margin: 0 0 4px 0;
+    }
+
+    .banner-text p {
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.85);
+        margin: 0;
+    }
+
+    /* Filters */
+    .filters-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+        margin-bottom: 20px;
+        overflow: hidden;
+    }
+
+    .filters-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 20px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .filters-header h5 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: #2d3748;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .filters-header h5 i { color: #667eea; }
+
+    .btn-collapse-filters {
+        background: none;
+        border: none;
+        color: #667eea;
+        cursor: pointer;
+        font-size: 16px;
+        padding: 4px;
+    }
+
+    .filters-body {
+        padding: 20px;
+    }
+
+    .filter-row {
+        display: flex;
+        gap: 14px;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+    }
+
+    .filter-field {
+        flex: 1;
+        min-width: 180px;
+    }
+
+    .filter-field-large {
+        flex: 2;
+        min-width: 280px;
+    }
+
+    .filter-field label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #4a5568;
+        margin-bottom: 6px;
+    }
+
+    .filter-field label i { color: #667eea; font-size: 13px; }
+
+    .filter-field .form-control {
+        padding: 9px 12px;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 13px;
+        transition: all 0.3s;
+        width: 100%;
+    }
+
+    .filter-field .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        outline: none;
+    }
+
+    .filter-button {
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+        min-width: auto;
+    }
+
+    .btn-search {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        white-space: nowrap;
+    }
+
+    .btn-search:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-clear {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 16px;
+        background: white;
+        color: #4a5568;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.3s;
+        white-space: nowrap;
+    }
+
+    .btn-clear:hover {
+        border-color: #667eea;
+        color: #667eea;
+    }
+
+    /* Indicators */
+    .indicators-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 14px;
+        margin-bottom: 20px;
+    }
+
+    .indicator-card {
+        background: white;
+        border-radius: 10px;
+        padding: 18px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        transition: transform 0.2s;
+    }
+
+    .indicator-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .indicator-icon {
+        width: 44px;
+        height: 44px;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        color: #667eea;
+        flex-shrink: 0;
+    }
+
+    .indicator-data {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .indicator-value {
+        font-size: 20px;
+        font-weight: 700;
+        color: #2d3748;
+        line-height: 1.2;
+    }
+
+    .indicator-label {
+        font-size: 11px;
+        color: #718096;
+        font-weight: 500;
+    }
+
+    /* Chart */
+    .chart-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        margin-bottom: 20px;
+        overflow: hidden;
+    }
+
+    .chart-header {
+        padding: 14px 20px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .chart-header h5 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: #2d3748;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .chart-header h5 i { color: #667eea; }
+
+    .chart-body {
+        padding: 20px;
+    }
+
+    /* Tables Grid */
+    .tables-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .table-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        overflow: hidden;
+    }
+
+    .table-card-header {
+        padding: 14px 20px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .table-card-header h5 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: #2d3748;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .table-card-header h5 i { color: #667eea; }
+
+    .table-card-body {
+        padding: 0;
+        overflow-x: auto;
+    }
+
+    .pivot-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+
+    .pivot-table thead th {
+        background: #f7fafc;
+        padding: 10px 14px;
+        text-align: left;
+        font-weight: 600;
+        color: #4a5568;
+        border-bottom: 2px solid #e2e8f0;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .pivot-table tbody td {
+        padding: 10px 14px;
+        border-bottom: 1px solid #f0f0f0;
+        color: #2d3748;
+    }
+
+    .pivot-table tbody tr:hover {
+        background: rgba(102, 126, 234, 0.03);
+    }
+
+    .expandable-row {
+        cursor: pointer;
+    }
+
+    .expandable-row:hover {
+        background: rgba(102, 126, 234, 0.05) !important;
+    }
+
+    .expand-icon {
+        font-size: 11px;
+        margin-right: 6px;
+        transition: transform 0.2s;
+        color: #667eea;
+    }
+
+    .expand-icon.rotated {
+        transform: rotate(90deg);
+    }
+
+    .sub-row td {
+        padding-left: 30px !important;
+        font-size: 12px;
+        color: #718096;
+        background: #fafbfc;
+    }
+
+    .sub-cell {
+        padding-left: 30px !important;
+    }
+
+    /* Badges */
+    .hours-badge {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+        color: #667eea;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 12px;
+    }
+
+    .type-badge {
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .type-badge.type-consultivo { background: #e6fffa; color: #234e52; }
+    .type-badge.type-contencioso { background: #fef3c7; color: #92400e; }
+    .type-badge.type-propostaespecifica { background: #ede9fe; color: #5b21b6; }
+    .type-badge.type-deslocamento { background: #fce7f3; color: #9d174d; }
+
+    /* Percent Bar */
+    .percent-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 100px;
+    }
+
+    .percent-fill {
+        height: 6px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 3px;
+        min-width: 2px;
+        flex: 1;
+    }
+
+    .percent-bar span {
+        font-size: 11px;
+        font-weight: 600;
+        color: #4a5568;
+        min-width: 32px;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .empty-state i {
+        font-size: 48px;
+        color: #cbd5e0;
+        margin-bottom: 16px;
+    }
+
+    .empty-state h4 {
+        color: #4a5568;
+        margin-bottom: 8px;
+    }
+
+    .empty-state p {
+        color: #718096;
+        font-size: 14px;
+    }
+
+    /* Select2 overrides for multi-select */
+    .filter-field .select2-container {
+        width: 100% !important;
+    }
+
+    .filter-field .select2-container .select2-selection--multiple {
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 4px 8px;
+        min-height: 40px;
+        font-size: 13px;
+    }
+
+    .filter-field .select2-container--focus .select2-selection--multiple {
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+    }
+
+    .select2-container .select2-selection--multiple .select2-selection__choice {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        border: none !important;
+        color: white !important;
+        border-radius: 4px !important;
+        padding: 2px 8px !important;
+        font-size: 12px !important;
+    }
+
+    .select2-container .select2-selection--multiple .select2-selection__choice__remove {
+        color: white !important;
+        margin-right: 4px !important;
+    }
+
+    .select2-container .select2-results__option--highlighted[aria-selected] {
+        background: rgba(102, 126, 234, 0.1) !important;
+        color: #667eea !important;
+    }
+
+    .select2-container .select2-search--dropdown .select2-search__field {
+        border: 2px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 6px 10px;
+    }
+
+    .select2-container .select2-search--dropdown .select2-search__field:focus {
+        border-color: #667eea;
+        outline: none;
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .gerencial-container { padding: 12px; }
+        .indicators-grid { grid-template-columns: repeat(2, 1fr); }
+        .tables-grid { grid-template-columns: 1fr; }
+        .filter-row { flex-direction: column; }
+        .filter-field, .filter-field-large { min-width: 100%; }
+        .filter-button { flex-direction: column; }
+    }
+</style>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Inicializar Select2 nos multi-selects
+            $('#advogadoSelect').select2({
+                placeholder: 'Todos os advogados',
+                allowClear: true,
+                width: '100%',
+                language: { noResults: function () { return 'Nenhum encontrado'; } },
+                matcher: function (params, data) {
+                    if ($.trim(params.term) === '') return data;
+                    if (data.text.toLowerCase().indexOf(params.term.toLowerCase()) > -1) return data;
+                    return null;
+                }
+            });
+
+            $('#clienteSelect').select2({
+                placeholder: 'Todos os clientes',
+                allowClear: true,
+                width: '100%',
+                language: { noResults: function () { return 'Nenhum encontrado'; } },
+                matcher: function (params, data) {
+                    if ($.trim(params.term) === '') return data;
+                    if (data.text.toLowerCase().indexOf(params.term.toLowerCase()) > -1) return data;
+                    return null;
+                }
+            });
+
+            $('#areaSelect').select2({
+                placeholder: 'Todas as áreas',
+                allowClear: true,
+                width: '100%',
+                language: { noResults: function () { return 'Nenhum encontrado'; } }
+            });
+
+            $('#tipoSelect').select2({
+                placeholder: 'Todos os tipos',
+                allowClear: true,
+                width: '100%'
+            });
+
+            // Interceptar form submit para formatar valores dos multi-selects
+            $('#filterForm').on('submit', function () {
+                // Converter arrays do Select2 em strings separadas por vírgula
+                var advIds = $('#advogadoSelect').val();
+                var cliIds = $('#clienteSelect').val();
+                var areaIds = $('#areaSelect').val();
+                var tipoIds = $('#tipoSelect').val();
+
+                // Substituir os selects por inputs hidden com valores concatenados
+                $(this).find('input[name="advogadoIds"]').remove();
+                $(this).find('input[name="clienteIds"]').remove();
+                $(this).find('input[name="areaIds"]').remove();
+                $(this).find('input[name="tiposRegistro"]').remove();
+
+                if (advIds && advIds.length > 0)
+                    $(this).append('<input type="hidden" name="advogadoIds" value="' + advIds.join(',') + '">');
+                if (cliIds && cliIds.length > 0)
+                    $(this).append('<input type="hidden" name="clienteIds" value="' + cliIds.join(',') + '">');
+                if (areaIds && areaIds.length > 0)
+                    $(this).append('<input type="hidden" name="areaIds" value="' + areaIds.join(',') + '">');
+                if (tipoIds && tipoIds.length > 0)
+                    $(this).append('<input type="hidden" name="tiposRegistro" value="' + tipoIds.join(',') + '">');
+
+                // Desabilitar os selects para não enviarem como array
+                $('#advogadoSelect, #clienteSelect, #areaSelect, #tipoSelect').prop('disabled', true);
+            });
+        });
+
+        // Gráfico de evolução diária
+        @if (Model.QuantidadeAtividades > 0)
+        {
+            <text>
+            var ctx = document.getElementById('evolucaoChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [@Html.Raw(string.Join(",", Model.EvolucaoDiaria.Select(e => $"'{e.Data}'")))],
+                    datasets: [{
+                        label: 'Horas',
+                        data: [@Html.Raw(string.Join(",", Model.EvolucaoDiaria.Select(e => e.Horas.ToString(System.Globalization.CultureInfo.InvariantCulture))))],
+                        backgroundColor: 'rgba(102, 126, 234, 0.6)',
+                        borderColor: '#667eea',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { callback: function(v) { return v + 'h'; } }
+                        }
+                    }
+                }
+            });
+            </text>
+        }
+
+        function toggleSubRows(row) {
+            var icon = row.querySelector('.expand-icon');
+            var next = row.nextElementSibling;
+            var isExpanding = icon && !icon.classList.contains('rotated');
+
+            if (icon) icon.classList.toggle('rotated');
+
+            while (next && next.classList.contains('sub-row')) {
+                next.style.display = isExpanding ? '' : 'none';
+                next = next.nextElementSibling;
+            }
+        }
+
+        function toggleFilters() {
+            var body = document.getElementById('filtersBody');
+            var chevron = document.getElementById('filtersChevron');
+            if (body.style.display === 'none') {
+                body.style.display = '';
+                chevron.className = 'bi bi-chevron-up';
+            } else {
+                body.style.display = 'none';
+                chevron.className = 'bi bi-chevron-down';
+            }
+        }
+    </script>
+}

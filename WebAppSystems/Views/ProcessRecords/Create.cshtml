@@ -808,6 +808,70 @@
 
     /* Botão IA na tela de atividades */
     .description-ia-wrap { position: relative; }
+
+    /* Select2 Custom Styles */
+    .client-select-wrapper .select2-container {
+        flex: 1;
+    }
+
+    .client-select-wrapper .select2-container .select2-selection--single {
+        height: 38px;
+        padding: 4px 12px;
+        border: 2px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 13px;
+        color: #2d3748;
+        transition: all 0.3s ease;
+        background: white;
+    }
+
+    .client-select-wrapper .select2-container .select2-selection--single .select2-selection__rendered {
+        line-height: 28px;
+        color: #2d3748;
+        padding-left: 0;
+    }
+
+    .client-select-wrapper .select2-container .select2-selection--single .select2-selection__arrow {
+        height: 36px;
+    }
+
+    .client-select-wrapper .select2-container--focus .select2-selection--single,
+    .client-select-wrapper .select2-container--open .select2-selection--single {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .select2-container .select2-dropdown {
+        border: 2px solid #e2e8f0;
+        border-radius: 6px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .select2-container .select2-results__option--highlighted[aria-selected] {
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea;
+    }
+
+    .select2-container .select2-results__option--selected {
+        background: rgba(102, 126, 234, 0.05);
+    }
+
+    .select2-container .select2-search--dropdown .select2-search__field {
+        border: 2px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+
+    .select2-container .select2-search--dropdown .select2-search__field:focus {
+        border-color: #667eea;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .select2-container .select2-selection__placeholder {
+        color: #a0aec0;
+    }
     .btn-ia-sugerir-create {
         margin-top: 8px;
         display: inline-flex;
@@ -836,6 +900,30 @@
 
     <script>
         $(document).ready(function () {
+            // Inicializar Select2 no campo de cliente com busca por qualquer parte do nome
+            $("select[id$='ProcessRecord_ClientId']").select2({
+                placeholder: 'Digite para buscar cliente...',
+                allowClear: true,
+                width: '100%',
+                language: {
+                    noResults: function() { return 'Nenhum cliente encontrado'; },
+                    searching: function() { return 'Buscando...'; }
+                },
+                matcher: function(params, data) {
+                    // Se não há termo de busca, mostra todos
+                    if ($.trim(params.term) === '') {
+                        return data;
+                    }
+                    // Busca por qualquer parte do texto (case insensitive)
+                    var term = params.term.toLowerCase();
+                    var text = data.text.toLowerCase();
+                    if (text.indexOf(term) > -1) {
+                        return data;
+                    }
+                    return null;
+                }
+            });
+
             // Define o foco automaticamente no campo "Tipo de Registro"
             var $recordTypeSelect = $("select[id$='ProcessRecord_RecordType']");
             $recordTypeSelect.focus();
@@ -939,7 +1027,7 @@
                         console.log(response);
                         if (response.success) {
                             var newOption = new Option(response.clienteNome, response.clienteId, false, true);
-                            $("select[id$='ProcessRecord_ClientId']").append(newOption).trigger('change');
+                            $("select[id$='ProcessRecord_ClientId']").append(newOption).val(response.clienteId).trigger('change');
                             $("#createClientModal").modal('hide');
                             
                             // Mostrar mensagem de sucesso
