@@ -448,7 +448,7 @@
                     <a class="gerenciar-item" asp-controller="ProcessRecord" asp-action="Index">
                         <i class="bi bi-clock-history"></i><span>Relatório de Horas</span>
                     </a>
-                    @if (showAdminItems)
+                    @if (isAdmin)
                     {
                         <div class="dd-divider"></div>
                         <a class="gerenciar-item" asp-controller="ProcessRecord" asp-action="RelatorioGerencial">

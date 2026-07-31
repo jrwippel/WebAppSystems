@@ -296,6 +296,146 @@ namespace WebAppSystems.Controllers
             return Json(new { porAdvogado, porArea, porTipo });
         }
 
+        // ── Painel de Faturamento dos Horistas ──────────────────────────────
+
+        public async Task<IActionResult> RentabilidadeHoristas(string? periodo, DateTime? dataInicio, DateTime? dataFim, string? clienteIds)
+        {
+            // Definir período
+            DateTime inicio, fim;
+            string periodoAtual = periodo ?? "mes";
+
+            switch (periodoAtual)
+            {
+                case "semestre":
+                    inicio = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddMonths(-5);
+                    fim = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.DaysInMonth(DateTime.Now.Year, DateTime.Now.Month));
+                    break;
+                case "custom":
+                    inicio = dataInicio ?? new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+                    fim = dataFim ?? DateTime.Now.Date;
+                    break;
+                default:
+                    periodoAtual = "mes";
+                    inicio = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+                    fim = DateTime.Now.Date;
+                    break;
+            }
+
+            // Buscar clientes com valor hora cadastrado (excluir mensalistas)
+            var mensalistaClientIds = await _mensalistaService.FindClientIdsAsync();
+            var valoresClientes = await _context.ValorCliente
+                .AsNoTracking()
+                .Where(v => v.AttorneyId == null && v.Valor > 0 && !mensalistaClientIds.Contains(v.ClientId))
+                .ToListAsync();
+
+            if (!valoresClientes.Any())
+            {
+                ViewBag.ClienteIdsFiltro = (List<int>?)null;
+                ViewBag.TodosCards = new List<CardMensalista>();
+                ViewBag.DebugTempo = "";
+                return View(new RentabilidadeMensalistaViewModel
+                {
+                    Periodo = periodoAtual,
+                    DataInicio = inicio,
+                    DataFim = fim
+                });
+            }
+
+            var clientIdsHoristas = valoresClientes.Select(v => v.ClientId).ToList();
+
+            // Buscar clientes
+            var clients = await _context.Client
+                .AsNoTracking()
+                .Where(c => clientIdsHoristas.Contains(c.Id))
+                .Select(c => new { c.Id, c.Name, c.ImageData, c.ImageMimeType })
+                .ToListAsync();
+
+            // Buscar horas por cliente
+            var registrosResumo = await _context.ProcessRecord
+                .AsNoTracking()
+                .Where(p => p.Date >= inicio && p.Date <= fim && clientIdsHoristas.Contains(p.ClientId))
+                .Select(p => new { p.ClientId, p.HoraInicial, p.HoraFinal })
+                .ToListAsync();
+
+            var horasDict = registrosResumo
+                .GroupBy(r => r.ClientId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Sum(r => (r.HoraFinal - r.HoraInicial).TotalHours)
+                );
+
+            var valoresDict = valoresClientes.ToDictionary(v => v.ClientId, v => v.Valor);
+
+            var cards = new List<CardMensalista>();
+
+            foreach (var vc in valoresClientes)
+            {
+                var client = clients.FirstOrDefault(c => c.Id == vc.ClientId);
+                if (client == null) continue;
+
+                var horasApontadas = horasDict.ContainsKey(vc.ClientId) ? horasDict[vc.ClientId] : 0;
+                
+                // Só mostra clientes com lançamentos no período
+                if (horasApontadas <= 0) continue;
+
+                var valorHora = (decimal)vc.Valor;
+                var valorFaturado = (decimal)horasApontadas * valorHora;
+
+                cards.Add(new CardMensalista
+                {
+                    MensalistaId = 0,
+                    ClienteId = client.Id,
+                    ClienteNome = client.Name,
+                    ClienteLogo = client.ImageData,
+                    ClienteLogoMime = client.ImageMimeType,
+                    ValorMensalidade = 0,
+                    ValorHoraVirtual = valorHora,
+                    HorasApontadas = horasApontadas,
+                    ValorConsumido = valorFaturado,
+                    Saldo = valorFaturado,
+                    PercentualConsumo = 0,
+                    Status = "verde",
+                    StatusTexto = $"{valorFaturado:C0}"
+                });
+            }
+
+            // Ordenar por valor faturado (maior primeiro)
+            cards = cards.OrderByDescending(c => c.ValorConsumido).ToList();
+
+            // Filtro por cliente
+            List<int> clienteIdsFiltro = null;
+            if (!string.IsNullOrWhiteSpace(clienteIds))
+            {
+                clienteIdsFiltro = clienteIds.Split(',')
+                    .Where(id => !string.IsNullOrWhiteSpace(id))
+                    .Select(id => int.Parse(id.Trim()))
+                    .ToList();
+            }
+            ViewBag.ClienteIdsFiltro = clienteIdsFiltro;
+            ViewBag.TodosCards = cards;
+            ViewBag.DebugTempo = "";
+
+            var cardsFiltrados = clienteIdsFiltro != null && clienteIdsFiltro.Any()
+                ? cards.Where(c => clienteIdsFiltro.Contains(c.ClienteId)).ToList()
+                : cards;
+
+            var viewModel = new RentabilidadeMensalistaViewModel
+            {
+                Periodo = periodoAtual,
+                DataInicio = inicio,
+                DataFim = fim,
+                Cards = cardsFiltrados,
+                TotalMensalidades = 0,
+                TotalConsumido = cardsFiltrados.Sum(c => c.ValorConsumido),
+                SaldoGeral = cardsFiltrados.Sum(c => c.ValorConsumido),
+                TotalEstourados = 0,
+                TotalAtencao = 0,
+                TotalEquilibrados = cardsFiltrados.Count
+            };
+
+            return View(viewModel);
+        }
+
         private void PopulateViewData(DateTime monthYear, int? clientId, int? departmentId)
         {
             ViewData["monthYear"] = monthYear.ToString("yyyy-MM");

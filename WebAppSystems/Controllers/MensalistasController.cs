@@ -7,12 +7,15 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using WebAppSystems.Data;
+using WebAppSystems.Filters;
 using WebAppSystems.Helper;
 using WebAppSystems.Models;
 using WebAppSystems.Services;
 
 namespace WebAppSystems.Controllers
 {
+    [PaginaParaUsuarioLogado]
+    [PaginaRestritaSomenteAdmin]
     public class MensalistasController : Controller
     {
         private readonly WebAppSystemsContext _context;
