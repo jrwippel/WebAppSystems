@@ -103,6 +103,121 @@ namespace WebAppSystems.Controllers
             }
         }
 
+        // ── Painel de Rentabilidade dos Mensalistas ──────────────────────────
+
+        public async Task<IActionResult> Rentabilidade(string? periodo, DateTime? dataInicio, DateTime? dataFim)
+        {
+            // Definir período
+            DateTime inicio, fim;
+            string periodoAtual = periodo ?? "mes";
+
+            switch (periodoAtual)
+            {
+                case "semestre":
+                    inicio = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddMonths(-5);
+                    fim = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.DaysInMonth(DateTime.Now.Year, DateTime.Now.Month));
+                    break;
+                case "custom":
+                    inicio = dataInicio ?? new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+                    fim = dataFim ?? DateTime.Now.Date;
+                    break;
+                default: // mes
+                    periodoAtual = "mes";
+                    inicio = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+                    fim = DateTime.Now.Date;
+                    break;
+            }
+
+            // Buscar todos os mensalistas com seus clientes
+            var mensalistas = await _mensalistaService.FindAllAsync();
+            var clients = await _clientService.FindAllAsync();
+
+            var cards = new List<CardMensalista>();
+
+            foreach (var m in mensalistas)
+            {
+                var client = clients.FirstOrDefault(c => c.Id == m.ClientId);
+                if (client == null) continue;
+
+                // Buscar horas apontadas no período para este cliente
+                var records = await _processRecordService.FindByDateAsync(inicio, fim, new List<int> { m.ClientId }, null, null, null);
+                var horasApontadas = records.Sum(r => r.CalculoHorasDecimal());
+
+                var valorHora = m.GetValorHoraEfetivo();
+                var valorConsumido = (decimal)horasApontadas * valorHora;
+
+                // Se for semestre, dividir a mensalidade pelo número de meses para comparar
+                decimal mensalidadeReferencia = m.ValorMensalBruto;
+                if (periodoAtual == "semestre")
+                    mensalidadeReferencia = m.ValorMensalBruto * 6;
+                else if (periodoAtual == "custom")
+                {
+                    // Calcular quantos meses abrange o período
+                    var meses = ((fim.Year - inicio.Year) * 12) + fim.Month - inicio.Month + 1;
+                    mensalidadeReferencia = m.ValorMensalBruto * meses;
+                }
+
+                var saldo = mensalidadeReferencia - valorConsumido;
+                var percentual = mensalidadeReferencia > 0 ? (double)(valorConsumido / mensalidadeReferencia) * 100 : 0;
+
+                string status, statusTexto;
+                if (percentual > 100)
+                {
+                    status = "vermelho";
+                    statusTexto = "Revisão Recomendada";
+                }
+                else if (percentual >= 80)
+                {
+                    status = "amarelo";
+                    statusTexto = "Atenção";
+                }
+                else
+                {
+                    status = "verde";
+                    statusTexto = "Equilibrado";
+                }
+
+                cards.Add(new CardMensalista
+                {
+                    MensalistaId = m.Id,
+                    ClienteId = client.Id,
+                    ClienteNome = client.Name,
+                    ClienteLogo = client.ImageData,
+                    ClienteLogoMime = client.ImageMimeType,
+                    ValorMensalidade = mensalidadeReferencia,
+                    ValorHoraVirtual = valorHora,
+                    HorasApontadas = horasApontadas,
+                    ValorConsumido = valorConsumido,
+                    Saldo = saldo,
+                    PercentualConsumo = percentual,
+                    Status = status,
+                    StatusTexto = statusTexto
+                });
+            }
+
+            // Ordenar: vermelhos primeiro, depois amarelos, depois verdes
+            cards = cards
+                .OrderByDescending(c => c.Status == "vermelho" ? 3 : c.Status == "amarelo" ? 2 : 1)
+                .ThenByDescending(c => c.PercentualConsumo)
+                .ToList();
+
+            var viewModel = new RentabilidadeMensalistaViewModel
+            {
+                Periodo = periodoAtual,
+                DataInicio = inicio,
+                DataFim = fim,
+                Cards = cards,
+                TotalMensalidades = cards.Sum(c => c.ValorMensalidade),
+                TotalConsumido = cards.Sum(c => c.ValorConsumido),
+                SaldoGeral = cards.Sum(c => c.Saldo),
+                TotalEstourados = cards.Count(c => c.Status == "vermelho"),
+                TotalAtencao = cards.Count(c => c.Status == "amarelo"),
+                TotalEquilibrados = cards.Count(c => c.Status == "verde")
+            };
+
+            return View(viewModel);
+        }
+
         private void PopulateViewData(DateTime monthYear, int? clientId, int? departmentId)
         {
             ViewData["monthYear"] = monthYear.ToString("yyyy-MM");

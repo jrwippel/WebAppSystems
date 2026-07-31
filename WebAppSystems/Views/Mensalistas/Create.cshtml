@@ -29,6 +29,11 @@
                     <span asp-validation-for="ValorMensalBruto" class="text-danger"></span>
                 </div>
                 <div class="form-field">
+                    <label asp-for="ValorHoraVirtual">Valor Hora Virtual (R$) <small style="color:#718096;">(opcional - calculado automaticamente)</small></label>
+                    <input asp-for="ValorHoraVirtual" class="form-control" pattern="^[0-9]+([.,][0-9]{1,2})?$" data-val="false" placeholder="Auto: 300~350" />
+                    <span asp-validation-for="ValorHoraVirtual" class="text-danger"></span>
+                </div>
+                <div class="form-field">
                     <label asp-for="ComissaoParceiro">Comissão Parceiro (R$)</label>
                     <input asp-for="ComissaoParceiro" class="form-control" pattern="^[0-9]+([.,][0-9]{1,2})?$" data-val="false" placeholder="0,00" />
                     <span asp-validation-for="ComissaoParceiro" class="text-danger"></span>
