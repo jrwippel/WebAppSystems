@@ -14,6 +14,8 @@ using WebAppSystems.Services;
 using WebAppSystems.Models.Enums;
 using NPOI.SS.Util;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using WebAppSystems.Data;
 
 
 namespace WebAppSystems.Controllers
@@ -35,11 +37,12 @@ namespace WebAppSystems.Controllers
         private readonly IWebHostEnvironment _env;
 
         private readonly MensalistaService _mensalistaService;
+        private readonly WebAppSystemsContext _context;
         private ICellStyle lightGrayStyle;
         private ICellStyle veryLightGrayStyle;
 
         public MensalistaController(ProcessRecordService processRecordService, ClientService clientService, AttorneyService attorneyService, IWebHostEnvironment env,
-            DepartmentService departmentService, MensalistaService mensalistaService)
+            DepartmentService departmentService, MensalistaService mensalistaService, WebAppSystemsContext context)
         {
             _processRecordService = processRecordService;
             _clientService = clientService;
@@ -47,6 +50,7 @@ namespace WebAppSystems.Controllers
             _env = env;
             _departmentService = departmentService;
             _mensalistaService = mensalistaService;
+            _context = context;
 
         }
 
@@ -105,7 +109,7 @@ namespace WebAppSystems.Controllers
 
         // ── Painel de Rentabilidade dos Mensalistas ──────────────────────────
 
-        public async Task<IActionResult> Rentabilidade(string? periodo, DateTime? dataInicio, DateTime? dataFim)
+        public async Task<IActionResult> Rentabilidade(string? periodo, DateTime? dataInicio, DateTime? dataFim, string? clienteIds)
         {
             // Definir período
             DateTime inicio, fim;
@@ -129,8 +133,37 @@ namespace WebAppSystems.Controllers
             }
 
             // Buscar todos os mensalistas com seus clientes
+            var sw = System.Diagnostics.Stopwatch.StartNew();
             var mensalistas = await _mensalistaService.FindAllAsync();
-            var clients = await _clientService.FindAllAsync();
+            var clientIdsMensalistas = mensalistas.Select(m => m.ClientId).ToList();
+            var t1 = sw.ElapsedMilliseconds;
+            
+            // Buscar clientes dos mensalistas (com logo)
+            var clients = await _context.Client
+                .AsNoTracking()
+                .Where(c => clientIdsMensalistas.Contains(c.Id))
+                .Select(c => new { c.Id, c.Name, c.ImageData, c.ImageMimeType })
+                .ToListAsync();
+            var t2 = sw.ElapsedMilliseconds;
+
+            // Query otimizada: busca apenas ClientId + HoraInicial + HoraFinal sem joins
+            var registrosResumo = await _context.ProcessRecord
+                .AsNoTracking()
+                .Where(p => p.Date >= inicio && p.Date <= fim && clientIdsMensalistas.Contains(p.ClientId))
+                .Select(p => new { p.ClientId, p.HoraInicial, p.HoraFinal })
+                .ToListAsync();
+            var t3 = sw.ElapsedMilliseconds;
+            sw.Stop();
+
+            // Debug: tempo de cada query
+            ViewBag.DebugTempo = $"Mensalistas: {t1}ms | Clientes: {t2 - t1}ms | Registros ({registrosResumo.Count}): {t3 - t2}ms | Total: {t3}ms";
+
+            var horasDict = registrosResumo
+                .GroupBy(r => r.ClientId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Sum(r => (r.HoraFinal - r.HoraInicial).TotalHours)
+                );
 
             var cards = new List<CardMensalista>();
 
@@ -139,9 +172,8 @@ namespace WebAppSystems.Controllers
                 var client = clients.FirstOrDefault(c => c.Id == m.ClientId);
                 if (client == null) continue;
 
-                // Buscar horas apontadas no período para este cliente
-                var records = await _processRecordService.FindByDateAsync(inicio, fim, new List<int> { m.ClientId }, null, null, null);
-                var horasApontadas = records.Sum(r => r.CalculoHorasDecimal());
+                // Pegar horas do dicionário pré-calculado
+                var horasApontadas = horasDict.ContainsKey(m.ClientId) ? horasDict[m.ClientId] : 0;
 
                 var valorHora = m.GetValorHoraEfetivo();
                 var valorConsumido = (decimal)horasApontadas * valorHora;
@@ -201,21 +233,67 @@ namespace WebAppSystems.Controllers
                 .ThenByDescending(c => c.PercentualConsumo)
                 .ToList();
 
+            // Filtro por cliente (aplicado após montar todos os cards para o dropdown ter todos)
+            List<int> clienteIdsFiltro = null;
+            if (!string.IsNullOrWhiteSpace(clienteIds))
+            {
+                clienteIdsFiltro = clienteIds.Split(',')
+                    .Where(id => !string.IsNullOrWhiteSpace(id))
+                    .Select(id => int.Parse(id.Trim()))
+                    .ToList();
+            }
+            ViewBag.ClienteIdsFiltro = clienteIdsFiltro;
+            ViewBag.TodosCards = cards; // Para o dropdown sempre ter todos
+            var cardsFiltrados = clienteIdsFiltro != null && clienteIdsFiltro.Any()
+                ? cards.Where(c => clienteIdsFiltro.Contains(c.ClienteId)).ToList()
+                : cards;
+
             var viewModel = new RentabilidadeMensalistaViewModel
             {
                 Periodo = periodoAtual,
                 DataInicio = inicio,
                 DataFim = fim,
-                Cards = cards,
-                TotalMensalidades = cards.Sum(c => c.ValorMensalidade),
-                TotalConsumido = cards.Sum(c => c.ValorConsumido),
-                SaldoGeral = cards.Sum(c => c.Saldo),
-                TotalEstourados = cards.Count(c => c.Status == "vermelho"),
-                TotalAtencao = cards.Count(c => c.Status == "amarelo"),
-                TotalEquilibrados = cards.Count(c => c.Status == "verde")
+                Cards = cardsFiltrados,
+                TotalMensalidades = cardsFiltrados.Sum(c => c.ValorMensalidade),
+                TotalConsumido = cardsFiltrados.Sum(c => c.ValorConsumido),
+                SaldoGeral = cardsFiltrados.Sum(c => c.Saldo),
+                TotalEstourados = cardsFiltrados.Count(c => c.Status == "vermelho"),
+                TotalAtencao = cardsFiltrados.Count(c => c.Status == "amarelo"),
+                TotalEquilibrados = cardsFiltrados.Count(c => c.Status == "verde")
             };
 
             return View(viewModel);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> RentabilidadeDetalhe(int clienteId, DateTime dataInicio, DateTime dataFim)
+        {
+            var registros = await _context.ProcessRecord
+                .AsNoTracking()
+                .Include(p => p.Attorney)
+                .Include(p => p.Department)
+                .Where(p => p.Date >= dataInicio && p.Date <= dataFim && p.ClientId == clienteId)
+                .ToListAsync();
+
+            var porAdvogado = registros
+                .GroupBy(r => r.Attorney.Name)
+                .Select(g => new { Nome = g.Key, Horas = Math.Round(g.Sum(r => (r.HoraFinal - r.HoraInicial).TotalHours), 1) })
+                .OrderByDescending(x => x.Horas)
+                .ToList();
+
+            var porArea = registros
+                .GroupBy(r => r.Department.Name)
+                .Select(g => new { Nome = g.Key, Horas = Math.Round(g.Sum(r => (r.HoraFinal - r.HoraInicial).TotalHours), 1) })
+                .OrderByDescending(x => x.Horas)
+                .ToList();
+
+            var porTipo = registros
+                .GroupBy(r => r.RecordType.ToString())
+                .Select(g => new { Nome = g.Key, Horas = Math.Round(g.Sum(r => (r.HoraFinal - r.HoraInicial).TotalHours), 1) })
+                .OrderByDescending(x => x.Horas)
+                .ToList();
+
+            return Json(new { porAdvogado, porArea, porTipo });
         }
 
         private void PopulateViewData(DateTime monthYear, int? clientId, int? departmentId)

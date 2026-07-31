@@ -492,6 +492,9 @@ namespace WebAppSystems.Migrations
                     b.Property<decimal>("ValorMensalBruto")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<decimal?>("ValorHoraVirtual")
+                        .HasColumnType("decimal(18,2)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ClientId");

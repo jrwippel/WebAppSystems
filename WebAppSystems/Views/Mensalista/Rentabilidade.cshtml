@@ -5,6 +5,27 @@
 }
 
 <div class="rentabilidade-container">
+    <!-- Loading Overlay com estilo inline para garantir que aparece imediatamente -->
+    <div id="loadingOverlay" style="position:fixed; top:0; left:0; right:0; bottom:0; background:white; z-index:99999; display:flex; align-items:center; justify-content:center; flex-direction:column;">
+        <div style="background:white; border-radius:16px; box-shadow:0 8px 32px rgba(0,0,0,0.1); padding:40px 50px; text-align:center;">
+            <div style="width:64px; height:64px; margin:0 auto 16px; position:relative;">
+                <svg viewBox="0 0 64 64" style="width:64px; height:64px;">
+                    <circle cx="32" cy="32" r="28" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+                    <circle cx="32" cy="32" r="28" fill="none" stroke="#667eea" stroke-width="3" stroke-dasharray="176" stroke-dashoffset="44" stroke-linecap="round" style="animation:rotateCircle 1.5s linear infinite; transform-origin:center;"/>
+                    <circle cx="32" cy="32" r="3" fill="#667eea"/>
+                    <line x1="32" y1="32" x2="32" y2="18" stroke="#667eea" stroke-width="2.5" stroke-linecap="round" style="animation:rotateHand 2s linear infinite; transform-origin:32px 32px;"/>
+                    <line x1="32" y1="32" x2="44" y2="32" stroke="#764ba2" stroke-width="2" stroke-linecap="round" style="animation:rotateHand 8s linear infinite; transform-origin:32px 32px;"/>
+                </svg>
+            </div>
+            <p style="font-size:15px; font-weight:600; color:#2d3748; margin:0 0 4px;">Aguarde...</p>
+            <p style="font-size:13px; color:#718096; margin:0;">Um momento, por favor</p>
+        </div>
+        <style>
+            @@keyframes rotateCircle { to { stroke-dashoffset: -132; } }
+            @@keyframes rotateHand { to { transform: rotate(360deg); } }
+        </style>
+    </div>
+
     <!-- Header -->
     <div class="page-banner">
         <div class="banner-content">
@@ -21,11 +42,11 @@
     <!-- Filtro de Período -->
     <div class="periodo-card">
         <div class="periodo-buttons">
-            <a href="@Url.Action("Rentabilidade", new { periodo = "mes" })" 
+            <a href="@Url.Action("Rentabilidade", new { periodo = "mes", clienteIds = ViewBag.ClienteIdsFiltro != null ? string.Join(",", (List<int>)ViewBag.ClienteIdsFiltro) : "" })" 
                class="periodo-btn @(Model.Periodo == "mes" ? "active" : "")">
                 <i class="bi bi-calendar-month"></i> Mês Atual
             </a>
-            <a href="@Url.Action("Rentabilidade", new { periodo = "semestre" })" 
+            <a href="@Url.Action("Rentabilidade", new { periodo = "semestre", clienteIds = ViewBag.ClienteIdsFiltro != null ? string.Join(",", (List<int>)ViewBag.ClienteIdsFiltro) : "" })" 
                class="periodo-btn @(Model.Periodo == "semestre" ? "active" : "")">
                 <i class="bi bi-calendar-range"></i> Últimos 6 Meses
             </a>
@@ -44,9 +65,44 @@
                 </div>
             </form>
         </div>
+        <!-- Filtro por Cliente -->
+        <div class="filtro-cliente">
+            <form method="get" class="filtro-cliente-form" id="filtroClienteForm">
+                <input type="hidden" name="periodo" value="@Model.Periodo" />
+                <input type="hidden" name="dataInicio" value="@Model.DataInicio.ToString("yyyy-MM-dd")" />
+                <input type="hidden" name="dataFim" value="@Model.DataFim.ToString("yyyy-MM-dd")" />
+                <label><i class="bi bi-funnel"></i> Filtrar cliente:</label>
+                <select name="clienteIds" id="filtroClienteSelect" class="form-control" multiple style="visibility:hidden; height:0; overflow:hidden;">
+                    @foreach (var card in ((List<WebAppSystems.Models.ViewModels.CardMensalista>)ViewBag.TodosCards).OrderBy(c => c.ClienteNome))
+                    {
+                        var clienteIdsFiltro = ViewBag.ClienteIdsFiltro as List<int>;
+                        <option value="@card.ClienteId" selected="@(clienteIdsFiltro != null && clienteIdsFiltro.Contains(card.ClienteId))">@card.ClienteNome</option>
+                    }
+                </select>
+                <button type="submit" class="btn-aplicar"><i class="bi bi-funnel-fill"></i> Filtrar</button>
+            </form>
+        </div>
+        <!-- Ordenação -->
+        <div class="ordenacao-row">
+            <label><i class="bi bi-sort-down"></i> Ordenar por:</label>
+            <select id="ordenarSelect" class="form-control ordenar-select" onchange="ordenarCards()">
+                <option value="status">Status (críticos primeiro)</option>
+                <option value="horas-desc">Horas lançadas (maior → menor)</option>
+                <option value="horas-asc">Horas lançadas (menor → maior)</option>
+                <option value="mensalidade-desc">Mensalidade (maior → menor)</option>
+                <option value="mensalidade-asc">Mensalidade (menor → maior)</option>
+                <option value="saldo-asc">Saldo (menor → maior)</option>
+                <option value="saldo-desc">Saldo (maior → menor)</option>
+                <option value="nome">Nome (A → Z)</option>
+            </select>
+        </div>
         <div class="periodo-info">
             <i class="bi bi-info-circle"></i>
             <span>Período: @Model.DataInicio.ToString("dd/MM/yyyy") a @Model.DataFim.ToString("dd/MM/yyyy")</span>
+            @if (ViewBag.DebugTempo != null)
+            {
+                <span style="margin-left: 20px; font-size: 10px; color: #a0aec0;">⏱ @ViewBag.DebugTempo</span>
+            }
         </div>
     </div>
 
@@ -89,7 +145,12 @@
             @{ var cardIndex = 0; }
             @foreach (var card in Model.Cards)
             {
-                <div class="mensalista-card @(cardIndex >= 8 ? "card-extra" : "")" style="@(cardIndex >= 8 ? "display:none;" : "")">
+                <div class="mensalista-card @(cardIndex >= 8 ? "card-extra" : "")" style="@(cardIndex >= 8 ? "display:none;" : "")" onclick="abrirDetalhe(@card.ClienteId, '@card.ClienteNome.Replace("'", "\\'")')" title="Clique para ver detalhes"
+                     data-horas="@card.HorasApontadas.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                     data-mensalidade="@card.ValorMensalidade.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                     data-saldo="@card.Saldo.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                     data-status="@(card.Status == "vermelho" ? "3" : card.Status == "amarelo" ? "2" : "1")"
+                     data-nome="@card.ClienteNome">>>
                     <!-- Cabeçalho com Logo + Nome -->
                     <div class="card-header-m">
                         <div class="client-avatar">
@@ -110,11 +171,13 @@
 
                     <!-- Gráfico de Barra Sobreposta -->
                     <div class="bar-chart-container" title="Horas: @card.HorasApontadas.ToString("N1")h | V.Hora: @card.ValorHoraVirtual.ToString("C0", new System.Globalization.CultureInfo("pt-BR")) | Consumo: @card.ValorConsumido.ToString("C0", new System.Globalization.CultureInfo("pt-BR"))">
-                        <div class="bar-background">
-                            <div class="bar-foreground bar-@card.Status" style="height: @(Math.Min(card.PercentualConsumo, 120).ToString("N0", System.Globalization.CultureInfo.InvariantCulture))%"></div>
+                        <div class="bar-wrapper">
+                            <div class="bar-background">
+                                <div class="bar-foreground bar-@card.Status" style="height: @(Math.Min(card.PercentualConsumo, 100).ToString("N0", System.Globalization.CultureInfo.InvariantCulture))%"></div>
+                            </div>
                         </div>
                         <div class="bar-labels">
-                            <span class="bar-percent">@card.PercentualConsumo.ToString("N0")%</span>
+                            <span class="bar-percent bar-percent-@card.Status">@card.PercentualConsumo.ToString("N0")%</span>
                         </div>
                     </div>
 
@@ -137,7 +200,9 @@
                     <!-- Rodapé -->
                     <div class="card-footer-m">
                         <span class="hours-info"><i class="bi bi-clock"></i> @card.HorasApontadas.ToString("N1")h apontadas</span>
-                        <span class="rate-info">@card.ValorHoraVirtual.ToString("C0", new System.Globalization.CultureInfo("pt-BR"))/h</span>
+                        <span class="rate-info" title="Valor-hora aplicado: @card.ValorHoraVirtual.ToString("C0", new System.Globalization.CultureInfo("pt-BR")). Calculado automaticamente pela faixa da mensalidade quando não há valor personalizado cadastrado no mensalista.">
+                            <i class="bi bi-info-circle"></i> @card.ValorHoraVirtual.ToString("C0", new System.Globalization.CultureInfo("pt-BR"))/h
+                        </span>
                     </div>
                 </div>
                 cardIndex++;
@@ -161,10 +226,44 @@
             <p>Cadastre mensalistas para visualizar a rentabilidade.</p>
         </div>
     }
+
+    <!-- Modal Detalhamento -->
+    <div class="modal fade" id="detalheModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-bar-chart-steps"></i> <span id="detalheClienteNome"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="detalhe-loading" id="detalheLoading">
+                        <div class="loading-spinner"></div>
+                        <p>Carregando detalhes...</p>
+                    </div>
+                    <div class="detalhe-content" id="detalheContent" style="display:none;">
+                        <div class="detalhe-grid">
+                            <div class="detalhe-section">
+                                <h6><i class="bi bi-person-badge"></i> Por Advogado</h6>
+                                <div id="detalheAdvogados"></div>
+                            </div>
+                            <div class="detalhe-section">
+                                <h6><i class="bi bi-diagram-3"></i> Por Área</h6>
+                                <div id="detalheAreas"></div>
+                            </div>
+                            <div class="detalhe-section">
+                                <h6><i class="bi bi-tag"></i> Por Tipo</h6>
+                                <div id="detalheTipos"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <style>
-    .rentabilidade-container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+    .rentabilidade-container { max-width: 1400px; margin: 0 auto; padding: 20px; position: relative; }
 
     .page-banner {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -196,6 +295,93 @@
     .periodo-info { margin-top: 10px; font-size: 12px; color: #718096; display: flex; align-items: center; gap: 6px; }
     .periodo-info i { color: #667eea; }
 
+    /* Filtro Cliente */
+    .filtro-cliente { margin-top: 12px; padding-top: 12px; border-top: 1px solid #f0f0f0; }
+
+    /* Ordenação */
+    .ordenacao-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #f0f0f0; }
+    .ordenacao-row label { font-size: 12px; font-weight: 600; color: #4a5568; display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+    .ordenacao-row label i { color: #667eea; }
+    .ordenar-select { max-width: 280px; padding: 7px 12px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 12px; color: #4a5568; cursor: pointer; }
+    .ordenar-select:focus { border-color: #667eea; outline: none; }
+    .filtro-cliente-form { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .filtro-cliente-form label { font-size: 12px; font-weight: 600; color: #4a5568; display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+    .filtro-cliente-form label i { color: #667eea; }
+    .filtro-cliente-form .select2-container { min-width: 300px; max-width: 500px; flex: 1; }
+    .filtro-cliente-form .btn-aplicar { flex-shrink: 0; }
+
+    /* Select2 Custom Styles */
+    .filtro-cliente .select2-container .select2-selection--multiple {
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 6px 10px;
+        min-height: 42px;
+        font-size: 13px;
+        background: white;
+        transition: all 0.3s;
+    }
+
+    .filtro-cliente .select2-container--focus .select2-selection--multiple {
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+    }
+
+    .select2-container .select2-selection--multiple .select2-selection__choice {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        border: none !important;
+        color: white !important;
+        border-radius: 4px !important;
+        padding: 3px 8px !important;
+        font-size: 12px !important;
+        margin: 2px 4px 2px 0 !important;
+    }
+
+    .select2-container .select2-selection--multiple .select2-selection__choice__remove {
+        color: white !important;
+        margin-right: 4px !important;
+        border-right: 1px solid rgba(255,255,255,0.3) !important;
+        padding-right: 4px !important;
+    }
+
+    .select2-container .select2-selection--multiple .select2-selection__choice__remove:hover {
+        color: #ffd6d6 !important;
+        background: transparent !important;
+    }
+
+    .select2-container .select2-dropdown {
+        border: 2px solid #e2e8f0 !important;
+        border-radius: 8px !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
+        margin-top: 4px;
+    }
+
+    .select2-container .select2-results__option--highlighted[aria-selected] {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+    }
+
+    .select2-container .select2-results__option--selected {
+        background: rgba(102, 126, 234, 0.08) !important;
+    }
+
+    .select2-container .select2-search--dropdown .select2-search__field {
+        border: 2px solid #e2e8f0 !important;
+        border-radius: 6px !important;
+        padding: 8px 12px !important;
+        font-size: 13px !important;
+    }
+
+    .select2-container .select2-search--dropdown .select2-search__field:focus {
+        border-color: #667eea !important;
+        outline: none !important;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+    }
+
+    .select2-container .select2-selection__placeholder {
+        color: #a0aec0 !important;
+        font-size: 13px;
+    }
+
     /* Resumo */
     .resumo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 24px; }
     .resumo-card { background: white; border-radius: 10px; padding: 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
@@ -209,12 +395,12 @@
 
     .mensalista-card {
         background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-        padding: 18px; transition: transform 0.2s, box-shadow 0.2s; overflow: hidden;
+        padding: 18px; transition: transform 0.2s, box-shadow 0.2s; overflow: hidden; cursor: pointer;
     }
     .mensalista-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
 
     /* Card Header */
-    .card-header-m { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .card-header-m { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; min-height: 48px; }
     .client-avatar {
         width: 42px; height: 42px; border-radius: 10px; overflow: hidden;
         background: linear-gradient(135deg, #667eea, #764ba2);
@@ -229,21 +415,36 @@
     .status-badge.status-vermelho { background: #fff5f5; color: #9b2c2c; }
 
     /* Bar Chart */
-    .bar-chart-container { display: flex; align-items: flex-end; gap: 10px; height: 100px; margin-bottom: 14px; cursor: help; }
+    .bar-chart-container { display: flex; align-items: flex-end; gap: 10px; height: 90px; margin-bottom: 14px; cursor: help; }
+    .bar-wrapper { flex: 1; height: 100%; position: relative; }
     .bar-background {
-        flex: 1; height: 100%; background: #e2e8f0; border-radius: 6px;
-        position: relative; overflow: visible;
+        width: 100%; height: 100%; background: #edf2f7; border-radius: 6px;
+        position: relative; overflow: hidden;
     }
     .bar-foreground {
         position: absolute; bottom: 0; left: 0; right: 0;
         border-radius: 6px; transition: height 0.8s ease;
         min-height: 4px;
     }
+    .bar-limit-line {
+        position: absolute; bottom: 0; left: 0; right: 0; height: 100%;
+        border-top: 2px dashed rgba(229, 62, 62, 0.5);
+        z-index: 1;
+    }
+    .bar-overflow-indicator {
+        position: absolute; top: -2px; left: 50%; transform: translateX(-50%);
+        color: #e53e3e; font-size: 14px;
+        animation: pulse-overflow 1.5s infinite;
+    }
+    @@keyframes pulse-overflow { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
     .bar-verde { background: linear-gradient(180deg, #68d391, #48bb78); }
     .bar-amarelo { background: linear-gradient(180deg, #f6e05e, #ecc94b); }
     .bar-vermelho { background: linear-gradient(180deg, #fc8181, #f56565); }
-    .bar-labels { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
-    .bar-percent { font-size: 18px; font-weight: 700; color: #2d3748; }
+    .bar-labels { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; min-width: 50px; }
+    .bar-percent { font-size: 16px; font-weight: 700; color: #2d3748; }
+    .bar-percent-vermelho { color: #e53e3e; }
+    .bar-percent-amarelo { color: #d69e2e; }
+    .bar-percent-verde { color: #2d3748; }
 
     /* Values */
     .card-values { margin-bottom: 12px; }
@@ -254,7 +455,9 @@
 
     /* Footer */
     .card-footer-m { display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid #f0f0f0; }
-    .hours-info, .rate-info { font-size: 11px; color: #a0aec0; display: flex; align-items: center; gap: 4px; }
+    .hours-info { font-size: 11px; color: #a0aec0; display: flex; align-items: center; gap: 4px; }
+    .rate-info { font-size: 11px; color: #a0aec0; display: flex; align-items: center; gap: 4px; cursor: help; position: relative; }
+    .rate-info i { font-size: 10px; color: #cbd5e0; }
 
     /* Ver Todos */
     .ver-todos-wrapper { text-align: center; margin-bottom: 20px; }
@@ -271,6 +474,30 @@
     .empty-state h4 { color: #4a5568; margin-bottom: 8px; }
     .empty-state p { color: #718096; font-size: 14px; }
 
+    /* Modal Detalhamento */
+    #detalheModal .modal-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white; border-radius: 12px 12px 0 0; padding: 16px 20px;
+    }
+    #detalheModal .modal-header .btn-close { filter: brightness(0) invert(1); }
+    #detalheModal .modal-title { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    #detalheModal .modal-content { border-radius: 12px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.15); }
+    #detalheModal .modal-body { padding: 24px; }
+
+    .detalhe-loading { text-align: center; padding: 30px; }
+    .detalhe-loading p { margin-top: 12px; color: #718096; font-size: 13px; }
+
+    .detalhe-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+    .detalhe-section h6 { font-size: 13px; font-weight: 600; color: #4a5568; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; padding-bottom: 8px; border-bottom: 2px solid #f0f0f0; }
+    .detalhe-section h6 i { color: #667eea; }
+
+    .detalhe-item { padding: 8px 0; border-bottom: 1px solid #f7fafc; }
+    .detalhe-item-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    .detalhe-item-nome { font-size: 12px; color: #4a5568; }
+    .detalhe-item-horas { font-size: 12px; font-weight: 700; color: #667eea; background: rgba(102,126,234,0.08); padding: 2px 8px; border-radius: 4px; }
+    .detalhe-item-bar { height: 6px; background: #edf2f7; border-radius: 3px; overflow: hidden; }
+    .detalhe-item-bar-fill { height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 3px; transition: width 0.6s ease; }
+
     @@media (max-width: 768px) {
         .rentabilidade-container { padding: 12px; }
         .cards-grid { grid-template-columns: 1fr; }
@@ -280,6 +507,7 @@
     }
 </style>
 
+@section Scripts {
 <script>
     function toggleCustomPeriodo() {
         var el = document.getElementById('periodoCustom');
@@ -292,4 +520,128 @@
         });
         document.getElementById('verTodosWrapper').style.display = 'none';
     }
+
+    function ordenarCards() {
+        var criterio = document.getElementById('ordenarSelect').value;
+        var grid = document.getElementById('cardsGrid');
+        if (!grid) return;
+
+        var cards = Array.from(grid.querySelectorAll('.mensalista-card'));
+
+        cards.sort(function(a, b) {
+            switch (criterio) {
+                case 'horas-desc':
+                    return parseFloat(b.dataset.horas) - parseFloat(a.dataset.horas);
+                case 'horas-asc':
+                    return parseFloat(a.dataset.horas) - parseFloat(b.dataset.horas);
+                case 'mensalidade-desc':
+                    return parseFloat(b.dataset.mensalidade) - parseFloat(a.dataset.mensalidade);
+                case 'mensalidade-asc':
+                    return parseFloat(a.dataset.mensalidade) - parseFloat(b.dataset.mensalidade);
+                case 'saldo-asc':
+                    return parseFloat(a.dataset.saldo) - parseFloat(b.dataset.saldo);
+                case 'saldo-desc':
+                    return parseFloat(b.dataset.saldo) - parseFloat(a.dataset.saldo);
+                case 'nome':
+                    return a.dataset.nome.localeCompare(b.dataset.nome);
+                default: // status
+                    var diff = parseInt(b.dataset.status) - parseInt(a.dataset.status);
+                    if (diff !== 0) return diff;
+                    return parseFloat(b.dataset.horas) - parseFloat(a.dataset.horas);
+            }
+        });
+
+        // Reordenar no DOM
+        cards.forEach(function(card) {
+            card.style.display = '';
+            card.classList.remove('card-extra');
+            grid.appendChild(card);
+        });
+
+        // Esconder botão "Ver todos" já que reordenamos tudo
+        var verTodos = document.getElementById('verTodosWrapper');
+        if (verTodos) verTodos.style.display = 'none';
+    }
+
+    function abrirDetalhe(clienteId, clienteNome) {
+        document.getElementById('detalheClienteNome').textContent = clienteNome;
+        document.getElementById('detalheLoading').style.display = '';
+        document.getElementById('detalheContent').style.display = 'none';
+
+        var modal = new bootstrap.Modal(document.getElementById('detalheModal'));
+        modal.show();
+
+        var dataInicio = '@Model.DataInicio.ToString("yyyy-MM-dd")';
+        var dataFim = '@Model.DataFim.ToString("yyyy-MM-dd")';
+
+        fetch('/Mensalista/RentabilidadeDetalhe?clienteId=' + clienteId + '&dataInicio=' + dataInicio + '&dataFim=' + dataFim)
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                document.getElementById('detalheLoading').style.display = 'none';
+                document.getElementById('detalheContent').style.display = '';
+
+                // Helper para gerar itens com barra proporcional
+                function renderItems(items, containerId) {
+                    var maxHoras = items.length > 0 ? Math.max.apply(null, items.map(function(i) { return i.horas; })) : 1;
+                    var html = '';
+                    items.forEach(function(item) {
+                        var pct = maxHoras > 0 ? (item.horas / maxHoras) * 100 : 0;
+                        html += '<div class="detalhe-item">'
+                            + '<div class="detalhe-item-info">'
+                            + '<span class="detalhe-item-nome">' + item.nome + '</span>'
+                            + '<span class="detalhe-item-horas">' + item.horas.toFixed(1) + 'h</span>'
+                            + '</div>'
+                            + '<div class="detalhe-item-bar"><div class="detalhe-item-bar-fill" style="width:' + pct.toFixed(0) + '%"></div></div>'
+                            + '</div>';
+                    });
+                    document.getElementById(containerId).innerHTML = html || '<span style="font-size:12px;color:#a0aec0;">Sem dados</span>';
+                }
+
+                renderItems(data.porAdvogado, 'detalheAdvogados');
+                renderItems(data.porArea, 'detalheAreas');
+                renderItems(data.porTipo, 'detalheTipos');
+            })
+            .catch(function() {
+                document.getElementById('detalheLoading').innerHTML = '<p style="color:#e53e3e;">Erro ao carregar detalhes.</p>';
+            });
+    }
+
+    $(document).ready(function () {
+        // Esconder loading overlay
+        var overlay = document.getElementById('loadingOverlay');
+        if (overlay) {
+            overlay.classList.add('hidden');
+            setTimeout(function() { overlay.style.display = 'none'; }, 300);
+        }
+
+        // Inicializar Select2 e depois mostrar
+        var $select = $('#filtroClienteSelect');
+        $select.select2({
+            placeholder: 'Digite para buscar clientes...',
+            allowClear: true,
+            width: '100%',
+            language: {
+                noResults: function () { return 'Nenhum cliente encontrado'; },
+                searching: function () { return 'Buscando...'; }
+            },
+            matcher: function (params, data) {
+                if ($.trim(params.term) === '') return data;
+                if (data.text.toLowerCase().indexOf(params.term.toLowerCase()) > -1) return data;
+                return null;
+            }
+        });
+        // Mostrar após Select2 renderizar
+        $select.css({ 'visibility': 'visible', 'height': 'auto', 'overflow': 'visible' });
+
+        // Interceptar submit para converter multi-select em string
+        $('#filtroClienteForm').on('submit', function () {
+            var ids = $('#filtroClienteSelect').val();
+            $select.prop('disabled', true);
+            $(this).find('input[name="clienteIds"]').remove();
+            if (ids && ids.length > 0) {
+                $(this).append('<input type="hidden" name="clienteIds" value="' + ids.join(',') + '">');
+            }
+        });
+    });
 </script>
+}

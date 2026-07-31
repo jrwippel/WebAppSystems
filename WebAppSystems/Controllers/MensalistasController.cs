@@ -108,6 +108,13 @@ namespace WebAppSystems.Controllers
             mensalista.ComissaoParceiro = ConvertToDecimalWithDotSeparator(Request.Form["ComissaoParceiro"]);
             mensalista.ComissaoSocio = ConvertToDecimalWithDotSeparator(Request.Form["ComissaoSocio"]);
 
+            // Valor Hora Virtual (opcional)
+            var valorHoraStr = Request.Form["ValorHoraVirtual"].ToString();
+            if (!string.IsNullOrWhiteSpace(valorHoraStr))
+                mensalista.ValorHoraVirtual = ConvertToDecimalWithDotSeparator(valorHoraStr);
+            else
+                mensalista.ValorHoraVirtual = null;
+
             // Adiciona e salva o Mensalista
             _context.Add(mensalista);
             await _context.SaveChangesAsync();  // Salve o Mensalista primeiro
@@ -126,7 +133,14 @@ namespace WebAppSystems.Controllers
                 throw new FormatException("O valor recebido é nulo ou vazio.");
 
             // Remove espaços extras e caracteres indesejados
-            string sanitizedValue = valueWithCommaSeparator.Trim().Replace("R$", "").Replace(" ", "").Replace(",", ".");
+            string sanitizedValue = valueWithCommaSeparator.Trim().Replace("R$", "").Replace(" ", "");
+
+            // Formato brasileiro: ponto é milhar, vírgula é decimal (ex: 1.053,17)
+            // Remove pontos de milhar e substitui vírgula por ponto decimal
+            if (sanitizedValue.Contains(","))
+            {
+                sanitizedValue = sanitizedValue.Replace(".", "").Replace(",", ".");
+            }
 
             if (decimal.TryParse(sanitizedValue, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal result))
                 return result;
@@ -178,21 +192,27 @@ namespace WebAppSystems.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,ClientId,ValorMensalBruto,ComissaoParceiro,ComissaoSocio")] Mensalista mensalista)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,ClientId,ValorMensalBruto,ComissaoParceiro,ComissaoSocio,ValorHoraVirtual")] Mensalista mensalista)
         {
             if (id != mensalista.Id)
             {
                 return NotFound();
             }
 
-           // if (ModelState.IsValid)
-           // {
+            // Converter valores do form manualmente para tratar vírgula/ponto
+            mensalista.ValorMensalBruto = ConvertToDecimalWithDotSeparator(Request.Form["ValorMensalBruto"]);
+            mensalista.ComissaoParceiro = ConvertToDecimalWithDotSeparator(Request.Form["ComissaoParceiro"]);
+            mensalista.ComissaoSocio = ConvertToDecimalWithDotSeparator(Request.Form["ComissaoSocio"]);
+
+            var valorHoraStr = Request.Form["ValorHoraVirtual"].ToString();
+            if (!string.IsNullOrWhiteSpace(valorHoraStr))
+                mensalista.ValorHoraVirtual = ConvertToDecimalWithDotSeparator(valorHoraStr);
+            else
+                mensalista.ValorHoraVirtual = null;
+
                     _context.Update(mensalista);
                     await _context.SaveChangesAsync();
                     return RedirectToAction(nameof(Index));
-            //}
-            //ViewData["ClientId"] = new SelectList(_context.Client, "Id", "Document", mensalista.ClientId);
-            //return View(mensalista);
         }
 
         // GET: Mensalistas/Delete/5
