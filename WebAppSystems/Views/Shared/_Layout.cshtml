@@ -355,7 +355,7 @@
                 var el = e.target.closest('a');
                 if (!el) return;
                 var href = el.getAttribute('href');
-                if (!href || href === '#' || href.startsWith('javascript') || href.startsWith('mailto')) return;
+                if (!href || href === '#' || href.startsWith('#') || href.startsWith('javascript') || href.startsWith('mailto')) return;
                 if (el.getAttribute('target') === '_blank') return;
                 if (el.hasAttribute('download')) return;
 

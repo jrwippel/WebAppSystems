@@ -124,13 +124,18 @@ namespace WebAppSystems.Controllers
                 case "custom":
                     inicio = dataInicio ?? new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
                     fim = dataFim ?? DateTime.Now.Date;
+                    // Limitar período máximo de 12 meses
+                    if ((fim - inicio).TotalDays > 366)
+                    {
+                        inicio = fim.AddMonths(-12);
+                        TempData["MensagemAviso"] = "Período limitado a 12 meses.";
+                    }
                     break;
                 default: // mes
                     periodoAtual = "mes";
                     inicio = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
                     fim = DateTime.Now.Date;
-                    break;
-            }
+                    break;            }
 
             // Buscar todos os mensalistas com seus clientes
             var sw = System.Diagnostics.Stopwatch.StartNew();
@@ -313,6 +318,12 @@ namespace WebAppSystems.Controllers
                 case "custom":
                     inicio = dataInicio ?? new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
                     fim = dataFim ?? DateTime.Now.Date;
+                    // Limitar período máximo de 12 meses
+                    if ((fim - inicio).TotalDays > 366)
+                    {
+                        inicio = fim.AddMonths(-12);
+                        TempData["MensagemAviso"] = "Período limitado a 12 meses.";
+                    }
                     break;
                 default:
                     periodoAtual = "mes";
@@ -343,14 +354,7 @@ namespace WebAppSystems.Controllers
 
             var clientIdsHoristas = valoresClientes.Select(v => v.ClientId).ToList();
 
-            // Buscar clientes
-            var clients = await _context.Client
-                .AsNoTracking()
-                .Where(c => clientIdsHoristas.Contains(c.Id))
-                .Select(c => new { c.Id, c.Name, c.ImageData, c.ImageMimeType })
-                .ToListAsync();
-
-            // Buscar horas por cliente
+            // Buscar horas por cliente primeiro (pra saber quais têm lançamento)
             var registrosResumo = await _context.ProcessRecord
                 .AsNoTracking()
                 .Where(p => p.Date >= inicio && p.Date <= fim && clientIdsHoristas.Contains(p.ClientId))
@@ -363,6 +367,14 @@ namespace WebAppSystems.Controllers
                     g => g.Key,
                     g => g.Sum(r => (r.HoraFinal - r.HoraInicial).TotalHours)
                 );
+
+            // Buscar clientes COM logo — apenas os que têm horas (são poucos)
+            var clientIdsComHoras = horasDict.Where(h => h.Value > 0).Select(h => h.Key).ToList();
+            var clients = await _context.Client
+                .AsNoTracking()
+                .Where(c => clientIdsComHoras.Contains(c.Id))
+                .Select(c => new { c.Id, c.Name, c.ImageData, c.ImageMimeType })
+                .ToListAsync();
 
             var valoresDict = valoresClientes.ToDictionary(v => v.ClientId, v => v.Valor);
 

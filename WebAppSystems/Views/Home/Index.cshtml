@@ -20,10 +20,25 @@
 
 <div class="dashboard-container">
 
-    <!-- KPI Cards (Admin only) -->
+    <!-- Abas de navegação (desabilitado temporariamente)
     @if (isAdmin)
     {
-        <div class="kpi-row">
+        <div class="home-tabs-nav">
+            <a href="@Url.Action("Rentabilidade", "Mensalista")" class="home-tab-item">
+                <i class="bi bi-piggy-bank"></i> Mensalistas
+            </a>
+            <a href="@Url.Action("RentabilidadeHoristas", "Mensalista")" class="home-tab-item">
+                <i class="bi bi-cash-stack"></i> Horistas
+            </a>
+            <a href="#" class="home-tab-item active">
+                <i class="bi bi-bar-chart-line"></i> Gráficos
+            </a>
+        </div>
+    }
+    -->
+
+    <!-- KPI Cards -->
+    <div class="kpi-row">
             <div class="kpi-card">
                 <div class="kpi-icon" style="background: linear-gradient(135deg,#667eea,#764ba2)">
                     <i class="bi bi-clock"></i>
@@ -65,7 +80,7 @@
                 </div>
             </div>
         </div>
-    }
+    </div>
 
     <div class="tabs-container">
         <div class="tab-buttons">
@@ -133,6 +148,43 @@
             padding: 20px;
             max-width: 1400px;
             margin: 0 auto;
+        }
+
+        /* Home Tabs */
+        .home-tabs-nav {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 20px;
+            background: #f7fafc;
+            border-radius: 10px;
+            padding: 4px;
+        }
+
+        .home-tab-item {
+            flex: 1;
+            text-align: center;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #4a5568;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .home-tab-item:hover {
+            background: rgba(102, 126, 234, 0.05);
+            color: #667eea;
+        }
+
+        .home-tab-item.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
         }
 
         /* KPI Cards */

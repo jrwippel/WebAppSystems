@@ -27,7 +27,8 @@ namespace WebAppSystems
             // Configurar o contexto do banco de dados
             builder.Services.AddDbContext<WebAppSystemsContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("WebAppSystemsContext")
-                ?? throw new InvalidOperationException("Connection string 'WebAppSystemsContext' not found.")));
+                ?? throw new InvalidOperationException("Connection string 'WebAppSystemsContext' not found."),
+                sqlOptions => sqlOptions.CommandTimeout(180)));
 
             builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             builder.Services.AddScoped<SeedingService>();
