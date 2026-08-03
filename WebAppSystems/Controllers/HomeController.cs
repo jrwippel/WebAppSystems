@@ -25,11 +25,11 @@ namespace WebAppSystems.Controllers
                 ViewBag.LoggedUserId = usuario.Id;
                 ViewBag.CurrentUserPerfil = usuario.Perfil;
 
-                // Admin: redirect para Rentabilidade desabilitado temporariamente
-                // if (usuario.Perfil == Models.Enums.ProfileEnum.Admin && !Request.Query.ContainsKey("tab"))
-                // {
-                //     return RedirectToAction("Rentabilidade", "Mensalista");
-                // }
+                // Admin: redireciona para Rentabilidade Mensalistas como página inicial
+                if (usuario.Perfil == Models.Enums.ProfileEnum.Admin && !Request.Query.ContainsKey("tab"))
+                {
+                    return RedirectToAction("Rentabilidade", "Mensalista");
+                }
 
                 var chartData = _processRecordsService.GetChartData();
 
