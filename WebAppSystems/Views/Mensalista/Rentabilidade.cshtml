@@ -137,7 +137,7 @@
             @{ var cardIndex = 0; }
             @foreach (var card in Model.Cards)
             {
-                <div class="mensalista-card @(cardIndex >= 8 ? "card-extra" : "")" style="@(cardIndex >= 8 ? "display:none;" : "")" onclick="abrirDetalhe(@card.ClienteId, '@card.ClienteNome.Replace("'", "\\'")')" title="Clique para ver detalhes"
+                <div class="mensalista-card @(cardIndex >= 8 ? "card-extra" : "")" style="@(cardIndex >= 8 ? "display:none;" : "")" onclick="abrirDetalhe(@card.ClienteId, '@card.ClienteNome.Replace("'", "\\'")', @card.MensalistaId)" title="Clique para ver detalhes"
                      data-horas="@card.HorasApontadas.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                      data-mensalidade="@card.ValorMensalidade.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                      data-saldo="@card.Saldo.ToString(System.Globalization.CultureInfo.InvariantCulture)"
@@ -228,25 +228,47 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="detalhe-loading" id="detalheLoading">
-                        <div class="loading-spinner"></div>
-                        <p>Carregando detalhes...</p>
+                    <!-- Abas do Modal -->
+                    <div class="modal-tabs">
+                        <button class="modal-tab active" onclick="switchModalTab('detalhamento')">
+                            <i class="bi bi-bar-chart-steps"></i> Detalhamento
+                        </button>
+                        <button class="modal-tab" onclick="switchModalTab('porarea')">
+                            <i class="bi bi-diagram-3"></i> Rentabilidade por Área
+                        </button>
                     </div>
-                    <div class="detalhe-content" id="detalheContent" style="display:none;">
-                        <div class="detalhe-grid">
-                            <div class="detalhe-section">
-                                <h6><i class="bi bi-person-badge"></i> Por Advogado</h6>
-                                <div id="detalheAdvogados"></div>
-                            </div>
-                            <div class="detalhe-section">
-                                <h6><i class="bi bi-diagram-3"></i> Por Área</h6>
-                                <div id="detalheAreas"></div>
-                            </div>
-                            <div class="detalhe-section">
-                                <h6><i class="bi bi-tag"></i> Por Tipo</h6>
-                                <div id="detalheTipos"></div>
+
+                    <!-- Tab Detalhamento -->
+                    <div class="modal-tab-content" id="tabDetalhamento">
+                        <div class="detalhe-loading" id="detalheLoading">
+                            <div class="loading-spinner"></div>
+                            <p>Carregando detalhes...</p>
+                        </div>
+                        <div class="detalhe-content" id="detalheContent" style="display:none;">
+                            <div class="detalhe-grid">
+                                <div class="detalhe-section">
+                                    <h6><i class="bi bi-person-badge"></i> Por Advogado</h6>
+                                    <div id="detalheAdvogados"></div>
+                                </div>
+                                <div class="detalhe-section">
+                                    <h6><i class="bi bi-diagram-3"></i> Por Área</h6>
+                                    <div id="detalheAreas"></div>
+                                </div>
+                                <div class="detalhe-section">
+                                    <h6><i class="bi bi-tag"></i> Por Tipo</h6>
+                                    <div id="detalheTipos"></div>
+                                </div>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Tab Rentabilidade por Área -->
+                    <div class="modal-tab-content" id="tabPorArea" style="display:none;">
+                        <div class="detalhe-loading" id="areaLoading" style="display:none;">
+                            <div class="loading-spinner"></div>
+                            <p>Carregando rentabilidade por área...</p>
+                        </div>
+                        <div id="areaContent"></div>
                     </div>
                 </div>
             </div>
@@ -420,7 +442,32 @@
     #detalheModal .modal-header .btn-close { filter: brightness(0) invert(1); }
     #detalheModal .modal-title { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
     #detalheModal .modal-content { border-radius: 12px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.15); }
-    #detalheModal .modal-body { padding: 24px; }
+    #detalheModal .modal-body { padding: 0; }
+
+    /* Modal Tabs */
+    .modal-tabs { display: flex; border-bottom: 2px solid #f0f0f0; padding: 0 20px; }
+    .modal-tab { flex: 1; padding: 12px 16px; border: none; background: none; font-size: 13px; font-weight: 600; color: #718096; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s; }
+    .modal-tab:hover { color: #667eea; }
+    .modal-tab.active { color: #667eea; border-bottom-color: #667eea; }
+    .modal-tab-content { padding: 20px; }
+
+    /* Area Rentabilidade Items */
+    .area-rent-item { padding: 14px; margin-bottom: 10px; border-radius: 10px; border: 1px solid #f0f0f0; background: #fafbfc; }
+    .area-rent-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .area-rent-nome { font-size: 14px; font-weight: 600; color: #2d3748; }
+    .area-rent-status { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 4px; }
+    .area-rent-status.verde { background: #e6fffa; color: #285e61; }
+    .area-rent-status.amarelo { background: #fefcbf; color: #975a16; }
+    .area-rent-status.vermelho { background: #fff5f5; color: #c53030; }
+    .area-rent-values { display: flex; gap: 16px; font-size: 12px; color: #718096; margin-bottom: 8px; }
+    .area-rent-values span { display: flex; align-items: center; gap: 4px; }
+    .area-rent-values strong { color: #2d3748; }
+    .area-rent-bar { height: 6px; background: #edf2f7; border-radius: 3px; overflow: hidden; }
+    .area-rent-bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+    .area-rent-bar-fill.verde { background: linear-gradient(90deg, #81e6d9, #4fd1c5); }
+    .area-rent-bar-fill.amarelo { background: linear-gradient(90deg, #fbd38d, #f6ad55); }
+    .area-rent-bar-fill.vermelho { background: linear-gradient(90deg, #feb2b2, #fc8181); }
+    .area-rent-empty { text-align: center; padding: 30px; color: #a0aec0; font-size: 13px; }
 
     .detalhe-loading { text-align: center; padding: 30px; }
     .detalhe-loading p { margin-top: 12px; color: #718096; font-size: 13px; }
@@ -501,10 +548,17 @@
         if (verTodos) verTodos.style.display = 'none';
     }
 
-    function abrirDetalhe(clienteId, clienteNome) {
+    function abrirDetalhe(clienteId, clienteNome, mensalistaId) {
         document.getElementById('detalheClienteNome').textContent = clienteNome;
         document.getElementById('detalheLoading').style.display = '';
         document.getElementById('detalheContent').style.display = 'none';
+        document.getElementById('areaContent').innerHTML = '';
+
+        // Reset tabs
+        switchModalTab('detalhamento');
+
+        // Guardar dados para a aba de área
+        window._currentDetalhe = { clienteId: clienteId, mensalistaId: mensalistaId || 0 };
 
         var modal = new bootstrap.Modal(document.getElementById('detalheModal'));
         modal.show();
@@ -518,7 +572,6 @@
                 document.getElementById('detalheLoading').style.display = 'none';
                 document.getElementById('detalheContent').style.display = '';
 
-                // Helper para gerar itens com barra proporcional
                 function renderItems(items, containerId) {
                     var maxHoras = items.length > 0 ? Math.max.apply(null, items.map(function(i) { return i.horas; })) : 1;
                     var html = '';
@@ -541,6 +594,72 @@
             })
             .catch(function() {
                 document.getElementById('detalheLoading').innerHTML = '<p style="color:#e53e3e;">Erro ao carregar detalhes.</p>';
+            });
+    }
+
+    function switchModalTab(tab) {
+        document.querySelectorAll('.modal-tab').forEach(function(t) { t.classList.remove('active'); });
+        document.querySelectorAll('.modal-tab-content').forEach(function(c) { c.style.display = 'none'; });
+
+        if (tab === 'detalhamento') {
+            document.querySelectorAll('.modal-tab')[0].classList.add('active');
+            document.getElementById('tabDetalhamento').style.display = '';
+        } else {
+            document.querySelectorAll('.modal-tab')[1].classList.add('active');
+            document.getElementById('tabPorArea').style.display = '';
+            carregarRentabilidadeArea();
+        }
+    }
+
+    function carregarRentabilidadeArea() {
+        var d = window._currentDetalhe;
+        if (!d || !d.mensalistaId) {
+            document.getElementById('areaContent').innerHTML = '<div class="area-rent-empty"><i class="bi bi-info-circle" style="font-size:20px;display:block;margin-bottom:8px;"></i>Disponível apenas para mensalistas.</div>';
+            return;
+        }
+
+        var content = document.getElementById('areaContent');
+        var loading = document.getElementById('areaLoading');
+        content.innerHTML = '';
+        loading.style.display = '';
+
+        var dataInicio = '@Model.DataInicio.ToString("yyyy-MM-dd")';
+        var dataFim = '@Model.DataFim.ToString("yyyy-MM-dd")';
+        var periodo = '@Model.Periodo';
+
+        fetch('/Mensalista/RentabilidadePorArea?clienteId=' + d.clienteId + '&mensalistaId=' + d.mensalistaId + '&dataInicio=' + dataInicio + '&dataFim=' + dataFim + '&periodo=' + periodo)
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                loading.style.display = 'none';
+
+                if (data.semPercentual) {
+                    content.innerHTML = '<div class="area-rent-empty"><i class="bi bi-info-circle" style="font-size:20px;display:block;margin-bottom:8px;"></i>Nenhum percentual por área cadastrado para este cliente.<br><small>Configure em Gerenciar → Percentuais.</small></div>';
+                    return;
+                }
+
+                var html = '';
+                data.areas.forEach(function(area) {
+                    var statusLabel = area.status === 'vermelho' ? 'Revisão' : area.status === 'amarelo' ? 'Atenção' : 'Equilibrado';
+                    var pct = Math.min(area.percentualConsumo, 100);
+                    html += '<div class="area-rent-item">'
+                        + '<div class="area-rent-header">'
+                        + '<span class="area-rent-nome">' + area.area + ' <small style="color:#a0aec0;">(' + area.percentualArea + '%)</small></span>'
+                        + '<span class="area-rent-status ' + area.status + '">' + statusLabel + ' ' + area.percentualConsumo + '%</span>'
+                        + '</div>'
+                        + '<div class="area-rent-values">'
+                        + '<span>Mensalidade: <strong>R$ ' + area.mensalidade.toLocaleString('pt-BR') + '</strong></span>'
+                        + '<span>Consumido: <strong>R$ ' + area.consumido.toLocaleString('pt-BR') + '</strong></span>'
+                        + '<span>Saldo: <strong style="color:' + (area.saldo >= 0 ? '#38a169' : '#e53e3e') + '">R$ ' + area.saldo.toLocaleString('pt-BR') + '</strong></span>'
+                        + '<span>' + area.horas + 'h</span>'
+                        + '</div>'
+                        + '<div class="area-rent-bar"><div class="area-rent-bar-fill ' + area.status + '" style="width:' + pct + '%"></div></div>'
+                        + '</div>';
+                });
+                content.innerHTML = html || '<div class="area-rent-empty">Sem dados no período.</div>';
+            })
+            .catch(function() {
+                loading.style.display = 'none';
+                content.innerHTML = '<p style="color:#e53e3e;text-align:center;">Erro ao carregar dados.</p>';
             });
     }
 

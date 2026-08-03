@@ -301,6 +301,78 @@ namespace WebAppSystems.Controllers
             return Json(new { porAdvogado, porArea, porTipo });
         }
 
+        [HttpGet]
+        public async Task<IActionResult> RentabilidadePorArea(int clienteId, int mensalistaId, DateTime dataInicio, DateTime dataFim, string periodo)
+        {
+            // Buscar mensalista
+            var mensalista = mensalistaId > 0 ? await _mensalistaService.FindByIdAsync(mensalistaId) : null;
+            
+            // Buscar percentuais de área do cliente
+            var percentuais = await _context.Set<PercentualArea>()
+                .AsNoTracking()
+                .Where(pa => pa.ClientId == clienteId)
+                .Include(pa => pa.Department)
+                .ToListAsync();
+
+            if (!percentuais.Any() || mensalista == null)
+            {
+                return Json(new { areas = new List<object>(), semPercentual = true });
+            }
+
+            // Calcular mensalidade de referência para o período
+            decimal mensalidadeTotal = mensalista.ValorMensalBruto;
+            if (periodo == "semestre")
+                mensalidadeTotal = mensalista.ValorMensalBruto * 6;
+            else if (periodo == "custom")
+            {
+                var meses = ((dataFim.Year - dataInicio.Year) * 12) + dataFim.Month - dataInicio.Month + 1;
+                mensalidadeTotal = mensalista.ValorMensalBruto * meses;
+            }
+
+            // Buscar horas por área
+            var registros = await _context.ProcessRecord
+                .AsNoTracking()
+                .Where(p => p.Date >= dataInicio && p.Date <= dataFim && p.ClientId == clienteId)
+                .Select(p => new { p.DepartmentId, p.HoraInicial, p.HoraFinal })
+                .ToListAsync();
+
+            var horasPorArea = registros
+                .GroupBy(r => r.DepartmentId)
+                .ToDictionary(g => g.Key, g => g.Sum(r => (r.HoraFinal - r.HoraInicial).TotalHours));
+
+            var valorHora = mensalista.GetValorHoraEfetivo();
+
+            var areas = percentuais.Select(pa =>
+            {
+                var mensalidadeArea = mensalidadeTotal * (pa.Percentual / 100m);
+                var horas = horasPorArea.ContainsKey(pa.DepartmentId) ? horasPorArea[pa.DepartmentId] : 0;
+                var consumido = (decimal)horas * valorHora;
+                var saldo = mensalidadeArea - consumido;
+                var percentual = mensalidadeArea > 0 ? (double)(consumido / mensalidadeArea) * 100 : 0;
+
+                string status;
+                if (percentual > 100) status = "vermelho";
+                else if (percentual >= 80) status = "amarelo";
+                else status = "verde";
+
+                return new
+                {
+                    area = pa.Department.Name,
+                    percentualArea = pa.Percentual,
+                    mensalidade = Math.Round(mensalidadeArea, 0),
+                    horas = Math.Round(horas, 1),
+                    consumido = Math.Round(consumido, 0),
+                    saldo = Math.Round(saldo, 0),
+                    percentualConsumo = Math.Round(percentual, 0),
+                    status
+                };
+            })
+            .OrderByDescending(a => a.percentualConsumo)
+            .ToList();
+
+            return Json(new { areas, semPercentual = false });
+        }
+
         // ── Painel de Faturamento dos Horistas ──────────────────────────────
 
         public async Task<IActionResult> RentabilidadeHoristas(string? periodo, DateTime? dataInicio, DateTime? dataFim, string? clienteIds)
