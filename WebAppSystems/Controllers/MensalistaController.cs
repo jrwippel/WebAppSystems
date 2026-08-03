@@ -1,4 +1,4 @@
-Ôªøusing DocumentFormat.OpenXml.Bibliography;
+using DocumentFormat.OpenXml.Bibliography;
 using Microsoft.AspNetCore.Mvc;
 using NPOI.HSSF.Util;
 using NPOI.SS.UserModel;
@@ -107,11 +107,11 @@ namespace WebAppSystems.Controllers
             }
         }
 
-        // ‚îÄ‚îÄ Painel de Rentabilidade dos Mensalistas ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+        // -- Painel de Rentabilidade dos Mensalistas --------------------------
 
         public async Task<IActionResult> Rentabilidade(string? periodo, DateTime? dataInicio, DateTime? dataFim, string? clienteIds)
         {
-            // Definir per√≠odo
+            // Definir perÌodo
             DateTime inicio, fim;
             string periodoAtual = periodo ?? "mes";
 
@@ -124,11 +124,11 @@ namespace WebAppSystems.Controllers
                 case "custom":
                     inicio = dataInicio ?? new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
                     fim = dataFim ?? DateTime.Now.Date;
-                    // Limitar per√≠odo m√°ximo de 12 meses
+                    // Limitar perÌodo m·ximo de 12 meses
                     if ((fim - inicio).TotalDays > 366)
                     {
                         inicio = fim.AddMonths(-12);
-                        TempData["MensagemAviso"] = "Per√≠odo limitado a 12 meses.";
+                        TempData["MensagemAviso"] = "PerÌodo limitado a 12 meses.";
                     }
                     break;
                 default: // mes
@@ -177,19 +177,19 @@ namespace WebAppSystems.Controllers
                 var client = clients.FirstOrDefault(c => c.Id == m.ClientId);
                 if (client == null) continue;
 
-                // Pegar horas do dicion√°rio pr√©-calculado
+                // Pegar horas do dicion·rio prÈ-calculado
                 var horasApontadas = horasDict.ContainsKey(m.ClientId) ? horasDict[m.ClientId] : 0;
 
                 var valorHora = m.GetValorHoraEfetivo();
                 var valorConsumido = (decimal)horasApontadas * valorHora;
 
-                // Se for semestre, dividir a mensalidade pelo n√∫mero de meses para comparar
+                // Se for semestre, dividir a mensalidade pelo n˙mero de meses para comparar
                 decimal mensalidadeReferencia = m.ValorMensalBruto;
                 if (periodoAtual == "semestre")
                     mensalidadeReferencia = m.ValorMensalBruto * 6;
                 else if (periodoAtual == "custom")
                 {
-                    // Calcular quantos meses abrange o per√≠odo
+                    // Calcular quantos meses abrange o perÌodo
                     var meses = ((fim.Year - inicio.Year) * 12) + fim.Month - inicio.Month + 1;
                     mensalidadeReferencia = m.ValorMensalBruto * meses;
                 }
@@ -201,12 +201,12 @@ namespace WebAppSystems.Controllers
                 if (percentual > 100)
                 {
                     status = "vermelho";
-                    statusTexto = "Revis√£o Recomendada";
+                    statusTexto = "Revis„o Recomendada";
                 }
                 else if (percentual >= 80)
                 {
                     status = "amarelo";
-                    statusTexto = "Aten√ß√£o";
+                    statusTexto = "AtenÁ„o";
                 }
                 else
                 {
@@ -219,8 +219,8 @@ namespace WebAppSystems.Controllers
                     MensalistaId = m.Id,
                     ClienteId = client.Id,
                     ClienteNome = client.Name,
-                    ClienteLogo = client.ImageData != null && client.ImageData.Length > 14000 ? client.ImageData : null,
-                    ClienteLogoMime = client.ImageData != null && client.ImageData.Length > 14000 ? client.ImageMimeType : null,
+                    ClienteLogo = client.ImageData != null && client.ImageData.Length != 13536 ? client.ImageData : null,
+                    ClienteLogoMime = client.ImageData != null && client.ImageData.Length != 13536 ? client.ImageMimeType : null,
                     ValorMensalidade = mensalidadeReferencia,
                     ValorHoraVirtual = valorHora,
                     HorasApontadas = horasApontadas,
@@ -238,7 +238,7 @@ namespace WebAppSystems.Controllers
                 .ThenByDescending(c => c.PercentualConsumo)
                 .ToList();
 
-            // Filtro por cliente (aplicado ap√≥s montar todos os cards para o dropdown ter todos)
+            // Filtro por cliente (aplicado apÛs montar todos os cards para o dropdown ter todos)
             List<int> clienteIdsFiltro = null;
             if (!string.IsNullOrWhiteSpace(clienteIds))
             {
@@ -307,7 +307,7 @@ namespace WebAppSystems.Controllers
             // Buscar mensalista
             var mensalista = mensalistaId > 0 ? await _mensalistaService.FindByIdAsync(mensalistaId) : null;
             
-            // Buscar percentuais de √°rea do cliente
+            // Buscar percentuais de ·rea do cliente
             var percentuais = await _context.Set<PercentualArea>()
                 .AsNoTracking()
                 .Where(pa => pa.ClientId == clienteId)
@@ -319,7 +319,7 @@ namespace WebAppSystems.Controllers
                 return Json(new { areas = new List<object>(), semPercentual = true });
             }
 
-            // Calcular mensalidade de refer√™ncia para o per√≠odo
+            // Calcular mensalidade de referÍncia para o perÌodo
             decimal mensalidadeTotal = mensalista.ValorMensalBruto;
             if (periodo == "semestre")
                 mensalidadeTotal = mensalista.ValorMensalBruto * 6;
@@ -329,7 +329,7 @@ namespace WebAppSystems.Controllers
                 mensalidadeTotal = mensalista.ValorMensalBruto * meses;
             }
 
-            // Buscar horas por √°rea
+            // Buscar horas por ·rea
             var registros = await _context.ProcessRecord
                 .AsNoTracking()
                 .Where(p => p.Date >= dataInicio && p.Date <= dataFim && p.ClientId == clienteId)
@@ -373,11 +373,11 @@ namespace WebAppSystems.Controllers
             return Json(new { areas, semPercentual = false });
         }
 
-        // ‚îÄ‚îÄ Painel de Faturamento dos Horistas ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+        // -- Painel de Faturamento dos Horistas ------------------------------
 
         public async Task<IActionResult> RentabilidadeHoristas(string? periodo, DateTime? dataInicio, DateTime? dataFim, string? clienteIds)
         {
-            // Definir per√≠odo
+            // Definir perÌodo
             DateTime inicio, fim;
             string periodoAtual = periodo ?? "mes";
 
@@ -390,11 +390,11 @@ namespace WebAppSystems.Controllers
                 case "custom":
                     inicio = dataInicio ?? new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
                     fim = dataFim ?? DateTime.Now.Date;
-                    // Limitar per√≠odo m√°ximo de 12 meses
+                    // Limitar perÌodo m·ximo de 12 meses
                     if ((fim - inicio).TotalDays > 366)
                     {
                         inicio = fim.AddMonths(-12);
-                        TempData["MensagemAviso"] = "Per√≠odo limitado a 12 meses.";
+                        TempData["MensagemAviso"] = "PerÌodo limitado a 12 meses.";
                     }
                     break;
                 default:
@@ -426,7 +426,7 @@ namespace WebAppSystems.Controllers
 
             var clientIdsHoristas = valoresClientes.Select(v => v.ClientId).ToList();
 
-            // Buscar horas por cliente primeiro (pra saber quais t√™m lan√ßamento)
+            // Buscar horas por cliente primeiro (pra saber quais tÍm lanÁamento)
             var registrosResumo = await _context.ProcessRecord
                 .AsNoTracking()
                 .Where(p => p.Date >= inicio && p.Date <= fim && clientIdsHoristas.Contains(p.ClientId))
@@ -440,7 +440,7 @@ namespace WebAppSystems.Controllers
                     g => g.Sum(r => (r.HoraFinal - r.HoraInicial).TotalHours)
                 );
 
-            // Buscar clientes COM logo ‚Äî apenas os que t√™m horas (s√£o poucos)
+            // Buscar clientes COM logo ó apenas os que tÍm horas (s„o poucos)
             var clientIdsComHoras = horasDict.Where(h => h.Value > 0).Select(h => h.Key).ToList();
             var clients = await _context.Client
                 .AsNoTracking()
@@ -459,7 +459,7 @@ namespace WebAppSystems.Controllers
 
                 var horasApontadas = horasDict.ContainsKey(vc.ClientId) ? horasDict[vc.ClientId] : 0;
                 
-                // S√≥ mostra clientes com lan√ßamentos no per√≠odo
+                // SÛ mostra clientes com lanÁamentos no perÌodo
                 if (horasApontadas <= 0) continue;
 
                 var valorHora = (decimal)vc.Valor;
@@ -470,8 +470,8 @@ namespace WebAppSystems.Controllers
                     MensalistaId = 0,
                     ClienteId = client.Id,
                     ClienteNome = client.Name,
-                    ClienteLogo = client.ImageData != null && client.ImageData.Length > 14000 ? client.ImageData : null,
-                    ClienteLogoMime = client.ImageData != null && client.ImageData.Length > 14000 ? client.ImageMimeType : null,
+                    ClienteLogo = client.ImageData != null && client.ImageData.Length != 13536 ? client.ImageData : null,
+                    ClienteLogoMime = client.ImageData != null && client.ImageData.Length != 13536 ? client.ImageMimeType : null,
                     ValorMensalidade = 0,
                     ValorHoraVirtual = valorHora,
                     HorasApontadas = horasApontadas,
@@ -545,7 +545,7 @@ namespace WebAppSystems.Controllers
                 return NotFound();
             }
 
-            // Se monthYear n√£o tiver valor, definimos para a data atual
+            // Se monthYear n„o tiver valor, definimos para a data atual
             if (!monthYear.HasValue)
             {
                 monthYear = DateTime.Now;
@@ -554,7 +554,7 @@ namespace WebAppSystems.Controllers
             // Convertendo monthYear para o intervalo de datas
             ConvertMonthYearToRange(monthYear.Value, out DateTime minDate, out DateTime maxDate);
 
-            // Obtendo as informa√ß√µes de MensalistaHoursViewModel usando os par√¢metros
+            // Obtendo as informaÁıes de MensalistaHoursViewModel usando os par‚metros
 
             var mensalistaHours = await _processRecordService.FindByDateMensalistaAsync(minDate, maxDate, clientId, departmentId, QueryType.Monthly);
 
@@ -565,7 +565,7 @@ namespace WebAppSystems.Controllers
                 return NotFound();
             }
 
-            // Armazenar os par√¢metros no ViewData
+            // Armazenar os par‚metros no ViewData
             ViewData["monthYear"] = monthYear.Value.ToString("yyyy-MM");
             ViewData["clientId"] = clientId;
             ViewData["departmentId"] = departmentId;
@@ -583,18 +583,18 @@ namespace WebAppSystems.Controllers
                 return NotFound();
             }
 
-            // Se monthYear n√£o tiver valor, definimos para a data atual
+            // Se monthYear n„o tiver valor, definimos para a data atual
             if (!monthYear.HasValue)
             {
                 monthYear = DateTime.Now;
             }
 
-            // Convertendo monthYear para o intervalo de datas dos √∫ltimos tr√™s meses
+            // Convertendo monthYear para o intervalo de datas dos ˙ltimos trÍs meses
             DateTime startOfSelectedMonth = new DateTime(monthYear.Value.Year, monthYear.Value.Month, 1);
             DateTime endOfSelectedMonth = startOfSelectedMonth.AddMonths(1).AddDays(-1);
             DateTime startOfThreeMonthsAgo = startOfSelectedMonth.AddMonths(-3);
 
-            // Obtendo as informa√ß√µes de MensalistaHoursViewModel usando os par√¢metros
+            // Obtendo as informaÁıes de MensalistaHoursViewModel usando os par‚metros
             var mensalistaHours = await _processRecordService.FindByDateMensalistaAsync(startOfThreeMonthsAgo, endOfSelectedMonth, clientId, departmentId, QueryType.Average);
 
 
@@ -605,7 +605,7 @@ namespace WebAppSystems.Controllers
                 return NotFound();
             }
 
-            // Armazenar os par√¢metros no ViewData
+            // Armazenar os par‚metros no ViewData
             ViewData["monthYear"] = monthYear.Value.ToString("yyyy-MM");
             ViewData["clientId"] = clientId;
             ViewData["departmentId"] = departmentId;
@@ -621,18 +621,18 @@ namespace WebAppSystems.Controllers
                 return NotFound();
             }
 
-            // Se monthYear n√£o tiver valor, definimos para a data atual
+            // Se monthYear n„o tiver valor, definimos para a data atual
             if (!monthYear.HasValue)
             {
                 monthYear = DateTime.Now;
             }
 
-            // Convertendo monthYear para o intervalo de datas dos √∫ltimos tr√™s meses
+            // Convertendo monthYear para o intervalo de datas dos ˙ltimos trÍs meses
             DateTime startOfSelectedMonth = new DateTime(monthYear.Value.Year, monthYear.Value.Month, 1);
             DateTime endOfSelectedMonth = startOfSelectedMonth.AddMonths(1).AddDays(-1);
             DateTime startOfThreeMonthsAgo = startOfSelectedMonth.AddMonths(-3);
 
-            // Obtendo as informa√ß√µes de MensalistaHoursViewModel usando os par√¢metros
+            // Obtendo as informaÁıes de MensalistaHoursViewModel usando os par‚metros
 
             var mensalistaHours = await _processRecordService.FindByDateMensalistaAsync(startOfThreeMonthsAgo, endOfSelectedMonth, clientId, departmentId, QueryType.Cumulative);
 
@@ -643,7 +643,7 @@ namespace WebAppSystems.Controllers
                 return NotFound();
             }            
 
-            // Armazenar os par√¢metros no ViewData
+            // Armazenar os par‚metros no ViewData
             ViewData["monthYear"] = monthYear.Value.ToString("yyyy-MM");
             ViewData["clientId"] = clientId;
             ViewData["departmentId"] = departmentId;
@@ -662,12 +662,12 @@ namespace WebAppSystems.Controllers
                 parsedDate = DateTime.ParseExact(monthYear, "MM/yyyy", System.Globalization.CultureInfo.InvariantCulture);
             }
 
-            // M√™s atual
+            // MÍs atual
             ConvertMonthYearToRange(parsedDate, out DateTime minDate, out DateTime maxDate);
             var mesAtualList = await _processRecordService.FindByDateMensalistaAsync(minDate, maxDate, clientId, departmentId, QueryType.Monthly);
             var mesAtual = mesAtualList.FirstOrDefault(m => m.Mensalista.Id == id);
 
-            // M√©dia 3 meses
+            // MÈdia 3 meses
             DateTime start3m = new DateTime(parsedDate.Year, parsedDate.Month, 1).AddMonths(-3);
             DateTime end3m = new DateTime(parsedDate.Year, parsedDate.Month, 1).AddMonths(1).AddDays(-1);
             var mediaList = await _processRecordService.FindByDateMensalistaAsync(start3m, end3m, clientId, departmentId, QueryType.Average);
@@ -727,7 +727,7 @@ namespace WebAppSystems.Controllers
 
             if (format != "xlsx")
             {
-                return BadRequest("Formato inv√°lido");
+                return BadRequest("Formato inv·lido");
             }
 
             var workbook = new XSSFWorkbook();
@@ -753,7 +753,7 @@ namespace WebAppSystems.Controllers
             ConvertMonthYearToRange(monthYear.Value, out DateTime minDate, out DateTime maxDate);
 
             var results = await _processRecordService.FindByDateMensalistaAsync(minDate, maxDate, clientId, departmentId);
-            // Ordena os resultados pelo valor l√≠quido antes de criar a planilha
+            // Ordena os resultados pelo valor lÌquido antes de criar a planilha
             results.Sort((a, b) =>
             {
                 return a.ValorResultadoLiquido.CompareTo(b.ValorResultadoLiquido);
@@ -772,7 +772,7 @@ namespace WebAppSystems.Controllers
             lightGrayStyle.SetFillForegroundColor(new XSSFColor(new byte[] { 230, 230, 230 }));
             lightGrayStyle.FillPattern = FillPattern.SolidForeground;
 
-            // Modificando lightGrayStyle para tamb√©m ter o formato de n√∫mero:
+            // Modificando lightGrayStyle para tambÈm ter o formato de n˙mero:
             lightGrayStyle.DataFormat = workbook.CreateDataFormat().GetFormat("#,##0.00");
 
 
@@ -795,25 +795,25 @@ namespace WebAppSystems.Controllers
             var departmentName = await _departmentService.GetDepartmentNameByIdAsync(departmentId);
             if (string.IsNullOrEmpty(departmentName))
             {
-                departmentName = "%";  // Caso departmentName seja nulo ou vazio, use "%" como padr√£o.
+                departmentName = "%";  // Caso departmentName seja nulo ou vazio, use "%" como padr„o.
             }
 
             var headerRow = sheet.CreateRow(0);
             headerRow.CreateCell(0).SetCellValue("NOME");
             headerRow.CreateCell(1).SetCellValue("VALOR MENSAL BRUTO");
             headerRow.CreateCell(2).SetCellValue("TRIBUTOS");
-            headerRow.CreateCell(3).SetCellValue("COMISS√ÉO PARCEIRO");
-            headerRow.CreateCell(4).SetCellValue("COMISS√ÉO S√ìCIO");
-            headerRow.CreateCell(5).SetCellValue("VALOR MENSAL L√çQUIDO");
+            headerRow.CreateCell(3).SetCellValue("COMISS√O PARCEIRO");
+            headerRow.CreateCell(4).SetCellValue("COMISS√O S”CIO");
+            headerRow.CreateCell(5).SetCellValue("VALOR MENSAL LÕQUIDO");
             headerRow.CreateCell(6).SetCellValue(departmentName);
-            headerRow.CreateCell(7).SetCellValue("VALOR DA √ÅREA BRUTO");
-            headerRow.CreateCell(8).SetCellValue("VALOR MENSAL L√çQUIDO");
+            headerRow.CreateCell(7).SetCellValue("VALOR DA ¡REA BRUTO");
+            headerRow.CreateCell(8).SetCellValue("VALOR MENSAL LÕQUIDO");
 
             for (int j = 0; j < 9; j++)
             {
                 headerRow.GetCell(j).CellStyle = headerStyle;
             }
-            // Configurar filtro nas c√©lulas do cabe√ßalho
+            // Configurar filtro nas cÈlulas do cabeÁalho
             sheet.SetAutoFilter(new CellRangeAddress(0, 0, 0, 8));
 
             for (int i = 0; i < results.Count; i++)
@@ -853,17 +853,17 @@ namespace WebAppSystems.Controllers
             ConvertMonthYearToRange(monthYear.Value, out DateTime minDate, out DateTime maxDate);
 
             var results = await _processRecordService.FindByDateMensalistaAsync(minDate, maxDate, clientId, departmentId);
-            // Ordena os resultados pelo valor l√≠quido antes de criar a planilha
+            // Ordena os resultados pelo valor lÌquido antes de criar a planilha
             results.Sort((a, b) =>
             {
                 return a.ValorResultadoLiquido.CompareTo(b.ValorResultadoLiquido);
             });
-            var sheet = workbook.CreateSheet("Resultado do M√™s");
+            var sheet = workbook.CreateSheet("Resultado do MÍs");
 
             var departmentName = await _departmentService.GetDepartmentNameByIdAsync(departmentId);
             if (string.IsNullOrEmpty(departmentName))
             {
-                departmentName = "%";  // Caso departmentName seja nulo ou vazio, use "%" como padr√£o.
+                departmentName = "%";  // Caso departmentName seja nulo ou vazio, use "%" como padr„o.
             }
             var titleStyle = (XSSFCellStyle)workbook.CreateCellStyle();
             var darkGreyColor = new XSSFColor(new byte[] { 169, 169, 169 }); // RGB para cinza escuro
@@ -898,7 +898,7 @@ namespace WebAppSystems.Controllers
             lightGrayStyle.SetFillForegroundColor(new XSSFColor(new byte[] { 230, 230, 230 }));
             lightGrayStyle.FillPattern = FillPattern.SolidForeground;
 
-            // Modificando lightGrayStyle para tamb√©m ter o formato de n√∫mero:
+            // Modificando lightGrayStyle para tambÈm ter o formato de n˙mero:
             lightGrayStyle.DataFormat = workbook.CreateDataFormat().GetFormat("#,##0.00");
 
 
@@ -929,18 +929,18 @@ namespace WebAppSystems.Controllers
             }
             else
             {
-                headerRow.CreateCell(1).SetCellValue("M√äS");
+                headerRow.CreateCell(1).SetCellValue("M S");
             }
 
-            headerRow.CreateCell(2).SetCellValue("HORA T√âCNICA BRUTA");
-            headerRow.CreateCell(3).SetCellValue("HORA T√âCNICA L√çQUIDA");
+            headerRow.CreateCell(2).SetCellValue("HORA T…CNICA BRUTA");
+            headerRow.CreateCell(3).SetCellValue("HORA T…CNICA LÕQUIDA");
             headerRow.CreateCell(4).SetCellValue("RESULTADO BRUTO");
-            headerRow.CreateCell(5).SetCellValue("RESULTADO L√çQUIDO");
+            headerRow.CreateCell(5).SetCellValue("RESULTADO LÕQUIDO");
             for (int j = 0; j < 6; j++)
             {
                 headerRow.GetCell(j).CellStyle = headerStyle;
             }
-            // Configurar filtro nas c√©lulas do cabe√ßalho para todas as colunas
+            // Configurar filtro nas cÈlulas do cabeÁalho para todas as colunas
             sheet.SetAutoFilter(new CellRangeAddress(1, 1, 0, 5));
 
             for (int i = 0; i < results.Count; i++)
@@ -982,7 +982,7 @@ namespace WebAppSystems.Controllers
                 double valorResultadoLiquido = Math.Round((double)item.ValorResultadoLiquido, 2);
                 row.GetCell(5).SetCellValue(valorResultadoLiquido);
 
-                // Aplicar formata√ß√£o condicional para todas as colunas de valor
+                // Aplicar formataÁ„o condicional para todas as colunas de valor
                 for (int col = 1; col <= 5; col++)
                 {
                     double cellValue;
@@ -1027,17 +1027,17 @@ namespace WebAppSystems.Controllers
 
             var results = await _processRecordService.FindByDateMensalistaAsync(minDate, maxDate, clientId, departmentId, QueryType.Average);
 
-            // Ordena os resultados pelo valor l√≠quido antes de criar a planilha
+            // Ordena os resultados pelo valor lÌquido antes de criar a planilha
             results.Sort((a, b) =>
             {
                 return a.ValorResultadoLiquido.CompareTo(b.ValorResultadoLiquido);
             });
-            var sheet = workbook.CreateSheet("M√©dia 3 meses");
+            var sheet = workbook.CreateSheet("MÈdia 3 meses");
 
             var departmentName = await _departmentService.GetDepartmentNameByIdAsync(departmentId);
             if (string.IsNullOrEmpty(departmentName))
             {
-                departmentName = "%";  // Caso departmentName seja nulo ou vazio, use "%" como padr√£o.
+                departmentName = "%";  // Caso departmentName seja nulo ou vazio, use "%" como padr„o.
             }
             var titleStyle = (XSSFCellStyle)workbook.CreateCellStyle();
             var darkGreyColor = new XSSFColor(new byte[] { 169, 169, 169 }); // RGB para cinza escuro
@@ -1072,7 +1072,7 @@ namespace WebAppSystems.Controllers
             lightGrayStyle.SetFillForegroundColor(new XSSFColor(new byte[] { 230, 230, 230 }));
             lightGrayStyle.FillPattern = FillPattern.SolidForeground;
 
-            // Modificando lightGrayStyle para tamb√©m ter o formato de n√∫mero:
+            // Modificando lightGrayStyle para tambÈm ter o formato de n˙mero:
             lightGrayStyle.DataFormat = workbook.CreateDataFormat().GetFormat("#,##0.00");
 
 
@@ -1095,16 +1095,16 @@ namespace WebAppSystems.Controllers
 
             var headerRow = sheet.CreateRow(1);
             headerRow.CreateCell(0).SetCellValue("NOME");
-            headerRow.CreateCell(1).SetCellValue("M√©dia √∫ltimos 3 meses");
-            headerRow.CreateCell(2).SetCellValue("M√©dia bruta √∫. 3 m√™s");
-            headerRow.CreateCell(3).SetCellValue("M√©dia L√≠quida √∫ltimos 3 meses");
-            headerRow.CreateCell(4).SetCellValue("Bruto √∫ltimos 3 meses");
-            headerRow.CreateCell(5).SetCellValue("L√≠quido √∫ltimos 3 meses");
+            headerRow.CreateCell(1).SetCellValue("MÈdia ˙ltimos 3 meses");
+            headerRow.CreateCell(2).SetCellValue("MÈdia bruta ˙. 3 mÍs");
+            headerRow.CreateCell(3).SetCellValue("MÈdia LÌquida ˙ltimos 3 meses");
+            headerRow.CreateCell(4).SetCellValue("Bruto ˙ltimos 3 meses");
+            headerRow.CreateCell(5).SetCellValue("LÌquido ˙ltimos 3 meses");
             for (int j = 0; j < 6; j++)
             {
                 headerRow.GetCell(j).CellStyle = headerStyle;
             }
-            // Configurar filtro nas c√©lulas do cabe√ßalho para todas as colunas
+            // Configurar filtro nas cÈlulas do cabeÁalho para todas as colunas
             sheet.SetAutoFilter(new CellRangeAddress(1, 1, 0, 5));
 
             for (int i = 0; i < results.Count; i++)
@@ -1144,7 +1144,7 @@ namespace WebAppSystems.Controllers
                 double valorResultadoLiquido = Math.Round((double)item.ValorResultadoLiquido, 2);
                 row.GetCell(5).SetCellValue(valorResultadoLiquido);
 
-                // Aplicar formata√ß√£o condicional para todas as colunas de valor
+                // Aplicar formataÁ„o condicional para todas as colunas de valor
                 for (int col = 1; col <= 5; col++)
                 {
                     double cellValue;
@@ -1186,7 +1186,7 @@ namespace WebAppSystems.Controllers
 
             var results = await _processRecordService.FindByDateMensalistaAsync(minDate, maxDate, clientId, departmentId, QueryType.Cumulative);
 
-            // Ordena os resultados pelo valor l√≠quido antes de criar a planilha
+            // Ordena os resultados pelo valor lÌquido antes de criar a planilha
             results.Sort((a, b) =>
             {
                 return a.ValorResultadoLiquido.CompareTo(b.ValorResultadoLiquido);
@@ -1247,16 +1247,16 @@ namespace WebAppSystems.Controllers
 
             var headerRow = sheet.CreateRow(1);
             headerRow.CreateCell(0).SetCellValue("NOME");
-            headerRow.CreateCell(1).SetCellValue("Acumulado √∫ltimos 3 meses");
-            headerRow.CreateCell(2).SetCellValue("Bruto √∫ltimos 3 meses");
-            headerRow.CreateCell(3).SetCellValue("L√≠quido √∫ltimos 3 meses");
-            headerRow.CreateCell(4).SetCellValue("Resultado Bruto √∫ltimos 3 meses");
-            headerRow.CreateCell(5).SetCellValue("L√≠quido √∫ltimos 3 meses");
+            headerRow.CreateCell(1).SetCellValue("Acumulado ˙ltimos 3 meses");
+            headerRow.CreateCell(2).SetCellValue("Bruto ˙ltimos 3 meses");
+            headerRow.CreateCell(3).SetCellValue("LÌquido ˙ltimos 3 meses");
+            headerRow.CreateCell(4).SetCellValue("Resultado Bruto ˙ltimos 3 meses");
+            headerRow.CreateCell(5).SetCellValue("LÌquido ˙ltimos 3 meses");
             for (int j = 0; j < 6; j++)
             {
                 headerRow.GetCell(j).CellStyle = headerStyle;
             }
-            // Configurar filtro nas c√©lulas do cabe√ßalho para todas as colunas
+            // Configurar filtro nas cÈlulas do cabeÁalho para todas as colunas
             sheet.SetAutoFilter(new CellRangeAddress(1, 1, 0, 5));
 
             for (int i = 0; i < results.Count; i++)
@@ -1296,7 +1296,7 @@ namespace WebAppSystems.Controllers
                 double valorResultadoLiquido = Math.Round((double)item.ValorResultadoLiquido, 2);
                 row.GetCell(5).SetCellValue(valorResultadoLiquido);
 
-                // Aplicar formata√ß√£o condicional para todas as colunas de valor
+                // Aplicar formataÁ„o condicional para todas as colunas de valor
                 for (int col = 1; col <= 5; col++)
                 {
                     double cellValue;
@@ -1344,7 +1344,7 @@ namespace WebAppSystems.Controllers
                 }
             }
 
-            string fileName = "Relat√≥rio_TimeSheet";
+            string fileName = "RelatÛrio_TimeSheet";
             if (!string.IsNullOrEmpty(clientName))
             {
                 fileName += $"_{clientName}";
