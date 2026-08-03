@@ -562,11 +562,11 @@
         document.getElementById('detalheContent').style.display = 'none';
         document.getElementById('areaContent').innerHTML = '';
 
+        // Guardar dados ANTES de switchTab (porque carregarRentabilidadeArea usa isso)
+        window._currentDetalhe = { clienteId: clienteId, mensalistaId: mensalistaId || 0 };
+
         // Reset tabs - área é a padrão
         switchModalTab('porarea');
-
-        // Guardar dados para a aba de área
-        window._currentDetalhe = { clienteId: clienteId, mensalistaId: mensalistaId || 0 };
 
         var modal = new bootstrap.Modal(document.getElementById('detalheModal'));
         modal.show();
