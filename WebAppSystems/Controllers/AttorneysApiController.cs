@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using WebAppSystems.Data;
 using WebAppSystems.Models;
 using System.Threading.Tasks;
@@ -8,6 +9,7 @@ using WebAppSystems.Models.Dto;
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize]
 public class AttorneysApiController : ControllerBase
 {
     private readonly WebAppSystemsContext _context;

@@ -3,6 +3,7 @@ using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Collections.Concurrent;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -13,14 +14,17 @@ using WebAppSystems.Services;
 
 namespace WebAppSystems.Controllers.ApiControllers
 {
-    [Route("api/[controller]")] // Esta linha define a rota base para este controller
-    [ApiController] // Esta linha indica que este é um Controller de API
+    [Route("api/[controller]")]
+    [ApiController]
     public class LoginApiController : Controller
     {
         private readonly AttorneyService _attorneyService;
         private readonly ISessao _sessao;
         private readonly IEmail _email;
         private readonly IConfiguration _configuration;
+
+        // Rate limiting: máx 5 tentativas por IP por minuto
+        private static readonly ConcurrentDictionary<string, (int count, DateTime resetAt)> _loginAttempts = new();
 
         public LoginApiController(AttorneyService attorneyService, ISessao sessao, IEmail email, IConfiguration configuration)
         {
@@ -35,11 +39,36 @@ namespace WebAppSystems.Controllers.ApiControllers
         {
             try
             {
+                // Rate limiting por IP
+                var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+                if (_loginAttempts.TryGetValue(ip, out var attempt))
+                {
+                    if (DateTime.UtcNow < attempt.resetAt && attempt.count >= 5)
+                    {
+                        return StatusCode(429, new { message = "Muitas tentativas. Aguarde 1 minuto." });
+                    }
+                    if (DateTime.UtcNow >= attempt.resetAt)
+                    {
+                        _loginAttempts[ip] = (1, DateTime.UtcNow.AddMinutes(1));
+                    }
+                    else
+                    {
+                        _loginAttempts[ip] = (attempt.count + 1, attempt.resetAt);
+                    }
+                }
+                else
+                {
+                    _loginAttempts[ip] = (1, DateTime.UtcNow.AddMinutes(1));
+                }
+
                 if (ModelState.IsValid)
                 {
                     Attorney usuario = _attorneyService.FindByLoginAsync(loginModel.Login);
                     if (usuario != null && usuario.ValidaSenha(loginModel.Senha))
                     {
+                        // Reset tentativas em caso de sucesso
+                        _loginAttempts.TryRemove(ip, out _);
+
                         var token = GenerateJwtToken(usuario);
 
                         return Ok(new
@@ -57,9 +86,9 @@ namespace WebAppSystems.Controllers.ApiControllers
                 }
                 return BadRequest(new { message = "Dados inválidos." });
             }
-            catch (Exception erro)
+            catch (Exception)
             {
-                return StatusCode(500, new { message = $"Erro interno do servidor: {erro.Message}" });
+                return StatusCode(500, new { message = "Erro interno do servidor." });
             }
         }
 
