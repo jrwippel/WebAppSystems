@@ -31,9 +31,13 @@ namespace WebAppSystems.Services
             {
                 var agora = DateTime.Now;
 
-                // Calcula o próximo disparo às 8h do dia seguinte (ou hoje se ainda não passou das 8h)
+                // Calcula o próximo disparo às 8h do próximo dia útil
                 var proximoDisparo = new DateTime(agora.Year, agora.Month, agora.Day, 8, 0, 0);
                 if (agora >= proximoDisparo)
+                    proximoDisparo = proximoDisparo.AddDays(1);
+
+                // Pular fins de semana — só dispara em dias úteis (seg-sex)
+                while (proximoDisparo.DayOfWeek == DayOfWeek.Saturday || proximoDisparo.DayOfWeek == DayOfWeek.Sunday)
                     proximoDisparo = proximoDisparo.AddDays(1);
 
                 var delay = proximoDisparo - agora;
@@ -55,7 +59,7 @@ namespace WebAppSystems.Services
             var email = scope.ServiceProvider.GetRequiredService<IEmail>();
 
             var limiteHoras = 48;
-            var limite = DateTime.Now.AddHours(-limiteHoras);
+            var hoje = DateTime.Now.Date;
 
             var usuarios = await context.Attorney
                 .Include(a => a.Department)
@@ -81,8 +85,8 @@ namespace WebAppSystems.Services
                 var ultimo = ultimosLancamentos.FirstOrDefault(u => u.AttorneyId == usuario.Id);
                 var dataUltimo = ultimo?.Ultimo ?? DateTime.MinValue;
 
-                // Verifica se o último lançamento foi há mais de 48h
-                if (dataUltimo <= limite)
+                // Verifica se o último lançamento foi há mais de 2 dias úteis
+                if (dataUltimo == DateTime.MinValue || ContarDiasUteis(dataUltimo.Date, hoje) >= 2)
                 {
                     var diasSem = dataUltimo == DateTime.MinValue
                         ? "nunca lançou horas"
@@ -172,6 +176,19 @@ namespace WebAppSystems.Services
             }
 
             _logger.LogInformation("Alertas de lançamento enviados: {Total}", alertasEnviados);
+        }
+
+        private static int ContarDiasUteis(DateTime inicio, DateTime fim)
+        {
+            var dias = 0;
+            var atual = inicio.AddDays(1); // começa no dia seguinte ao último lançamento
+            while (atual <= fim)
+            {
+                if (atual.DayOfWeek != DayOfWeek.Saturday && atual.DayOfWeek != DayOfWeek.Sunday)
+                    dias++;
+                atual = atual.AddDays(1);
+            }
+            return dias;
         }
     }
 }
