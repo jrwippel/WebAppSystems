@@ -15,10 +15,6 @@ namespace WebAppSystems.Models
        
         public string? Document { get; set; }
 
-        [EmailAddress(ErrorMessage = "Digite um email válido")]
-       
-        public string? Email { get; set; }
-        public string? Telephone { get; set; }        
         public byte[]? ImageData { get; set; }
 
         public string? ImageMimeType { get; set; }
@@ -34,21 +30,17 @@ namespace WebAppSystems.Models
         {
         }
 
-        public Client(string name, string document, string email, string telephone)
+        public Client(string name, string document)
         {
             Name = name;
             Document = document;
-            Email = email;
-            Telephone = telephone;
         }
 
-        public Client(int id, string name, string document, string email, string telephone)
+        public Client(int id, string name, string document)
         {
             Id = id;
             Name = name;
             Document = document;
-            Email = email;
-            Telephone = telephone;
         }
     }
 }

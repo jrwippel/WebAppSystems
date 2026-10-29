@@ -41,8 +41,8 @@ namespace WebAppSystems.Data
             Attorney a6 = new Attorney("Jackson R Wippel", "jackson.wippel@abin.com", "47 9 99346765", new DateTime(1997, 3, 4), d2, ProfileEnum.Admin, "7c4a8d09ca3762af61e59520943dc26494f8941b", new DateTime(1998, 4, 21), new DateTime(1998, 4, 21), "jrwippel");
             Attorney a7 = new Attorney("James Bond", "james.bond@mi.com", "47 9 99346765", new DateTime(1997, 3, 4), d2, ProfileEnum.Padrao, "7c4a8d09ca3762af61e59520943dc26494f8941b", new DateTime(1998, 4, 21), new DateTime(1998, 4, 21), "james.bond");
 
-            Client c1 = new Client("Google SA", "84.148.436.0001-12", "google@gmail.com","4721235401");
-            Client c2 = new Client("Jrw Soluções em TI", "50.456.126.0001-76", "jrwippel@hotmail.com", "4799346159");
+            Client c1 = new Client("Google SA", "84.148.436.0001-12");
+            Client c2 = new Client("Jrw Soluções em TI", "50.456.126.0001-76");
 
             TimeSpan horaini = new TimeSpan(2, 30, 0);
             TimeSpan horafin = new TimeSpan(3, 50, 0);

@@ -50,9 +50,7 @@ namespace WebAppSystems.Controllers
                 {
                     query = query.Where(c => 
                         c.Name.Contains(search) || 
-                        c.Email.Contains(search) || 
-                        c.Document.Contains(search) ||
-                        c.Telephone.Contains(search));
+                        c.Document.Contains(search));
                 }
 
                 // Contar total de registros
@@ -68,9 +66,7 @@ namespace WebAppSystems.Controllers
                     {
                         Id = c.Id,
                         Name = c.Name,
-                        Email = c.Email,
                         Document = c.Document,
-                        Telephone = c.Telephone,
                         Solicitante = c.Solicitante,
                         ClienteInterno = c.ClienteInterno,
                         ClienteInativo = c.ClienteInativo,
@@ -121,7 +117,7 @@ namespace WebAppSystems.Controllers
         // POST: Clients/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(int id, [Bind("Id,Name,Document,Email,Telephone,ImageData,ImageMimeType,Solicitante,ClienteInterno, ClienteInativo")] Client client, IFormFile imageData, bool forcar = false)
+        public async Task<IActionResult> Create(int id, [Bind("Id,Name,Document,ImageData,ImageMimeType,Solicitante,ClienteInterno, ClienteInativo")] Client client, IFormFile imageData, bool forcar = false)
         {
             // Normalizar nome para Title Case (primeira letra de cada palavra em maiúscula)
             if (!string.IsNullOrWhiteSpace(client.Name))
@@ -216,8 +212,7 @@ namespace WebAppSystems.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        //public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Document,Email,Telephone")] Client client, IFormFile imageData)
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Document,Email,Telephone,ImageData,ImageMimeType,Solicitante,ClienteInterno, ClienteInativo")] Client client, IFormFile imageData)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Document,ImageData,ImageMimeType,Solicitante,ClienteInterno, ClienteInativo")] Client client, IFormFile imageData)
         {
             if (id != client.Id)
             {
@@ -351,7 +346,7 @@ namespace WebAppSystems.Controllers
 
         // POST: Clients/CreateCliente
         [HttpPost]
-        public async Task<IActionResult> CreateCliente([Bind("Name,Document,Email,Telephone,ImageData,ImageMimeType,Solicitante,ClienteInterno")] Client client, IFormFile imageData, bool forcar = false)
+        public async Task<IActionResult> CreateCliente([Bind("Name,Document,ImageData,ImageMimeType,Solicitante,ClienteInterno")] Client client, IFormFile imageData, bool forcar = false)
         {
             // Normalizar nome para Title Case
             if (!string.IsNullOrWhiteSpace(client.Name))

@@ -43,7 +43,6 @@
             </div>
             <div class="client-info">
                 <h2>@Model.Name</h2>
-                <p>@Model.Email</p>
                 <div class="status-badges">
                     @if (Model.ClienteInativo)
                     {
@@ -73,30 +72,6 @@
 
     <!-- Details Grid -->
     <div class="details-grid">
-        <!-- Contact Info -->
-        <div class="info-card">
-            <div class="card-header">
-                <i class="bi bi-telephone"></i>
-                <h3>Informações de Contato</h3>
-            </div>
-            <div class="card-content">
-                <div class="info-item">
-                    <label>
-                        <i class="bi bi-envelope"></i>
-                        Email
-                    </label>
-                    <span>@Model.Email</span>
-                </div>
-                <div class="info-item">
-                    <label>
-                        <i class="bi bi-telephone"></i>
-                        Telefone
-                    </label>
-                    <span>@Model.Telephone</span>
-                </div>
-            </div>
-        </div>
-
         <!-- Document Info -->
         <div class="info-card">
             <div class="card-header">

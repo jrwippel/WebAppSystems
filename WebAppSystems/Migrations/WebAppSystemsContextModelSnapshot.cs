@@ -177,9 +177,6 @@ namespace WebAppSystems.Migrations
                     b.Property<string>("Document")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Email")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<byte[]>("ImageData")
                         .HasColumnType("varbinary(max)");
 
@@ -192,9 +189,6 @@ namespace WebAppSystems.Migrations
                         .HasColumnType("nvarchar(60)");
 
                     b.Property<string>("Solicitante")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Telephone")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -489,10 +483,10 @@ namespace WebAppSystems.Migrations
                     b.Property<decimal>("ComissaoSocio")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<decimal>("ValorMensalBruto")
+                    b.Property<decimal?>("ValorHoraVirtual")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<decimal?>("ValorHoraVirtual")
+                    b.Property<decimal>("ValorMensalBruto")
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");

@@ -29,7 +29,7 @@
         <div class="search-wrapper">
             <i class="bi bi-search"></i>
             <input type="text" id="searchInput" class="search-input" 
-                   placeholder="Buscar por nome, email, documento ou telefone..."
+                   placeholder="Buscar por nome ou documento..."
                    value="@ViewBag.SearchTerm">
         </div>
     </div>
@@ -41,7 +41,6 @@
                 <thead>
                     <tr>
                         <th>Nome</th>
-                        <th>Email</th>
                         <th>Documento</th>
                         <th>Solicitante</th>
                         <th>Status</th>
@@ -60,9 +59,7 @@
                                     <span>@item.Name</span>
                                 </div>
                             </td>
-                            <td>@item.Email</td>
                             <td>@item.Document</td>
-                            <td>@item.Telephone</td>
                             <td>@item.Solicitante</td>
                             <td>
                                 @if (item.ClienteInativo)
