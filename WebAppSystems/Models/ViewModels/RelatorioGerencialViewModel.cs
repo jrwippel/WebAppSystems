@@ -64,6 +64,7 @@ namespace WebAppSystems.Models.ViewModels
         public double TotalHoras { get; set; }
         public int QuantidadeAtividades { get; set; }
         public double PercentualTotal { get; set; }
+        public List<SubGrupoCliente> Clientes { get; set; } = new();
     }
 
     public class GrupoTipo

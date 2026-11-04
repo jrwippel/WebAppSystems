@@ -264,6 +264,7 @@
             <div class="table-card">
                 <div class="table-card-header">
                     <h5><i class="bi bi-diagram-3"></i> Por Área</h5>
+                    <small class="header-hint">Clique para ver os clientes da área</small>
                 </div>
                 <div class="table-card-body">
                     <table class="pivot-table">
@@ -278,8 +279,15 @@
                         <tbody>
                             @foreach (var area in Model.PorArea)
                             {
-                                <tr>
-                                    <td><strong>@area.Nome</strong></td>
+                                var temClientes = area.Clientes != null && area.Clientes.Any();
+                                <tr class="@(temClientes ? "expandable-row" : "")" onclick="@(temClientes ? "toggleSubRows(this)" : "")">
+                                    <td>
+                                        @if (temClientes)
+                                        {
+                                            <i class="bi bi-chevron-right expand-icon"></i>
+                                        }
+                                        <strong>@area.Nome</strong>
+                                    </td>
                                     <td><span class="hours-badge">@area.TotalHoras.ToString("N1")</span></td>
                                     <td>@area.QuantidadeAtividades</td>
                                     <td>
@@ -289,6 +297,16 @@
                                         </div>
                                     </td>
                                 </tr>
+                                @foreach (var cli in area.Clientes)
+                                {
+                                    var percCliArea = area.TotalHoras > 0 ? (cli.TotalHoras / area.TotalHoras) * 100 : 0;
+                                    <tr class="sub-row" style="display:none;">
+                                        <td class="sub-cell">↳ @cli.Nome</td>
+                                        <td>@cli.TotalHoras.ToString("N1")</td>
+                                        <td>@cli.QuantidadeAtividades</td>
+                                        <td>@percCliArea.ToString("N0")%</td>
+                                    </tr>
+                                }
                             }
                         </tbody>
                     </table>
@@ -638,6 +656,14 @@
     }
 
     .table-card-header h5 i { color: #667eea; }
+
+    .header-hint {
+        display: block;
+        margin-top: 4px;
+        font-size: 11px;
+        color: #a0aec0;
+        font-style: italic;
+    }
 
     .table-card-body {
         padding: 0;

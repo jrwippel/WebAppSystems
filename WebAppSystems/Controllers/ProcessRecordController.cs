@@ -1487,7 +1487,17 @@ namespace WebAppSystems.Controllers
                             Nome = g.Key.Name,
                             TotalHoras = g.Sum(r => calcHoras(r)),
                             QuantidadeAtividades = g.Count(),
-                            PercentualTotal = totalHoras > 0 ? (g.Sum(r => calcHoras(r)) / totalHoras) * 100 : 0
+                            PercentualTotal = totalHoras > 0 ? (g.Sum(r => calcHoras(r)) / totalHoras) * 100 : 0,
+                            // Clientes que mais consumiram esta área no período
+                            Clientes = g.GroupBy(r => r.Client.Name)
+                                .Select(cg => new Models.ViewModels.SubGrupoCliente
+                                {
+                                    Nome = cg.Key,
+                                    TotalHoras = cg.Sum(r => calcHoras(r)),
+                                    QuantidadeAtividades = cg.Count()
+                                })
+                                .OrderByDescending(c => c.TotalHoras)
+                                .ToList()
                         })
                         .OrderByDescending(a => a.TotalHoras)
                         .ToList(),
