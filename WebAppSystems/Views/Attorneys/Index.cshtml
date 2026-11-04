@@ -39,9 +39,26 @@
                     </select>
                     <label data-i18n="common.entries">registros</label>
                 </div>
-                <div class="search-box">
-                    <i class="bi bi-search"></i>
-                    <input type="text" id="searchInput" class="search-input" placeholder="Pesquisar..." data-i18n-placeholder="common.search">
+                <div class="filters-group">
+                    <select id="areaFilter" class="filter-select" title="Filtrar por área">
+                        <option value="">Todas as áreas</option>
+                    </select>
+                    <select id="profileFilter" class="filter-select" title="Filtrar por perfil">
+                        <option value="">Todos os perfis</option>
+                        <option value="1">Administrador</option>
+                        <option value="2">Controladoria</option>
+                        <option value="3">Padrão</option>
+                    </select>
+                    <select id="sortSelect" class="filter-select" title="Ordenar">
+                        <option value="name-asc">Nome (A-Z)</option>
+                        <option value="name-desc">Nome (Z-A)</option>
+                        <option value="area-asc">Área (A-Z)</option>
+                        <option value="profile-asc">Perfil</option>
+                    </select>
+                    <div class="search-box">
+                        <i class="bi bi-search"></i>
+                        <input type="text" id="searchInput" class="search-input" placeholder="Pesquisar..." data-i18n-placeholder="common.search">
+                    </div>
                 </div>
             </div>
         </div>
@@ -64,8 +81,16 @@
                         {
                             var isInactive = item.Inativo;
                             var rowClass = isInactive ? "inactive-user" : "";
-                            
-                            <tr class="@rowClass">
+                            var perfilNome = item.Perfil == WebAppSystems.Models.Enums.ProfileEnum.Admin
+                                ? "Administrador"
+                                : item.Perfil == WebAppSystems.Models.Enums.ProfileEnum.Controladoria
+                                ? "Controladoria"
+                                : "Padrão";
+
+                            <tr class="@rowClass"
+                                data-name="@item.Name"
+                                data-area="@item.Department.Name"
+                                data-profile="@((int)item.Perfil)">
                                 <td class="name-cell">
                                     <i class="bi bi-person-circle"></i>
                                     @item.Name
@@ -77,11 +102,7 @@
                                 </td>
                                 <td class="profile-cell">
                                     <span class="profile-badge profile-@((int)item.Perfil)">
-                                        @(item.Perfil == WebAppSystems.Models.Enums.ProfileEnum.Admin
-                                            ? "Administrador"
-                                            : item.Perfil == WebAppSystems.Models.Enums.ProfileEnum.Controladoria
-                                            ? "Controladoria"
-                                            : "Padrão")
+                                        @perfilNome
                                     </span>
                                 </td>
                                 <td class="actions-cell">
@@ -251,6 +272,32 @@
     .entries-select:focus {
         outline: none;
         border-color: #667eea;
+    }
+
+    .filters-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    .filter-select {
+        padding: 8px 12px;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 13px;
+        color: #4a5568;
+        background: #f7fafc;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        max-width: 180px;
+    }
+
+    .filter-select:focus {
+        outline: none;
+        border-color: #667eea;
+        background: white;
     }
 
     .search-box {
@@ -530,6 +577,17 @@
             align-items: stretch;
         }
 
+        .filters-group {
+            flex-direction: column;
+            align-items: stretch;
+            justify-content: flex-start;
+        }
+
+        .filter-select {
+            max-width: 100%;
+            width: 100%;
+        }
+
         .search-input {
             width: 100%;
         }
@@ -557,6 +615,9 @@
         const tbody = table.querySelector('tbody');
         const searchInput = document.getElementById('searchInput');
         const entriesSelect = document.getElementById('entriesSelect');
+        const areaFilter = document.getElementById('areaFilter');
+        const profileFilter = document.getElementById('profileFilter');
+        const sortSelect = document.getElementById('sortSelect');
         const allRows = Array.from(tbody.querySelectorAll('tr')).filter(row => !row.querySelector('td[colspan]'));
         
         let currentPage = 1;
@@ -570,15 +631,80 @@
             return;
         }
 
-        searchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            
+        // Popular o dropdown de áreas com os valores presentes na tabela (sem duplicar)
+        const areas = [...new Set(allRows.map(row => (row.getAttribute('data-area') || '').trim()).filter(a => a))]
+            .sort((a, b) => a.localeCompare(b, 'pt-BR'));
+        areas.forEach(area => {
+            const opt = document.createElement('option');
+            opt.value = area;
+            opt.textContent = area;
+            areaFilter.appendChild(opt);
+        });
+
+        const profileOrder = { '1': 'Administrador', '2': 'Controladoria', '3': 'Padrão' };
+
+        // Aplica busca + filtros de área/perfil e ordenação; alimenta filteredRows
+        function applyFiltersAndSort() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const areaValue = areaFilter.value;
+            const profileValue = profileFilter.value;
+
             filteredRows = allRows.filter(row => {
-                const text = row.textContent.toLowerCase();
-                return text.includes(searchTerm);
+                const matchesSearch = row.textContent.toLowerCase().includes(searchTerm);
+                const matchesArea = !areaValue || (row.getAttribute('data-area') || '').trim() === areaValue;
+                const matchesProfile = !profileValue || (row.getAttribute('data-profile') || '') === profileValue;
+                return matchesSearch && matchesArea && matchesProfile;
             });
-            
+
+            const sortValue = sortSelect.value;
+            filteredRows.sort((a, b) => {
+                const nameA = (a.getAttribute('data-name') || '').trim();
+                const nameB = (b.getAttribute('data-name') || '').trim();
+                const areaA = (a.getAttribute('data-area') || '').trim();
+                const areaB = (b.getAttribute('data-area') || '').trim();
+                const profA = parseInt(a.getAttribute('data-profile') || '0', 10);
+                const profB = parseInt(b.getAttribute('data-profile') || '0', 10);
+
+                switch (sortValue) {
+                    case 'name-desc':
+                        return nameB.localeCompare(nameA, 'pt-BR', { sensitivity: 'base' });
+                    case 'area-asc':
+                        return areaA.localeCompare(areaB, 'pt-BR', { sensitivity: 'base' })
+                            || nameA.localeCompare(nameB, 'pt-BR', { sensitivity: 'base' });
+                    case 'profile-asc':
+                        return (profA - profB)
+                            || nameA.localeCompare(nameB, 'pt-BR', { sensitivity: 'base' });
+                    case 'name-asc':
+                    default:
+                        return nameA.localeCompare(nameB, 'pt-BR', { sensitivity: 'base' });
+                }
+            });
+
+            // Reordena fisicamente as linhas no DOM conforme a ordenação atual
+            filteredRows.forEach(row => tbody.appendChild(row));
+        }
+
+        searchInput.addEventListener('input', function() {
             currentPage = 1;
+            applyFiltersAndSort();
+            updateTable();
+        });
+
+        areaFilter.addEventListener('change', function() {
+            currentPage = 1;
+            applyFiltersAndSort();
+            updateTable();
+        });
+
+        profileFilter.addEventListener('change', function() {
+            currentPage = 1;
+            applyFiltersAndSort();
+            updateTable();
+        });
+
+        sortSelect.addEventListener('change', function() {
+            currentPage = 1;
+            applyFiltersAndSort();
             updateTable();
         });
 
@@ -655,6 +781,7 @@
             paginationDiv.appendChild(nextBtn);
         }
 
+        applyFiltersAndSort();
         updateTable();
     });
 </script>
