@@ -40,7 +40,10 @@
             </div>
             <div class="form-field">
                 <label data-i18n="timetracker.requester">Requester</label>
-                <input type="text" asp-for="Solicitante" class="form-control" id="solicitante" data-i18n-placeholder="timetracker.requester.placeholder" placeholder="Requester name" />
+                <div class="sol-combo-wrap">
+                    <input type="text" asp-for="Solicitante" class="form-control" id="solicitante" autocomplete="off" data-i18n-placeholder="timetracker.requester.placeholder" placeholder="Requester name" />
+                    <button type="button" id="solicitanteToggle" class="sol-combo-toggle" tabindex="-1" title="Mostrar solicitantes do cliente" aria-label="Mostrar solicitantes do cliente"><i class="bi bi-chevron-down"></i></button>
+                </div>
             </div>
         </div>
     </div>
@@ -524,6 +527,59 @@
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
         }
 
+        /* Combo de solicitante (lista própria, não depende do datalist do navegador) */
+        .sol-combo-wrap {
+            position: relative;
+            display: block;
+        }
+
+        .sol-combo-wrap .form-control {
+            padding-right: 36px;
+        }
+
+        .sol-combo-toggle {
+            position: absolute;
+            top: 1px;
+            bottom: 1px;
+            right: 1px;
+            width: 34px;
+            border: none;
+            background: transparent;
+            color: #718096;
+            cursor: pointer;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .sol-combo-toggle:hover {
+            color: #667eea;
+            background: #f7fafc;
+        }
+
+        .sol-combo-panel {
+            position: fixed;
+            z-index: 10000;
+            max-height: 220px;
+            overflow-y: auto;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            padding: 4px 0;
+        }
+
+        .sol-combo-item {
+            padding: 8px 12px;
+            font-size: 13px;
+            color: #2d3748;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .sol-combo-item:hover {
+            background: #eef2ff;
+            color: #4338ca;
+        }
+
         /* Edição inline geral */
         .editable-cell {
             cursor: pointer;
@@ -705,15 +761,23 @@
             const startStopButton = document.getElementById("startStopButton");
 
             // Auto-fill solicitante when client changes (via Select2 change event)
+            // Solicitantes do cliente selecionado no formulário (alimenta o combo do campo Solicitante)
+            let solicitantesCliente = [];
+            attachSolicitanteCombo(solicitanteField, () => solicitantesCliente, {
+                toggle: document.getElementById("solicitanteToggle")
+            });
+
             $('select[name="ProcessRecord.ClientId"]').on('change', async function () {
                 const clientId = $(this).val();
+                solicitantesCliente = [];
                 if (clientId && clientId !== "0") {
                     try {
-                        const response = await fetch(`/TimeTracker/GetSolicitanteByClientId?clientId=${clientId}`);
+                        const response = await fetch(`/TimeTracker/GetSolicitantesByClientId?clientId=${clientId}`);
                         if (response.ok) {
                             const data = await response.json();
-                            if (data && data.solicitante) {
-                                solicitanteField.value = data.solicitante;
+                            if (data && data.success) {
+                                solicitantesCliente = data.solicitantes || [];
+                                solicitanteField.value = data.solicitantePadrao || "";
                             } else {
                                 solicitanteField.value = "";
                             }
@@ -886,6 +950,33 @@
                         if (String(opt.value) === String(currentValue)) o.selected = true;
                         editor.appendChild(o);
                     });
+                } else if (field === "solicitante") {
+                    editor = document.createElement("input");
+                    editor.type = "text";
+                    editor.autocomplete = "off";
+                    editor.value = currentValue;
+
+                    // Combo próprio com os solicitantes do cliente da linha; escolher um item salva na hora
+                    let solicitantesLinha = [];
+                    const combo = attachSolicitanteCombo(editor, () => solicitantesLinha, {
+                        onSelect: () => editor.blur()
+                    });
+                    // O editor é descartado após salvar; remove o painel da lista junto
+                    editor.addEventListener("blur", () => setTimeout(combo.destroy, 0));
+
+                    const clientIdCell = row.querySelector("[data-field='clientId']");
+                    const rowClientId = clientIdCell ? clientIdCell.dataset.value : null;
+                    if (rowClientId) {
+                        fetch(`/TimeTracker/GetSolicitantesByClientId?clientId=${rowClientId}`)
+                            .then(r => r.json())
+                            .then(data => {
+                                if (data && data.success) {
+                                    solicitantesLinha = data.solicitantes || [];
+                                    if (document.activeElement === editor) combo.open();
+                                }
+                            })
+                            .catch(() => {});
+                    }
                 } else {
                     editor = document.createElement("input");
                     editor.type = "text";
@@ -986,6 +1077,96 @@
                 });
             });
         });
+
+        // Combo de solicitante próprio: lista de opções sob o campo, que continua aceitando digitação livre.
+        //  - getOptions(): devolve os nomes disponíveis no momento (ex.: solicitantes do cliente selecionado)
+        //  - config.toggle: botão (seta) que abre/fecha a lista
+        //  - config.onSelect(nome): chamado quando o usuário escolhe um item da lista
+        function attachSolicitanteCombo(input, getOptions, config) {
+            config = config || {};
+            const panel = document.createElement("div");
+            panel.className = "sol-combo-panel";
+            panel.style.display = "none";
+            document.body.appendChild(panel);
+
+            let suppressInput = false;
+
+            function isOpen() { return panel.style.display === "block"; }
+            function hide() { panel.style.display = "none"; }
+
+            function position() {
+                const r = input.getBoundingClientRect();
+                panel.style.left = r.left + "px";
+                panel.style.top = (r.bottom + 2) + "px";
+                panel.style.minWidth = r.width + "px";
+            }
+
+            function render(filtro) {
+                if (!document.body.contains(input)) { destroy(); return; }
+
+                const todos = getOptions() || [];
+                const f = (filtro || "").trim().toLowerCase();
+                const itens = f ? todos.filter(n => n.toLowerCase().includes(f)) : todos;
+
+                panel.innerHTML = "";
+                if (!itens.length) { hide(); return; }
+
+                itens.forEach(function (nome) {
+                    const el = document.createElement("div");
+                    el.className = "sol-combo-item";
+                    el.textContent = nome;
+                    el.addEventListener("mousedown", function (e) {
+                        e.preventDefault(); // mantém o foco no campo
+                        suppressInput = true;
+                        input.value = nome;
+                        input.dispatchEvent(new Event("input", { bubbles: true }));
+                        suppressInput = false;
+                        hide();
+                        if (config.onSelect) config.onSelect(nome);
+                    });
+                    panel.appendChild(el);
+                });
+
+                position();
+                panel.style.display = "block";
+            }
+
+            function open() { render(""); }
+
+            function onWindowScroll(e) { if (!panel.contains(e.target)) hide(); }
+
+            function destroy() {
+                window.removeEventListener("scroll", onWindowScroll, true);
+                window.removeEventListener("resize", hide);
+                panel.remove();
+            }
+
+            window.addEventListener("scroll", onWindowScroll, true);
+            window.addEventListener("resize", hide);
+
+            input.addEventListener("focus", open);
+            input.addEventListener("click", open);
+            input.addEventListener("input", function () {
+                if (!suppressInput) render(input.value);
+            });
+            input.addEventListener("keydown", function (e) {
+                if (e.key === "Escape") hide();
+                else if (e.key === "ArrowDown") open();
+            });
+            input.addEventListener("blur", hide);
+
+            if (config.toggle) {
+                // mousedown com preventDefault evita que o campo perca o foco ao clicar na seta
+                config.toggle.addEventListener("mousedown", function (e) { e.preventDefault(); });
+                config.toggle.addEventListener("click", function () {
+                    if (isOpen()) { hide(); return; }
+                    input.focus();
+                    open();
+                });
+            }
+
+            return { open: open, hide: hide, destroy: destroy };
+        }
 
         async function checkActiveTimer() {
             try {

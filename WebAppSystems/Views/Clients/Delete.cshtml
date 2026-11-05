@@ -71,8 +71,11 @@
             <div class="info-item">
                 <i class="bi bi-person-badge"></i>
                 <div>
-                    <label>Solicitante</label>
-                    <span>@Model.Solicitante</span>
+                    <label>Solicitantes</label>
+                    @{
+                        var solicitantesCliente = ViewBag.Solicitantes as List<string> ?? new List<string>();
+                    }
+                    <span>@(solicitantesCliente.Any() ? string.Join(", ", solicitantesCliente) : "—")</span>
                 </div>
             </div>
         </div>

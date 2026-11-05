@@ -123,7 +123,8 @@
                             <i class="bi bi-person-check"></i>
                             <span data-i18n="activity.field.requester">Solicitante</span>
                         </label>
-                        <input asp-for="ProcessRecord.Solicitante" class="modern-input" />
+                        <input asp-for="ProcessRecord.Solicitante" class="modern-input" list="solicitantesList" autocomplete="off" placeholder="Selecione ou digite um novo solicitante" />
+                        <datalist id="solicitantesList"></datalist>
                         <span asp-validation-for="ProcessRecord.Solicitante" class="field-error"></span>
                     </div>
 
@@ -664,6 +665,34 @@
     }
 
     <script>
+        // O datalist filtra as opções pelo texto já digitado. Ao abrir a lista (clique na seta ou seta para baixo),
+        // esvazia o campo temporariamente para exibir todas as opções; se nada for escolhido, restaura o valor.
+        function habilitarListaCompleta(input) {
+            if (!input) return;
+            var valorAnterior = '';
+
+            function limpar() {
+                if (input.value !== '') {
+                    valorAnterior = input.value;
+                    input.value = '';
+                }
+            }
+
+            input.addEventListener('mousedown', function (e) {
+                var rect = input.getBoundingClientRect();
+                if (e.clientX > rect.right - 32) limpar();
+            });
+            input.addEventListener('keydown', function (e) {
+                if (e.key === 'ArrowDown') limpar();
+            });
+            input.addEventListener('blur', function () {
+                if (input.value.trim() === '' && valorAnterior !== '') {
+                    input.value = valorAnterior;
+                }
+                valorAnterior = '';
+            });
+        }
+
         $(document).ready(function () {
             // Inicializar Select2 no campo de cliente (se não estiver bloqueado)
             var $clientSelect = $("select[id$='ProcessRecord_ClientId']");
@@ -737,20 +766,41 @@
             // Calcular duração inicial
             calculateDuration();
 
-            $("select[id$='ProcessRecord_ClientId']").change(function () {
-                var clientId = $(this).val();
-                if (clientId) {
-                    $.getJSON('@Url.Action("GetClientSolicitante", "ProcessRecords")', { clientId: clientId }, function (data) {
-                        if (data.success) {
-                            $("input[id$='ProcessRecord_Solicitante']").val(data.solicitante);
-                        } else {
-                            $("input[id$='ProcessRecord_Solicitante']").val('');
-                        }
-                    });
-                } else {
-                    $("input[id$='ProcessRecord_Solicitante']").val('');
+            // Carrega a lista de solicitantes do cliente no combo.
+            // preencherPadrao = true (troca de cliente): redefine o campo; false (abertura da tela): mantém o valor gravado.
+            function carregarSolicitantes(clientId, preencherPadrao) {
+                var $input = $("input[id$='ProcessRecord_Solicitante']");
+                var $datalist = $('#solicitantesList');
+                $datalist.empty();
+
+                if (!clientId || clientId === '0') {
+                    if (preencherPadrao) $input.val('');
+                    return;
                 }
+
+                $.getJSON('@Url.Action("GetClientSolicitantes", "ProcessRecords")', { clientId: clientId }, function (data) {
+                    $datalist.empty();
+                    if (data.success) {
+                        (data.solicitantes || []).forEach(function (nome) {
+                            $datalist.append($('<option>').attr('value', nome));
+                        });
+                        if (preencherPadrao) $input.val(data.solicitantePadrao || '');
+                    } else if (preencherPadrao) {
+                        $input.val('');
+                    }
+                });
+            }
+
+            // Ao abrir a tela, popula a lista do cliente atual sem alterar o solicitante já gravado
+            // (o campo do cliente pode ser select ou hidden quando o registro está bloqueado)
+            carregarSolicitantes($("[id$='ProcessRecord_ClientId']").val(), false);
+
+            $("select[id$='ProcessRecord_ClientId']").change(function () {
+                carregarSolicitantes($(this).val(), true);
             });
+
+            // Faz o combo mostrar a lista completa mesmo com um valor já preenchido
+            habilitarListaCompleta(document.querySelector("input[id$='ProcessRecord_Solicitante']"));
 
             $("input[id$='HoraInicial'], input[id$='HoraFinal']").on('focus', function (e) {
                 if ($(this).val() == '00:00') {

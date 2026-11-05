@@ -22,7 +22,7 @@
 
     <!-- Form Card -->
     <div class="form-card">
-        <form asp-action="Edit" method="post" enctype="multipart/form-data">
+        <form id="editClientForm" asp-action="Edit" method="post" enctype="multipart/form-data">
             <input type="hidden" asp-for="Id" />
             
             <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
@@ -88,15 +88,6 @@
                     Informações Adicionais
                 </h3>
                 
-                <div class="form-group">
-                    <label asp-for="Solicitante">
-                        <i class="bi bi-person-badge"></i>
-                        Solicitante
-                    </label>
-                    <input asp-for="Solicitante" class="form-control" placeholder="Nome do solicitante" />
-                    <span asp-validation-for="Solicitante" class="text-danger"></span>
-                </div>
-
                 <div class="checkbox-group">
                     <label class="checkbox-card">
                         <input type="checkbox" asp-for="ClienteInterno" />
@@ -123,24 +114,153 @@
                     </label>
                 </div>
             </div>
-
-            <!-- Actions -->
-            <div class="form-actions">
-                <button type="submit" class="btn-submit">
-                    <i class="bi bi-check-circle"></i>
-                    Salvar Alterações
-                </button>
-                <a asp-action="Index" class="btn-cancel">
-                    <i class="bi bi-x-circle"></i>
-                    Cancelar
-                </a>
-            </div>
         </form>
+
+        <!-- Solicitantes do Cliente -->
+        <div class="form-section solicitantes-section">
+            <h3 class="section-title">
+                <i class="bi bi-people"></i>
+                Solicitantes
+            </h3>
+            <p class="section-hint">Lista de solicitantes disponíveis ao lançar horas para este cliente. Clique na estrela para definir o solicitante padrão, que é sugerido ao selecionar o cliente. Novos solicitantes digitados no lançamento são adicionados automaticamente.</p>
+
+            <div class="solicitante-add-row">
+                <input type="text" id="novoSolicitante" class="form-control" placeholder="Nome do solicitante" maxlength="100" />
+                <button type="button" id="btnAddSolicitante" class="btn-add-solicitante">
+                    <i class="bi bi-plus-circle"></i> Adicionar
+                </button>
+            </div>
+
+            <ul id="solicitantesList" class="solicitantes-list"></ul>
+            <div id="solicitantesEmpty" class="solicitantes-empty" style="display:none;">Nenhum solicitante cadastrado.</div>
+        </div>
+
+        <!-- Actions -->
+        <div class="form-actions">
+            <button type="submit" form="editClientForm" class="btn-submit">
+                <i class="bi bi-check-circle"></i>
+                Salvar Alterações
+            </button>
+            <a asp-action="Index" class="btn-cancel">
+                <i class="bi bi-x-circle"></i>
+                Cancelar
+            </a>
+        </div>
     </div>
 </div>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @Html.AntiForgeryToken()
+    <script>
+        (function () {
+            const clientId = @Model.Id;
+            const listEl = document.getElementById('solicitantesList');
+            const emptyEl = document.getElementById('solicitantesEmpty');
+            const inputEl = document.getElementById('novoSolicitante');
+            const btnAdd = document.getElementById('btnAddSolicitante');
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            function render(solicitantes) {
+                listEl.innerHTML = '';
+                if (!solicitantes || solicitantes.length === 0) {
+                    emptyEl.style.display = 'block';
+                    return;
+                }
+                emptyEl.style.display = 'none';
+                solicitantes.forEach(function (s) {
+                    const li = document.createElement('li');
+                    li.className = 'solicitante-item' + (s.padrao ? ' is-padrao' : '');
+
+                    // Nome inserido como texto (não como HTML) para evitar injeção de script
+                    const nomeEl = document.createElement('span');
+                    const icone = document.createElement('i');
+                    icone.className = 'bi bi-person-badge';
+                    nomeEl.appendChild(icone);
+                    nomeEl.appendChild(document.createTextNode(' ' + s.nome));
+                    if (s.padrao) {
+                        const badge = document.createElement('span');
+                        badge.className = 'badge-padrao';
+                        badge.textContent = 'Padrão';
+                        nomeEl.appendChild(badge);
+                    }
+
+                    const acoes = document.createElement('div');
+                    acoes.className = 'solicitante-acoes';
+
+                    const btnPadrao = document.createElement('button');
+                    btnPadrao.type = 'button';
+                    btnPadrao.className = 'btn-padrao-solicitante' + (s.padrao ? ' ativo' : '');
+                    btnPadrao.title = s.padrao ? 'Remover como padrão' : 'Definir como padrão';
+                    btnPadrao.setAttribute('aria-label', btnPadrao.title);
+                    btnPadrao.innerHTML = s.padrao ? '<i class="bi bi-star-fill"></i>' : '<i class="bi bi-star"></i>';
+                    btnPadrao.onclick = function () { definirPadrao(s.id, !s.padrao); };
+
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'btn-remove-solicitante';
+                    btn.title = 'Remover';
+                    btn.setAttribute('aria-label', 'Remover');
+                    btn.innerHTML = '<i class="bi bi-trash"></i>';
+                    btn.onclick = function () { remover(s.id); };
+
+                    acoes.appendChild(btnPadrao);
+                    acoes.appendChild(btn);
+                    li.appendChild(nomeEl);
+                    li.appendChild(acoes);
+                    listEl.appendChild(li);
+                });
+            }
+
+            function definirPadrao(id, padrao) {
+                const fd = new FormData();
+                fd.append('id', id);
+                fd.append('padrao', padrao);
+                fd.append('__RequestVerificationToken', token);
+                fetch('@Url.Action("DefinirSolicitantePadrao", "Clients")', { method: 'POST', body: fd })
+                    .then(r => r.json())
+                    .then(d => { if (d.success) carregar(); else alert(d.message || 'Erro ao definir o padrão.'); });
+            }
+
+            function carregar() {
+                fetch('@Url.Action("GetSolicitantes", "Clients")?clientId=' + clientId)
+                    .then(r => r.json())
+                    .then(d => { if (d.success) render(d.solicitantes); });
+            }
+
+            function adicionar() {
+                const nome = (inputEl.value || '').trim();
+                if (!nome) { inputEl.focus(); return; }
+                const fd = new FormData();
+                fd.append('clientId', clientId);
+                fd.append('nome', nome);
+                fd.append('__RequestVerificationToken', token);
+                fetch('@Url.Action("AddSolicitante", "Clients")', { method: 'POST', body: fd })
+                    .then(r => r.json())
+                    .then(d => {
+                        if (d.success) { inputEl.value = ''; carregar(); }
+                        else { alert(d.message || 'Não foi possível adicionar.'); }
+                    });
+            }
+
+            function remover(id) {
+                if (!confirm('Remover este solicitante?')) return;
+                const fd = new FormData();
+                fd.append('id', id);
+                fd.append('__RequestVerificationToken', token);
+                fetch('@Url.Action("RemoveSolicitante", "Clients")', { method: 'POST', body: fd })
+                    .then(r => r.json())
+                    .then(d => { if (d.success) carregar(); else alert(d.message || 'Erro ao remover.'); });
+            }
+
+            btnAdd.addEventListener('click', adicionar);
+            inputEl.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); adicionar(); }
+            });
+
+            carregar();
+        })();
+    </script>
     <script>
         document.getElementById('imageInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
@@ -316,6 +436,134 @@
     .section-title i {
         color: #667eea;
         font-size: 20px;
+    }
+
+    .solicitantes-section {
+        border-top: 1px solid #e2e8f0;
+        padding-top: 24px;
+    }
+
+    .section-hint {
+        font-size: 13px;
+        color: #718096;
+        margin: -4px 0 16px;
+    }
+
+    .solicitante-add-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+
+    .solicitante-add-row .form-control {
+        flex: 1;
+    }
+
+    .btn-add-solicitante {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 18px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.2s ease;
+    }
+
+    .btn-add-solicitante:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(102,126,234,0.3);
+    }
+
+    .solicitantes-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .solicitante-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 14px;
+        background: #f7fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 14px;
+        color: #2d3748;
+    }
+
+    .solicitante-item i { color: #667eea; margin-right: 6px; }
+
+    .solicitante-item.is-padrao {
+        background: #fffbeb;
+        border-color: #fcd34d;
+    }
+
+    .badge-padrao {
+        margin-left: 8px;
+        padding: 2px 8px;
+        border-radius: 10px;
+        background: #fef3c7;
+        color: #92400e;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .solicitante-acoes {
+        display: flex;
+        gap: 6px;
+    }
+
+    .btn-padrao-solicitante {
+        background: #f7fafc;
+        color: #a0aec0;
+        border: none;
+        border-radius: 6px;
+        width: 30px;
+        height: 30px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-padrao-solicitante:hover,
+    .btn-padrao-solicitante.ativo {
+        color: #d97706;
+        background: #fef3c7;
+    }
+
+    .btn-padrao-solicitante i,
+    .btn-remove-solicitante i { margin-right: 0; color: inherit; }
+
+    .btn-remove-solicitante {
+        background: #fff5f5;
+        color: #e53e3e;
+        border: none;
+        border-radius: 6px;
+        width: 30px;
+        height: 30px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-remove-solicitante:hover {
+        background: #e53e3e;
+        color: #fff;
+    }
+
+    .solicitantes-empty {
+        font-size: 13px;
+        color: #a0aec0;
+        font-style: italic;
+        padding: 8px 0;
     }
 
     .form-row {

@@ -196,6 +196,32 @@ namespace WebAppSystems.Migrations
                     b.ToTable("Client");
                 });
 
+            modelBuilder.Entity("WebAppSystems.Models.ClienteSolicitante", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<int>("ClientId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("Padrao")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientId");
+
+                    b.ToTable("ClienteSolicitante");
+                });
+
             modelBuilder.Entity("WebAppSystems.Models.Department", b =>
                 {
                     b.Property<int>("Id")
@@ -703,6 +729,17 @@ namespace WebAppSystems.Migrations
                         .IsRequired();
 
                     b.Navigation("Department");
+                });
+
+            modelBuilder.Entity("WebAppSystems.Models.ClienteSolicitante", b =>
+                {
+                    b.HasOne("WebAppSystems.Models.Client", "Client")
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Client");
                 });
 
             modelBuilder.Entity("WebAppSystems.Models.DocumentAnalysis", b =>

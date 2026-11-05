@@ -19,6 +19,8 @@ namespace WebAppSystems.Data
         public DbSet<WebAppSystems.Models.ProcessRecord> ProcessRecord { get; set; } = default!;
         public DbSet<WebAppSystems.Models.Client>? Client { get; set; }
 
+        public DbSet<WebAppSystems.Models.ClienteSolicitante> ClienteSolicitante { get; set; } = default!;
+
         public DbSet<WebAppSystems.Models.Mensalista> Mensalista { get; set; } = default!;
      
 
@@ -41,6 +43,13 @@ namespace WebAppSystems.Data
                 .WithMany()
                 .HasForeignKey(p => p.FaturadoPorId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Relacionamento ClienteSolicitante -> Client (um cliente tem N solicitantes)
+            modelBuilder.Entity<ClienteSolicitante>()
+                .HasOne(cs => cs.Client)
+                .WithMany()
+                .HasForeignKey(cs => cs.ClientId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Outras configurações de modelo podem ir aqui, se necessário
         }               

@@ -185,6 +185,9 @@ namespace WebAppSystems.Controllers
                 await _context.SaveChangesAsync();
             }
 
+            // Auto-cadastra o solicitante para o cliente, se for novo
+            await _clientService.RegistrarSolicitanteSeNovoAsync(processRecord.ClientId, processRecord.Solicitante);
+
             return Ok();
         }
 
@@ -566,6 +569,10 @@ namespace WebAppSystems.Controllers
 
             await _context.SaveChangesAsync();
 
+            // Se o solicitante foi editado na grade, cadastra no cliente caso seja um nome novo
+            if (!string.IsNullOrWhiteSpace(request.Solicitante))
+                await _clientService.RegistrarSolicitanteSeNovoAsync(record.ClientId, record.Solicitante);
+
             var diff = record.HoraFinal - record.HoraInicial;
             var duration = $"{(int)diff.TotalHours:00}:{diff.Minutes:00}:{diff.Seconds:00}";
             return Ok(new { duration });
@@ -659,6 +666,33 @@ Retorne APENAS a descrição melhorada, completa, sem aspas, sem explicações, 
                 return Json(new { solicitante = string.Empty });
             }
         }
+
+        // Retorna a lista de solicitantes cadastrados de um cliente (combo editável do TimeTracker)
+        [HttpGet]
+        public async Task<IActionResult> GetSolicitantesByClientId(int clientId)
+        {
+            try
+            {
+                var client = await _clientService.FindByIdAsync(clientId);
+                if (client == null)
+                    return Json(new { success = false });
+
+                if (client.ClienteInterno)
+                {
+                    Attorney usuarioLogado = _isessao.BuscarSessaoDoUsuario();
+                    return Json(new { success = true, interno = true, solicitantePadrao = usuarioLogado.Name, solicitantes = new List<string>() });
+                }
+
+                var (solicitantes, padrao) = await _clientService.GetSolicitantesComPadraoAsync(client);
+
+                return Json(new { success = true, interno = false, solicitantePadrao = padrao, solicitantes });
+            }
+            catch
+            {
+                return Json(new { success = false });
+            }
+        }
+
         /*
         [HttpGet]
         //[Route("keep-alive")]

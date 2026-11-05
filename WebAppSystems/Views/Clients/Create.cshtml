@@ -62,10 +62,6 @@
                     <span asp-validation-for="Document" class="text-danger"></span>
                 </div>
                 <div class="form-field">
-                    <label asp-for="Solicitante">Solicitante Padrão</label>
-                    <input asp-for="Solicitante" class="form-control" />
-                </div>
-                <div class="form-field">
                     <label asp-for="ImageData">Logo</label>
                     <input asp-for="ImageData" name="imageData" type="file" class="form-control" />
                 </div>
@@ -80,6 +76,17 @@
                     <input type="checkbox" asp-for="ClienteInativo" />
                     <span>Cliente Inativo</span>
                 </label>
+            </div>
+
+            <div class="solicitantes-box">
+                <label class="solicitantes-title"><i class="bi bi-people"></i> Solicitantes</label>
+                <p class="solicitantes-hint">Opcional. Pessoas que costumam solicitar trabalhos para este cliente. Clique na estrela para definir o padrão, sugerido ao selecionar o cliente nos lançamentos.</p>
+                <input type="hidden" name="solicitantePadrao" id="solicitantePadraoCreate" value="" />
+                <div class="solicitantes-add">
+                    <input type="text" id="novoSolicitanteCreate" class="form-control" placeholder="Nome do solicitante" maxlength="100" />
+                    <button type="button" id="btnAddSolicitanteCreate" class="btn-add-sol"><i class="bi bi-plus-circle"></i> Adicionar</button>
+                </div>
+                <ul id="solicitantesListCreate" class="solicitantes-ul"></ul>
             </div>
 
             <div class="form-actions">
@@ -97,5 +104,117 @@
             document.getElementById('forcarSalvar').value = 'true';
             document.getElementById('formCreateCliente').submit();
         }
+
+        (function () {
+            const inputEl = document.getElementById('novoSolicitanteCreate');
+            const btnAdd = document.getElementById('btnAddSolicitanteCreate');
+            const listEl = document.getElementById('solicitantesListCreate');
+            const padraoEl = document.getElementById('solicitantePadraoCreate');
+            const nomes = [];
+            let padrao = '';
+
+            function render() {
+                listEl.innerHTML = '';
+                // Se o padrão foi removido da lista, o cliente fica sem padrão
+                if (padrao && !nomes.includes(padrao)) padrao = '';
+                padraoEl.value = padrao;
+
+                nomes.forEach(function (nome, index) {
+                    const ehPadrao = nome === padrao;
+                    const li = document.createElement('li');
+                    li.className = 'solicitante-chip' + (ehPadrao ? ' is-padrao' : '');
+
+                    // Estrela: define/remove o solicitante padrão (sugerido ao selecionar o cliente)
+                    const btnPadrao = document.createElement('button');
+                    btnPadrao.type = 'button';
+                    btnPadrao.className = 'chip-star';
+                    btnPadrao.title = ehPadrao ? 'Remover como padrão' : 'Definir como padrão';
+                    btnPadrao.setAttribute('aria-label', btnPadrao.title);
+                    btnPadrao.innerHTML = ehPadrao ? '<i class="bi bi-star-fill"></i>' : '<i class="bi bi-star"></i>';
+                    btnPadrao.addEventListener('click', function () {
+                        padrao = ehPadrao ? '' : nome;
+                        render();
+                    });
+
+                    const label = document.createElement('span');
+                    label.textContent = ehPadrao ? nome + ' (padrão)' : nome;
+
+                    // Campo enviado junto com o formulário (model binding: List<string> solicitantes)
+                    const hidden = document.createElement('input');
+                    hidden.type = 'hidden';
+                    hidden.name = 'solicitantes';
+                    hidden.value = nome;
+
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.title = 'Remover';
+                    btn.setAttribute('aria-label', 'Remover');
+                    btn.innerHTML = '<i class="bi bi-x-lg"></i>';
+                    btn.addEventListener('click', function () {
+                        nomes.splice(index, 1);
+                        render();
+                    });
+
+                    li.appendChild(btnPadrao);
+                    li.appendChild(label);
+                    li.appendChild(hidden);
+                    li.appendChild(btn);
+                    listEl.appendChild(li);
+                });
+            }
+
+            function adicionar(nome) {
+                nome = (nome || '').trim();
+                if (!nome) return;
+                const jaExiste = nomes.some(function (n) { return n.toLowerCase() === nome.toLowerCase(); });
+                if (!jaExiste) {
+                    nomes.push(nome);
+                    // O primeiro solicitante já entra como padrão (o usuário pode trocar pela estrela)
+                    if (nomes.length === 1) padrao = nome;
+                }
+                render();
+            }
+
+            btnAdd.addEventListener('click', function () {
+                adicionar(inputEl.value);
+                inputEl.value = '';
+                inputEl.focus();
+            });
+
+            // Enter adiciona o nome sem enviar o formulário do cliente
+            inputEl.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    adicionar(inputEl.value);
+                    inputEl.value = '';
+                }
+            });
+
+            // Restaura os nomes quando o formulário é reexibido pelo servidor (ex.: aviso de duplicidade)
+            const iniciais = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                (ViewBag.SolicitantesIniciais as List<string>) ?? new List<string>()));
+            iniciais.forEach(adicionar);
+            // Padrão restaurado depois dos nomes (o render descarta um padrão que não esteja na lista)
+            padrao = @Html.Raw(System.Text.Json.JsonSerializer.Serialize((ViewBag.SolicitantePadraoInicial as string) ?? ""));
+            render();
+        })();
     </script>
 }
+
+<style>
+    .solicitantes-box { margin-top: 20px; padding-top: 16px; border-top: 1px solid #e2e8f0; }
+    .solicitantes-title { font-size: 14px; font-weight: 600; color: #4a5568; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .solicitantes-title i { color: #667eea; }
+    .solicitantes-hint { font-size: 12px; color: #718096; margin: 0 0 10px; }
+    .solicitantes-add { display: flex; gap: 10px; }
+    .solicitantes-add .form-control { flex: 1; }
+    .btn-add-sol { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .solicitantes-ul { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+    .solicitante-chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px 6px 12px; background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 16px; font-size: 13px; color: #3730a3; }
+    .solicitante-chip button { background: transparent; border: none; color: #6366f1; cursor: pointer; padding: 0; line-height: 1; }
+    .solicitante-chip button:hover { color: #e53e3e; }
+    .solicitante-chip .chip-star { color: #a0aec0; }
+    .solicitante-chip .chip-star:hover { color: #d97706; }
+    .solicitante-chip.is-padrao { background: #fffbeb; border-color: #fcd34d; color: #92400e; }
+    .solicitante-chip.is-padrao .chip-star { color: #d97706; }
+</style>

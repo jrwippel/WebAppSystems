@@ -263,6 +263,10 @@ namespace WebAppSystems.Controllers
 
             _context.Add(processRecord);
             await _context.SaveChangesAsync();
+
+            // Auto-cadastra o solicitante digitado para o cliente, se ainda não existir (evita duplicado por caixa/espaços)
+            await _clientService.RegistrarSolicitanteSeNovoAsync(processRecord.ClientId, processRecord.Solicitante);
+
             return RedirectToAction(nameof(Index));
         }
 
@@ -362,6 +366,10 @@ namespace WebAppSystems.Controllers
                     throw;
                 }
             }
+
+            // Cadastra o solicitante no cliente caso tenha sido digitado um nome novo
+            await _clientService.RegistrarSolicitanteSeNovoAsync(processRecord.ClientId, processRecord.Solicitante);
+
             return RedirectToAction(nameof(Index));
         }
 
@@ -456,6 +464,28 @@ namespace WebAppSystems.Controllers
             }
 
             return Json(new { success = true, solicitante = client.Solicitante });
+        }
+
+        // Retorna a lista de solicitantes cadastrados de um cliente (para o combo editável do lançamento)
+        [HttpGet]
+        public async Task<JsonResult> GetClientSolicitantes(int clientId)
+        {
+            var client = await _clientService.FindByIdAsync(clientId);
+            if (client == null)
+            {
+                return Json(new { success = false });
+            }
+
+            // Cliente interno: o solicitante padrão é o próprio usuário logado
+            if (client.ClienteInterno)
+            {
+                Attorney usuarioLogado = _isessao.BuscarSessaoDoUsuario();
+                return Json(new { success = true, interno = true, solicitantePadrao = usuarioLogado.Name, solicitantes = new List<string>() });
+            }
+
+            var (solicitantes, padrao) = await _clientService.GetSolicitantesComPadraoAsync(client);
+
+            return Json(new { success = true, interno = false, solicitantePadrao = padrao, solicitantes });
         }
 
         public async Task<JsonResult> GetProcessRecords(int draw, int start, int length, string search = "", int orderColumn = 0, string orderDir = "asc")

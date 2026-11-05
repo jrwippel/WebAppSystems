@@ -89,9 +89,19 @@
                 <div class="info-item">
                     <label>
                         <i class="bi bi-person-badge"></i>
-                        Solicitante
+                        Solicitantes
                     </label>
-                    <span>@Model.Solicitante</span>
+                    @{
+                        var solicitantesCliente = ViewBag.Solicitantes as List<string> ?? new List<string>();
+                    }
+                    @if (solicitantesCliente.Any())
+                    {
+                        <span>@string.Join(", ", solicitantesCliente)</span>
+                    }
+                    else
+                    {
+                        <span style="color:#a0aec0;font-style:italic;">Nenhum solicitante cadastrado</span>
+                    }
                 </div>
             </div>
         </div>

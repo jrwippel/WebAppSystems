@@ -104,6 +104,13 @@ namespace WebAppSystems.Controllers
                 return NotFound();
             }
 
+            ViewBag.Solicitantes = await _context.ClienteSolicitante
+                .Where(cs => cs.ClientId == client.Id)
+                .OrderByDescending(cs => cs.Padrao)
+                .ThenBy(cs => cs.Nome)
+                .Select(cs => cs.Padrao ? cs.Nome + " (padrão)" : cs.Nome)
+                .ToListAsync();
+
             return View(client);
         }
 
@@ -117,8 +124,24 @@ namespace WebAppSystems.Controllers
         // POST: Clients/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(int id, [Bind("Id,Name,Document,ImageData,ImageMimeType,Solicitante,ClienteInterno, ClienteInativo")] Client client, IFormFile imageData, bool forcar = false)
+        public async Task<IActionResult> Create(int id, [Bind("Id,Name,Document,ImageData,ImageMimeType,ClienteInterno, ClienteInativo")] Client client, IFormFile imageData, List<string>? solicitantes = null, string? solicitantePadrao = null, bool forcar = false)
         {
+            // Normaliza a lista de solicitantes informada (sem vazios e sem duplicados ignorando caixa)
+            var solicitantesLimpos = (solicitantes ?? new List<string>())
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .Select(s => s.Trim())
+                .GroupBy(s => s.ToLowerInvariant())
+                .Select(g => g.First())
+                .ToList();
+
+            // Padrão só vale se for um dos nomes da lista
+            var padraoInformado = solicitantesLimpos
+                .FirstOrDefault(s => string.Equals(s, solicitantePadrao?.Trim(), StringComparison.OrdinalIgnoreCase));
+
+            // Devolve a lista para a tela caso o formulário seja reexibido (aviso de duplicidade, erro etc.)
+            ViewBag.SolicitantesIniciais = solicitantesLimpos;
+            ViewBag.SolicitantePadraoInicial = padraoInformado ?? "";
+
             // Normalizar nome para Title Case (primeira letra de cada palavra em maiúscula)
             if (!string.IsNullOrWhiteSpace(client.Name))
                 client.Name = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(client.Name.Trim().ToLower());
@@ -183,6 +206,25 @@ namespace WebAppSystems.Controllers
 
                 _context.Add(client);
                 await _context.SaveChangesAsync();
+
+                // Cadastra os solicitantes informados na criação do cliente (cliente interno não usa a lista)
+                if (!client.ClienteInterno && solicitantesLimpos.Any())
+                {
+                    foreach (var nome in solicitantesLimpos)
+                    {
+                        _context.ClienteSolicitante.Add(new ClienteSolicitante(client.Id, nome)
+                        {
+                            Padrao = padraoInformado != null && nome == padraoInformado
+                        });
+                    }
+
+                    // Campo legado acompanha o padrão escolhido
+                    if (padraoInformado != null)
+                        client.Solicitante = padraoInformado;
+
+                    await _context.SaveChangesAsync();
+                }
+
                 return RedirectToAction(nameof(Index));
             //}
 
@@ -212,7 +254,7 @@ namespace WebAppSystems.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Document,ImageData,ImageMimeType,Solicitante,ClienteInterno, ClienteInativo")] Client client, IFormFile imageData)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Document,ImageData,ImageMimeType,ClienteInterno, ClienteInativo")] Client client, IFormFile imageData)
         {
             if (id != client.Id)
             {
@@ -250,6 +292,9 @@ namespace WebAppSystems.Controllers
                     client.ImageMimeType = existingClient.ImageMimeType;
                 }
 
+                // O campo Solicitante padrão não é mais editado pela tela; preserva o valor existente
+                client.Solicitante = existingClient.Solicitante;
+
                 _context.Update(client);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
@@ -284,6 +329,13 @@ namespace WebAppSystems.Controllers
             {
                 return NotFound();
             }
+
+            ViewBag.Solicitantes = await _context.ClienteSolicitante
+                .Where(cs => cs.ClientId == client.Id)
+                .OrderByDescending(cs => cs.Padrao)
+                .ThenBy(cs => cs.Nome)
+                .Select(cs => cs.Padrao ? cs.Nome + " (padrão)" : cs.Nome)
+                .ToListAsync();
 
             // Verifica se o cliente tem registros relacionados
             if (client.ProcessRecords.Any())
@@ -344,9 +396,101 @@ namespace WebAppSystems.Controllers
           return (_context.Client?.Any(e => e.Id == id)).GetValueOrDefault();
         }
 
+        // ── Solicitantes do cliente ───────────────────────────────────────
+
+        [HttpGet]
+        public async Task<JsonResult> GetSolicitantes(int clientId)
+        {
+            var solicitantes = await _context.ClienteSolicitante
+                .Where(cs => cs.ClientId == clientId)
+                .OrderByDescending(cs => cs.Padrao)
+                .ThenBy(cs => cs.Nome)
+                .Select(cs => new { cs.Id, cs.Nome, cs.Padrao })
+                .ToListAsync();
+
+            return Json(new { success = true, solicitantes });
+        }
+
+        // Marca (padrao = true) ou desmarca o solicitante padrão do cliente. Marcar um desmarca os demais.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<JsonResult> DefinirSolicitantePadrao(int id, bool padrao = true)
+        {
+            var solicitante = await _context.ClienteSolicitante.FindAsync(id);
+            if (solicitante == null)
+                return Json(new { success = false, message = "Solicitante não encontrado." });
+
+            var doCliente = await _context.ClienteSolicitante
+                .Where(cs => cs.ClientId == solicitante.ClientId)
+                .ToListAsync();
+
+            foreach (var cs in doCliente)
+                cs.Padrao = padrao && cs.Id == solicitante.Id;
+
+            await SincronizarSolicitanteLegadoAsync(solicitante.ClientId, padrao ? solicitante.Nome : null);
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true });
+        }
+
+        // Mantém o campo antigo Client.Solicitante igual ao solicitante padrão (ainda usado na busca de lançamentos)
+        private async Task SincronizarSolicitanteLegadoAsync(int clientId, string? nomePadrao)
+        {
+            var client = await _context.Client!.FindAsync(clientId);
+            if (client != null)
+                client.Solicitante = nomePadrao;
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<JsonResult> AddSolicitante(int clientId, string nome)
+        {
+            if (clientId <= 0 || string.IsNullOrWhiteSpace(nome))
+                return Json(new { success = false, message = "Informe um nome válido." });
+
+            nome = nome.Trim();
+
+            var jaExiste = await _context.ClienteSolicitante
+                .AnyAsync(cs => cs.ClientId == clientId && cs.Nome.ToLower() == nome.ToLower());
+
+            if (jaExiste)
+                return Json(new { success = false, message = "Este solicitante já está cadastrado para o cliente." });
+
+            // O primeiro solicitante do cliente já entra como padrão
+            var primeiro = !await _context.ClienteSolicitante.AnyAsync(cs => cs.ClientId == clientId);
+
+            var novo = new ClienteSolicitante(clientId, nome) { Padrao = primeiro };
+            _context.ClienteSolicitante.Add(novo);
+
+            if (primeiro)
+                await SincronizarSolicitanteLegadoAsync(clientId, nome);
+
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, id = novo.Id, nome = novo.Nome });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<JsonResult> RemoveSolicitante(int id)
+        {
+            var solicitante = await _context.ClienteSolicitante.FindAsync(id);
+            if (solicitante == null)
+                return Json(new { success = false, message = "Solicitante não encontrado." });
+
+            // Removendo o padrão, o cliente fica sem solicitante padrão
+            if (solicitante.Padrao)
+                await SincronizarSolicitanteLegadoAsync(solicitante.ClientId, null);
+
+            _context.ClienteSolicitante.Remove(solicitante);
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true });
+        }
+
         // POST: Clients/CreateCliente
         [HttpPost]
-        public async Task<IActionResult> CreateCliente([Bind("Name,Document,ImageData,ImageMimeType,Solicitante,ClienteInterno")] Client client, IFormFile imageData, bool forcar = false)
+        public async Task<IActionResult> CreateCliente([Bind("Name,Document,ImageData,ImageMimeType,ClienteInterno")] Client client, IFormFile imageData, bool forcar = false)
         {
             // Normalizar nome para Title Case
             if (!string.IsNullOrWhiteSpace(client.Name))

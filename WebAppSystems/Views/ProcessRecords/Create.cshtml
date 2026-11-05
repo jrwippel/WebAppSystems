@@ -123,7 +123,8 @@
                             <i class="bi bi-person-check"></i>
                             <span data-i18n="activity.field.requester">Solicitante</span>
                         </label>
-                        <input asp-for="ProcessRecord.Solicitante" class="modern-input" />
+                        <input asp-for="ProcessRecord.Solicitante" class="modern-input" list="solicitantesList" autocomplete="off" placeholder="Selecione ou digite um novo solicitante" />
+                        <datalist id="solicitantesList"></datalist>
                         <span asp-validation-for="ProcessRecord.Solicitante" class="field-error"></span>
                     </div>
 
@@ -198,10 +199,6 @@
                     <div class="form-group">
                         <label for="ImageData">Logo</label>
                         <input type="file" id="ImageData" name="ImageData" class="form-control" />
-                    </div>
-                    <div class="form-group">
-                        <label for="Solicitante">Solicitante Padrão</label>
-                        <input type="text" id="Solicitante" name="Solicitante" class="form-control" />
                     </div>
                     <div class="form-check">
                         <input type="checkbox" id="ClienteInterno" name="ClienteInterno" class="form-check-input" />
@@ -966,18 +963,31 @@
 
             $("select[id$='ProcessRecord_ClientId']").change(function () {
                 var clientId = $(this).val();
-                if (clientId) {
-                    $.getJSON('@Url.Action("GetClientSolicitante", "ProcessRecords")', { clientId: clientId }, function (data) {
+                var $solicitanteInput = $("input[id$='ProcessRecord_Solicitante']");
+                var $datalist = $('#solicitantesList');
+
+                if (clientId && clientId !== '0') {
+                    $.getJSON('@Url.Action("GetClientSolicitantes", "ProcessRecords")', { clientId: clientId }, function (data) {
+                        $datalist.empty();
                         if (data.success) {
-                            $("input[id$='ProcessRecord_Solicitante']").val(data.solicitante);
+                            // Popula o combo com os solicitantes cadastrados do cliente
+                            (data.solicitantes || []).forEach(function (nome) {
+                                $datalist.append($('<option>').attr('value', nome));
+                            });
+                            // Pré-preenche com o solicitante padrão (ou nome do usuário, se cliente interno)
+                            $solicitanteInput.val(data.solicitantePadrao || '');
                         } else {
-                            $("input[id$='ProcessRecord_Solicitante']").val('');
+                            $solicitanteInput.val('');
                         }
                     });
                 } else {
-                    $("input[id$='ProcessRecord_Solicitante']").val('');
+                    $datalist.empty();
+                    $solicitanteInput.val('');
                 }
             });
+
+            // Faz o combo de solicitante mostrar a lista completa mesmo com um valor já preenchido
+            habilitarListaCompleta(document.querySelector("input[id$='ProcessRecord_Solicitante']"));
 
             $("input[id$='HoraInicial'], input[id$='HoraFinal']").on('focus', function (e) {
                 if ($(this).val() == '00:00') {
@@ -1046,6 +1056,34 @@
                 $(target).modal('show');
             });
         });
+
+        // O datalist filtra as opções pelo texto já digitado. Ao abrir a lista (clique na seta ou seta para baixo),
+        // esvazia o campo temporariamente para exibir todas as opções; se nada for escolhido, restaura o valor.
+        function habilitarListaCompleta(input) {
+            if (!input) return;
+            var valorAnterior = '';
+
+            function limpar() {
+                if (input.value !== '') {
+                    valorAnterior = input.value;
+                    input.value = '';
+                }
+            }
+
+            input.addEventListener('mousedown', function (e) {
+                var rect = input.getBoundingClientRect();
+                if (e.clientX > rect.right - 32) limpar();
+            });
+            input.addEventListener('keydown', function (e) {
+                if (e.key === 'ArrowDown') limpar();
+            });
+            input.addEventListener('blur', function () {
+                if (input.value.trim() === '' && valorAnterior !== '') {
+                    input.value = valorAnterior;
+                }
+                valorAnterior = '';
+            });
+        }
 
         async function sugerirDescricaoIACreate() {
             const textarea = document.getElementById('descriptionTextarea');
