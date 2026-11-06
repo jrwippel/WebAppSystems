@@ -39,6 +39,7 @@ namespace WebAppSystems
             builder.Services.AddScoped<ProcessRecordService>();
             builder.Services.AddScoped<ProcessRecordsService>();
             builder.Services.AddScoped<ClientService>();
+            builder.Services.AddScoped<ClienteDuplicadoService>();
             builder.Services.AddScoped<ISessao, Sessao>();
             builder.Services.AddScoped<IEmail, Email>();
             builder.Services.AddScoped<MensalistaService>();
