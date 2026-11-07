@@ -221,8 +221,13 @@ namespace WebAppSystems.Controllers
         }
 
         // GET: AprovacaoAprovador/Revisar/5
+        // Anti-cache: evita que o botão "Voltar" do navegador exiba um estado antigo (tudo pendente)
+        [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None, Duration = 0)]
         public async Task<IActionResult> Revisar(int id)
         {
+            Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate";
+            Response.Headers["Pragma"] = "no-cache";
+
             var usuarioLogado = _sessao.BuscarSessaoDoUsuario();
             
             if (usuarioLogado == null)

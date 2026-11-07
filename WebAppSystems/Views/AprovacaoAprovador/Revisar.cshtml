@@ -186,6 +186,9 @@
                     <button type="button" id="btnAbonarTodos" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: transparent; color: #c0392b; border: 1.5px solid #c0392b; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
                         <i class="bi bi-x-circle-fill"></i> Abonar Pendentes da @aprovadorDeptNome
                     </button>
+                    <button type="button" id="btnEncaminharRevisadas" title="Disponível quando todos os lançamentos da sua área estiverem revisados" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: #667eea; color: #fff; border: none; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;" disabled>
+                        <i class="bi bi-send-fill"></i> Encaminhar horas revisadas
+                    </button>
                 </div>
             </div>
         <table class="table table-lancamentos">
@@ -577,6 +580,9 @@
             valorArea += calcValor(parseInt($(this).data('item-id')));
         });
         $('#totalArea').html(formatarHoras(horasArea) + ' <span class="valor-sub">' + fmtValor(valorArea) + '</span>');
+
+        // Estado inicial do botão de encaminhar (caso a área já esteja toda revisada ao abrir)
+        atualizarBotaoEncaminhar();
     });
 
     function formatarHoras(decimal) {
@@ -638,7 +644,38 @@
                 }, 500);
             }
         }
+
+        atualizarBotaoEncaminhar();
     }
+
+    // Habilita o botão "Encaminhar horas revisadas" somente quando não há mais pendentes na área
+    function atualizarBotaoEncaminhar() {
+        var temPendentes = false;
+        $('#tabelaItens tr[data-minha-area="true"]').each(function() {
+            var id = parseInt($(this).data('item-id'));
+            var statusText = $('#status_' + id).text().trim();
+            if (statusText.indexOf('Pendente') > -1 || statusText.indexOf('Editado') > -1) {
+                temPendentes = true;
+                return false; // break
+            }
+        });
+
+        var $btn = $('#btnEncaminharRevisadas');
+        if (totalMinhaArea > 0 && !temPendentes) {
+            $btn.prop('disabled', false).css('opacity', '1');
+            $btn.attr('title', 'Encaminhar as horas revisadas da sua área para o financeiro');
+        } else {
+            $btn.prop('disabled', true).css('opacity', '0.5');
+            $btn.attr('title', 'Disponível quando todos os lançamentos da sua área estiverem revisados');
+        }
+    }
+
+    // Botão explícito para encaminhar: abre o modal de liberação da área
+    $('#btnEncaminharRevisadas').on('click', function() {
+        if ($(this).prop('disabled')) return;
+        $('#comentarioLiberacao').val('');
+        new bootstrap.Modal(document.getElementById('modalLiberarArea')).show();
+    });
 
     // Event delegation para botões de ação
     $(document).on('click', '[data-action]', function(e) {
@@ -858,12 +895,10 @@
         });
     });
 
-    // Aprovar Todos da Minha Área
+    // Aprovar Todos da Minha Área (apenas os itens VISÍVEIS, respeitando o filtro de pesquisa)
     $('#btnAprovarTodos').on('click', function() {
-        if (!confirm('Tem certeza que deseja aprovar TODOS os lançamentos pendentes da área ' + aprovadorDeptNome + '?')) return;
-
         var pendentes = [];
-        $('#tabelaItens tr[data-minha-area="true"]').each(function() {
+        $('#tabelaItens tr[data-minha-area="true"]:visible').each(function() {
             var id = parseInt($(this).data('item-id'));
             var statusText = $('#status_' + id).text().trim();
             if (statusText.indexOf('Pendente') > -1 || statusText.indexOf('Editado') > -1) {
@@ -871,7 +906,13 @@
             }
         });
 
-        if (pendentes.length === 0) { alert('Não há lançamentos pendentes na sua área.'); return; }
+        if (pendentes.length === 0) { alert('Não há lançamentos pendentes (exibidos) na sua área.'); return; }
+
+        var filtroAtivo = $('#searchInput').val().trim().length > 0;
+        var msg = filtroAtivo
+            ? 'Aprovar os ' + pendentes.length + ' lançamento(s) pendente(s) EXIBIDOS no filtro atual?'
+            : 'Tem certeza que deseja aprovar TODOS os ' + pendentes.length + ' lançamentos pendentes da área ' + aprovadorDeptNome + '?';
+        if (!confirm(msg)) return;
 
         var total = pendentes.length, processados = 0;
         pendentes.forEach(function(id) {
@@ -888,18 +929,22 @@
         });
     });
 
-    // Abonar Todos da Minha Área
+    // Abonar Todos da Minha Área (apenas os itens VISÍVEIS, respeitando o filtro de pesquisa)
     $('#btnAbonarTodos').on('click', function() {
-        var obs = prompt('Observação para abonar TODOS os pendentes da área ' + aprovadorDeptNome + ' (opcional):');
-        if (obs === null) return;
-
         var pendentes = [];
-        $('#tabelaItens tr[data-minha-area="true"]').each(function() {
+        $('#tabelaItens tr[data-minha-area="true"]:visible').each(function() {
             var id = parseInt($(this).data('item-id'));
             if ($('#status_' + id).text().trim().indexOf('Pendente') > -1) pendentes.push(id);
         });
 
-        if (pendentes.length === 0) { alert('Não há lançamentos pendentes na sua área.'); return; }
+        if (pendentes.length === 0) { alert('Não há lançamentos pendentes (exibidos) na sua área.'); return; }
+
+        var filtroAtivo = $('#searchInput').val().trim().length > 0;
+        var textoConfirma = filtroAtivo
+            ? 'Observação para abonar os ' + pendentes.length + ' pendente(s) EXIBIDOS no filtro atual (opcional):'
+            : 'Observação para abonar TODOS os ' + pendentes.length + ' pendentes da área ' + aprovadorDeptNome + ' (opcional):';
+        var obs = prompt(textoConfirma);
+        if (obs === null) return;
 
         var total = pendentes.length, processados = 0;
         pendentes.forEach(function(id) {
