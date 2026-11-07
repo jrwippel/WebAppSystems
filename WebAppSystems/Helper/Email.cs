@@ -23,9 +23,22 @@ namespace WebAppSystems.Helper
 
                 var emailClient = new EmailClient(connectionString);
 
+                // emailCc pode conter vários endereços separados por vírgula ou ponto e vírgula
+                List<EmailAddress> ccList = null;
+                if (!string.IsNullOrWhiteSpace(emailCc))
+                {
+                    ccList = emailCc
+                        .Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                        .Select(e => e.Trim())
+                        .Where(e => e.Length > 0)
+                        .Select(e => new EmailAddress(e))
+                        .ToList();
+                    if (ccList.Count == 0) ccList = null;
+                }
+
                 var recipients = new EmailRecipients(
                     to: new List<EmailAddress> { new EmailAddress(email) },
-                    cc: !string.IsNullOrEmpty(emailCc) ? new List<EmailAddress> { new EmailAddress(emailCc) } : null
+                    cc: ccList
                 );
 
                 var emailMessage = new EmailMessage(

@@ -22,11 +22,14 @@ namespace WebAppSystems.Controllers
 
         private readonly ISessao _isessao;
 
-        public AttorneysController (AttorneyService attorneyService, DepartmentService departmentService, ISessao isessao)
+        private readonly WebAppSystems.Data.WebAppSystemsContext _context;
+
+        public AttorneysController (AttorneyService attorneyService, DepartmentService departmentService, ISessao isessao, WebAppSystems.Data.WebAppSystemsContext context)
         {
             _attorneyService = attorneyService;
             _departmentService = departmentService;
             _isessao = isessao;
+            _context = context;
         }
         public async Task<IActionResult> Index()
         {
@@ -195,6 +198,42 @@ namespace WebAppSystems.Controllers
                RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
             };
             return View(viewModel);
+        }
+
+        // ── Áreas gerenciadas por um gestor ──────────────────────────────
+
+        [HttpGet]
+        public async Task<JsonResult> GetAreasGestor(int attorneyId)
+        {
+            var areaIds = await _context.GestorArea
+                .Where(g => g.AttorneyId == attorneyId)
+                .Select(g => g.DepartmentId)
+                .ToListAsync();
+
+            return Json(new { success = true, areaIds });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<JsonResult> SalvarAreasGestor(int attorneyId, List<int>? departmentIds)
+        {
+            var attorney = await _context.Attorney.FirstOrDefaultAsync(a => a.Id == attorneyId);
+            if (attorney == null)
+                return Json(new { success = false, message = "Usuário não encontrado." });
+
+            // Remove os vínculos atuais e regrava os selecionados (operação idempotente)
+            var atuais = await _context.GestorArea
+                .Where(g => g.AttorneyId == attorneyId)
+                .ToListAsync();
+            _context.GestorArea.RemoveRange(atuais);
+
+            var ids = (departmentIds ?? new List<int>()).Distinct().ToList();
+            foreach (var depId in ids)
+                _context.GestorArea.Add(new GestorArea(attorneyId, depId));
+
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true });
         }
 
     }

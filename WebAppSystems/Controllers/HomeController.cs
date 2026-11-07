@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using WebAppSystems.Filters;
 using WebAppSystems.Helper;
 using WebAppSystems.Models;
 using WebAppSystems.Services;
@@ -109,8 +110,15 @@ namespace WebAppSystems.Controllers
 
         // TEMPORÁRIO: endpoint para testar alerta de lançamentos manualmente
         [Route("TestarAlerta")]
-        public async Task<IActionResult> TestarAlerta()
+        [PaginaRestritaSomenteAdmin]
+        public async Task<IActionResult> TestarAlerta(bool enviar = false)
         {
+            var log = new List<string>();
+            var swTotal = System.Diagnostics.Stopwatch.StartNew();
+            void Log(string msg) => log.Add($"[{DateTime.Now:HH:mm:ss.fff}] {msg}");
+
+            Log($"Início. Modo: {(enviar ? "ENVIAR E-MAILS" : "SIMULAÇÃO (não envia) — use ?enviar=true para disparar de verdade")}");
+
             using var scope = HttpContext.RequestServices.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<WebAppSystems.Data.WebAppSystemsContext>();
             var email = scope.ServiceProvider.GetRequiredService<WebAppSystems.Helper.IEmail>();
@@ -118,22 +126,32 @@ namespace WebAppSystems.Controllers
             var limiteHoras = 48;
             var limite = DateTime.Now.AddHours(-limiteHoras);
 
+            var sw = System.Diagnostics.Stopwatch.StartNew();
             var usuarios = await context.Attorney
                 .Include(a => a.Department)
                 .Where(a => !a.Inativo && !a.IsGestor)
                 .ToListAsync();
+            Log($"Usuários (não gestores, ativos) carregados: {usuarios.Count} em {sw.ElapsedMilliseconds}ms");
 
+            sw.Restart();
             var ultimosLancamentos = await context.ProcessRecord
                 .Where(p => p.HoraFinal != TimeSpan.Zero)
                 .GroupBy(p => p.AttorneyId)
                 .Select(g => new { AttorneyId = g.Key, Ultimo = g.Max(p => p.Date) })
                 .ToListAsync();
+            Log($"Últimos lançamentos agregados: {ultimosLancamentos.Count} em {sw.ElapsedMilliseconds}ms");
 
-            var gestores = await context.Attorney
-                .Where(a => a.IsGestor && !a.Inativo)
+            // Vínculos gestor↔área (um gestor pode cobrir várias áreas; uma área pode ter vários gestores)
+            sw.Restart();
+            var vinculosGestores = await context.GestorArea
+                .Include(g => g.Attorney)
+                .Where(g => g.Attorney != null && g.Attorney.IsGestor && !g.Attorney.Inativo)
+                .Select(g => new { g.DepartmentId, g.Attorney!.Email, g.Attorney.Name })
                 .ToListAsync();
+            Log($"Vínculos GestorArea carregados: {vinculosGestores.Count} em {sw.ElapsedMilliseconds}ms");
 
             var resultados = new List<string>();
+            int enviados = 0, falhas = 0;
 
             foreach (var usuario in usuarios)
             {
@@ -143,12 +161,18 @@ namespace WebAppSystems.Controllers
                 if (dataUltimo <= limite)
                 {
                     var diasSem = dataUltimo == DateTime.MinValue ? "nunca lançou" : $"último: {dataUltimo:dd/MM/yyyy}";
-                    var gestor = gestores.FirstOrDefault(g => g.DepartmentId == usuario.DepartmentId);
 
-                    // Só envia se existir gestor na área
-                    if (gestor == null) continue;
+                    // Todos os gestores que acompanham a área do usuário (pode não haver nenhum).
+                    // O colaborador recebe o lembrete de qualquer forma.
+                    var gestoresDaArea = vinculosGestores
+                        .Where(g => g.DepartmentId == usuario.DepartmentId && !string.IsNullOrWhiteSpace(g.Email))
+                        .ToList();
 
-                    resultados.Add($"✉️ {usuario.Name} ({usuario.Email}) — {diasSem} — CC: {gestor.Name} ({gestor.Email})");
+                    var gestoresCc = string.Join(",", gestoresDaArea.Select(g => g.Email));
+                    var gestoresNomes = gestoresDaArea.Any()
+                        ? string.Join(", ", gestoresDaArea.Select(g => g.Name))
+                        : "(sem gestor na área)";
+                    resultados.Add($"✉️ {usuario.Name} ({usuario.Email}) — {diasSem} — CC: {gestoresNomes}");
 
                     // Calcular dias sem lançamento
                     var diasSemLancamento = dataUltimo == DateTime.MinValue ? 999 : (DateTime.Now - dataUltimo).Days;
@@ -233,14 +257,37 @@ namespace WebAppSystems.Controllers
 </body>
 </html>";
 
-                    await email.EnviarAsync(usuario.Email, assunto, $"Olá {usuario.Name}, regularize seus lançamentos. ({diasSem})", htmlBody: html, emailCc: gestor.Email);
+                    if (enviar)
+                    {
+                        var swMail = System.Diagnostics.Stopwatch.StartNew();
+                        try
+                        {
+                            await email.EnviarAsync(usuario.Email, assunto, $"Olá {usuario.Name}, regularize seus lançamentos. ({diasSem})", htmlBody: html, emailCc: gestoresCc);
+                            enviados++;
+                            Log($"ENVIADO para {usuario.Email} (CC: {gestoresCc}) em {swMail.ElapsedMilliseconds}ms");
+                        }
+                        catch (Exception ex)
+                        {
+                            falhas++;
+                            Log($"FALHA ao enviar para {usuario.Email} após {swMail.ElapsedMilliseconds}ms: {ex.Message}");
+                        }
+                    }
+                    else
+                    {
+                        Log($"SIMULADO (não enviado): {usuario.Email} (CC: {gestoresCc})");
+                    }
                 }
             }
 
-            if (!resultados.Any())
-                return Content("Nenhum usuário elegível para alerta (todos lançaram nas últimas 48h).");
+            swTotal.Stop();
+            Log($"Fim. Elegíveis: {resultados.Count} | Enviados: {enviados} | Falhas: {falhas} | Tempo total: {swTotal.ElapsedMilliseconds}ms");
 
-            return Content(string.Join("\n", resultados), "text/plain");
+            var saida = "===== DESTINATÁRIOS ELEGÍVEIS =====\n"
+                      + (resultados.Any() ? string.Join("\n", resultados) : "(nenhum)")
+                      + "\n\n===== LOG DE EXECUÇÃO =====\n"
+                      + string.Join("\n", log);
+
+            return Content(saida, "text/plain");
         }
 
         public IActionResult About()

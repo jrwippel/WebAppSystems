@@ -336,6 +336,29 @@ namespace WebAppSystems.Migrations
                     b.ToTable("DocumentAnalysis");
                 });
 
+            modelBuilder.Entity("WebAppSystems.Models.GestorArea", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<int>("AttorneyId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DepartmentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AttorneyId");
+
+                    b.HasIndex("DepartmentId");
+
+                    b.ToTable("GestorArea");
+                });
+
             modelBuilder.Entity("WebAppSystems.Models.HistoricoAprovacao", b =>
                 {
                     b.Property<int>("Id")
@@ -763,6 +786,25 @@ namespace WebAppSystems.Migrations
                     b.Navigation("Client");
 
                     b.Navigation("UploadedBy");
+                });
+
+            modelBuilder.Entity("WebAppSystems.Models.GestorArea", b =>
+                {
+                    b.HasOne("WebAppSystems.Models.Attorney", "Attorney")
+                        .WithMany()
+                        .HasForeignKey("AttorneyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("WebAppSystems.Models.Department", "Department")
+                        .WithMany()
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Attorney");
+
+                    b.Navigation("Department");
                 });
 
             modelBuilder.Entity("WebAppSystems.Models.HistoricoAprovacao", b =>

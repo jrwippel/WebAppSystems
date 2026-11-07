@@ -189,6 +189,25 @@
                             <div style="font-size:12px;color:#4ade80;">Recebe alertas quando membros da equipe estão sem lançamentos</div>
                         </label>
                     </div>
+
+                    <!-- Áreas gerenciadas pelo gestor (aparece quando "Gestor de Área" está marcado) -->
+                    <div id="areasGestorBox" style="margin-top:12px; padding:14px; background:#f7fafc; border:1px solid #e2e8f0; border-radius:8px; display:none;">
+                        <strong style="font-size:13px;color:#2d3748;"><i class="bi bi-diagram-3"></i> Áreas que este gestor acompanha</strong>
+                        <div style="font-size:12px;color:#718096;margin:4px 0 10px;">Receberá cópia dos alertas dos usuários destas áreas. É possível marcar mais de uma.</div>
+                        <div id="areasGestorLista" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;">
+                            @foreach (var dep in Model.Departments)
+                            {
+                                <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#2d3748;cursor:pointer;">
+                                    <input type="checkbox" class="area-gestor-check" value="@dep.Id" style="width:16px;height:16px;cursor:pointer;">
+                                    @dep.Name
+                                </label>
+                            }
+                        </div>
+                        <button type="button" id="btnSalvarAreasGestor" style="margin-top:12px;padding:8px 16px;background:#166534;color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;">
+                            <i class="bi bi-check-lg"></i> Salvar áreas
+                        </button>
+                        <span id="areasGestorMsg" style="margin-left:10px;font-size:12px;"></span>
+                    </div>
                 </div>
             }
 
@@ -241,8 +260,65 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-    
+    @Html.AntiForgeryToken()
+
     <script>
+        // ── Áreas gerenciadas pelo gestor ──
+        (function () {
+            var attorneyId = @Model.Attorney.Id;
+            var chkGestor = document.getElementById('isGestor');
+            var box = document.getElementById('areasGestorBox');
+            if (!chkGestor || !box) return;
+
+            var tokenEl = document.querySelector('input[name="__RequestVerificationToken"]');
+            var token = tokenEl ? tokenEl.value : '';
+            var msgEl = document.getElementById('areasGestorMsg');
+            var carregado = false;
+
+            function toggleBox() {
+                if (chkGestor.checked) {
+                    box.style.display = 'block';
+                    if (!carregado) carregarAreas();
+                } else {
+                    box.style.display = 'none';
+                }
+            }
+
+            function carregarAreas() {
+                fetch('@Url.Action("GetAreasGestor", "Attorneys")?attorneyId=' + attorneyId)
+                    .then(r => r.json())
+                    .then(function (d) {
+                        if (d.success) {
+                            (d.areaIds || []).forEach(function (id) {
+                                var cb = document.querySelector('.area-gestor-check[value="' + id + '"]');
+                                if (cb) cb.checked = true;
+                            });
+                        }
+                        carregado = true;
+                    });
+            }
+
+            document.getElementById('btnSalvarAreasGestor').addEventListener('click', function () {
+                var ids = Array.from(document.querySelectorAll('.area-gestor-check:checked')).map(function (c) { return c.value; });
+                var fd = new FormData();
+                fd.append('attorneyId', attorneyId);
+                ids.forEach(function (id) { fd.append('departmentIds', id); });
+                fd.append('__RequestVerificationToken', token);
+                msgEl.textContent = 'Salvando...';
+                msgEl.style.color = '#718096';
+                fetch('@Url.Action("SalvarAreasGestor", "Attorneys")', { method: 'POST', body: fd })
+                    .then(r => r.json())
+                    .then(function (d) {
+                        if (d.success) { msgEl.textContent = 'Áreas salvas!'; msgEl.style.color = '#166534'; }
+                        else { msgEl.textContent = d.message || 'Erro ao salvar.'; msgEl.style.color = '#c53030'; }
+                    })
+                    .catch(function () { msgEl.textContent = 'Erro ao salvar.'; msgEl.style.color = '#c53030'; });
+            });
+
+            chkGestor.addEventListener('change', toggleBox);
+            toggleBox(); // estado inicial (se já é gestor, abre e carrega)
+        })();
+
         function updateApprovalFlags(role) {
             const isFinanceiro = document.getElementById('hiddenIsFinanceiro');
             const isAprovador = document.getElementById('hiddenIsAprovador');

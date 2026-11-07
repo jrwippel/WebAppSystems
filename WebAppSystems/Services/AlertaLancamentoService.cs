@@ -74,8 +74,11 @@ namespace WebAppSystems.Services
                 .ToListAsync();
 
             // Buscar gestores por área
-            var gestores = await context.Attorney
-                .Where(a => a.IsGestor && !a.Inativo)
+            // Vínculos gestor↔área (um gestor pode cobrir várias áreas; uma área pode ter vários gestores)
+            var vinculosGestores = await context.GestorArea
+                .Include(g => g.Attorney)
+                .Where(g => g.Attorney != null && g.Attorney.IsGestor && !g.Attorney.Inativo)
+                .Select(g => new { g.DepartmentId, g.Attorney!.Email, g.Attorney.Name })
                 .ToListAsync();
 
             var alertasEnviados = 0;
@@ -92,10 +95,14 @@ namespace WebAppSystems.Services
                         ? "nunca lançou horas"
                         : $"último lançamento em {dataUltimo:dd/MM/yyyy}";
 
-                    var gestor = gestores.FirstOrDefault(g => g.DepartmentId == usuario.DepartmentId);
-
-                    // Só envia se existir gestor na área
-                    if (gestor == null) continue;
+                    // Todos os gestores que acompanham a área do usuário entram em CC (pode não haver nenhum).
+                    // O colaborador recebe o lembrete de qualquer forma, mesmo sem gestor na área.
+                    var gestoresDaArea = vinculosGestores
+                        .Where(g => g.DepartmentId == usuario.DepartmentId
+                                    && !string.IsNullOrWhiteSpace(g.Email))
+                        .Select(g => g.Email!)
+                        .Distinct()
+                        .ToList();
 
                     // Um único email para o usuário, com CC para o gestor da área (se existir)
                     var assunto = "⏰ Lembrete: Regularize seus lançamentos de horas";
@@ -163,7 +170,7 @@ namespace WebAppSystems.Services
 </body>
 </html>";
 
-                    var emailCc = gestor?.Email;
+                    var emailCc = string.Join(",", gestoresDaArea);
                     var enviou = await email.EnviarAsync(
                         usuario.Email,
                         assunto,

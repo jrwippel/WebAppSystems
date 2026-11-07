@@ -21,6 +21,8 @@ namespace WebAppSystems.Data
 
         public DbSet<WebAppSystems.Models.ClienteSolicitante> ClienteSolicitante { get; set; } = default!;
 
+        public DbSet<WebAppSystems.Models.GestorArea> GestorArea { get; set; } = default!;
+
         public DbSet<WebAppSystems.Models.Mensalista> Mensalista { get; set; } = default!;
      
 
@@ -50,6 +52,19 @@ namespace WebAppSystems.Data
                 .WithMany()
                 .HasForeignKey(cs => cs.ClientId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // GestorArea: vínculo N:N entre gestor (Attorney) e área (Department)
+            modelBuilder.Entity<GestorArea>()
+                .HasOne(g => g.Attorney)
+                .WithMany()
+                .HasForeignKey(g => g.AttorneyId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<GestorArea>()
+                .HasOne(g => g.Department)
+                .WithMany()
+                .HasForeignKey(g => g.DepartmentId)
+                .OnDelete(DeleteBehavior.Restrict); // não apagar vínculos ao mexer em departamento
 
             // Outras configurações de modelo podem ir aqui, se necessário
         }               
