@@ -106,7 +106,7 @@
                 </div>
                 <div class="faq-item">
                     <div class="faq-question" onclick="toggleFaq(this)"><span>Qual a obrigatoriedade de lançamento?</span><i class="bi bi-plus-lg"></i></div>
-                    <div class="faq-answer"><p>Todos os colaboradores devem registrar suas horas diariamente. O sistema envia alertas automáticos caso fique <strong>mais de 48 horas</strong> sem lançamentos.</p></div>
+                    <div class="faq-answer"><p>Todos os colaboradores devem registrar suas horas diariamente. O sistema envia alertas automáticos por e-mail a quem ficar <strong>mais de 2 dias úteis</strong> sem lançamentos (veja a seção "Alertas por Email").</p></div>
                 </div>
             </div>
         </div>
@@ -488,31 +488,76 @@
                 <i class="bi bi-chevron-down section-chevron"></i>
             </div>
             <div class="section-content">
+                <p style="font-size:14px;color:#4a5568;line-height:1.7;margin-bottom:16px;">
+                    O sistema envia automaticamente um <strong>lembrete por e-mail</strong> para os colaboradores que estão
+                    atrasados nos lançamentos de horas, com <strong>cópia para os gestores</strong> das áreas envolvidas.
+                </p>
+
                 <div class="help-screenshot">
-                    <img src="~/images/ajuda/Email48horassemlancartemo.png" alt="Email de alerta de lançamento" />
-                    <p class="screenshot-caption">Exemplo de email recebido pelo colaborador após 48 horas sem lançamentos</p>
+                    <img src="~/images/ajuda/EmailAtraso.png" alt="Exemplo de e-mail de alerta de lançamento" />
+                    <p class="screenshot-caption">Exemplo do e-mail recebido pelo colaborador atrasado (o gestor da área entra em cópia)</p>
                 </div>
 
+                <!-- Regras de envio -->
                 <div class="help-flow">
-                    <h4><i class="bi bi-bell"></i> Como funcionam os alertas automáticos</h4>
-                    <p style="font-size:13px;color:#4a5568;margin:0 0 12px;">O sistema monitora automaticamente os lançamentos de todos os colaboradores. Quando um usuário fica <strong>mais de 48 horas</strong> sem registrar atividades, o sistema envia um email de lembrete.</p>
+                    <h4><i class="bi bi-bell"></i> Quando e para quem o e-mail é enviado</h4>
                     <div class="flow-steps">
-                        <div class="flow-step"><span class="step-num">1</span><span>O sistema verifica diariamente (às 8h) quem está sem lançar há mais de 48 horas</span></div>
-                        <div class="flow-step"><span class="step-num">2</span><span>O colaborador recebe um <strong>email de lembrete</strong> informando a data do último lançamento e os dias pendentes</span></div>
-                        <div class="flow-step"><span class="step-num">3</span><span>O <strong>Gestor da Área</strong> recebe uma cópia (CC) do mesmo email, permitindo o acompanhamento da equipe</span></div>
+                        <div class="flow-step"><span class="step-num">1</span><span>Todo dia útil, às <strong>8h</strong>, o sistema verifica quem está há <strong>mais de 2 dias úteis</strong> sem lançar (sábados e domingos não contam)</span></div>
+                        <div class="flow-step"><span class="step-num">2</span><span>O <strong>colaborador atrasado</strong> recebe o e-mail de lembrete, com a data do último lançamento e os dias pendentes</span></div>
+                        <div class="flow-step"><span class="step-num">3</span><span>Em <strong>cópia (CC)</strong>, entram <strong>todos os gestores</strong> que acompanham a área daquele colaborador</span></div>
+                        <div class="flow-step"><span class="step-num">4</span><span>Se a área <strong>não tiver nenhum gestor</strong>, o colaborador <strong>ainda assim recebe</strong> o lembrete — apenas sem cópia</span></div>
                     </div>
                 </div>
 
+                <!-- Como configurar o gestor -->
+                <h3 style="font-size:16px;color:#2d3748;margin:28px 0 12px;border-top:1px solid #e2e8f0;padding-top:20px;">
+                    <i class="bi bi-person-check-fill" style="color:#166534;"></i> Como configurar um Gestor de Área
+                </h3>
+                <p style="font-size:14px;color:#4a5568;line-height:1.7;margin-bottom:16px;">
+                    Para um gestor começar a receber as cópias dos alertas, ele precisa ser marcado como gestor e ter as
+                    áreas que acompanha vinculadas. Isso é feito em <strong>Gerenciar → Usuários</strong>, editando o usuário.
+                </p>
+
+                <div class="help-screenshot">
+                    <img src="~/images/ajuda/GestorArea.png" alt="Configuração de gestor de área no cadastro do usuário" />
+                    <p class="screenshot-caption">No cadastro do usuário: marque "Gestor de Área" e selecione as áreas que ele acompanha</p>
+                </div>
+
+                <div class="flow-steps">
+                    <div class="flow-step"><span class="step-num">1</span><span>Acesse <strong>Gerenciar → Usuários</strong> e edite o usuário que será gestor</span></div>
+                    <div class="flow-step"><span class="step-num">2</span><span>Marque a opção <strong>"Gestor de Área"</strong></span></div>
+                    <div class="flow-step"><span class="step-num">3</span><span>Na lista <strong>"Áreas que este gestor acompanha"</strong>, selecione uma ou mais áreas e clique em <strong>Salvar áreas</strong></span></div>
+                    <div class="flow-step"><span class="step-num">4</span><span>A partir daí, ele passa a receber cópia dos alertas dos colaboradores dessas áreas</span></div>
+                </div>
+
                 <div class="faq-item">
-                    <div class="faq-question" onclick="toggleFaq(this)"><span>Quem recebe os alertas?</span><i class="bi bi-plus-lg"></i></div>
+                    <div class="faq-question" onclick="toggleFaq(this)"><span>Um gestor pode acompanhar mais de uma área?</span><i class="bi bi-plus-lg"></i></div>
                     <div class="faq-answer">
-                        <p>Apenas colaboradores de <strong>áreas que possuem um Gestor cadastrado</strong>. Se a área não tem gestor configurado, nenhum email é enviado para os membros daquela área.</p>
+                        <p>Sim. No cadastro do gestor, basta marcar <strong>todas as áreas</strong> que ele deve acompanhar. Ele receberá cópia dos alertas dos colaboradores de qualquer uma dessas áreas — mesmo que ele próprio pertença a outra área.</p>
                     </div>
                 </div>
                 <div class="faq-item">
-                    <div class="faq-question" onclick="toggleFaq(this)"><span>Posso desativar os alertas?</span><i class="bi bi-plus-lg"></i></div>
+                    <div class="faq-question" onclick="toggleFaq(this)"><span>Uma área pode ter mais de um gestor?</span><i class="bi bi-plus-lg"></i></div>
                     <div class="faq-answer">
-                        <p>Os alertas são controlados pela configuração de <strong>Gestor de Área</strong>. Se o administrador não marcar nenhum usuário como gestor de uma área, os membros daquela área não receberão alertas.</p>
+                        <p>Sim. Basta vincular a mesma área a vários gestores. <strong>Todos</strong> eles entram em cópia nos alertas dos colaboradores daquela área.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)"><span>O que acontece se a área não tiver gestor?</span><i class="bi bi-plus-lg"></i></div>
+                    <div class="faq-answer">
+                        <p>O colaborador atrasado <strong>continua recebendo</strong> o lembrete normalmente. A diferença é que o e-mail sai <strong>sem cópia</strong>, já que não há gestor para acompanhar aquela área.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)"><span>Com que frequência e em qual horário os alertas são enviados?</span><i class="bi bi-plus-lg"></i></div>
+                    <div class="faq-answer">
+                        <p>A verificação roda <strong>uma vez por dia útil, às 8h</strong>. Sábados e domingos não disparam alertas e também não contam no cálculo do atraso.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)"><span>O gestor também recebe alerta se ele mesmo estiver atrasado?</span><i class="bi bi-plus-lg"></i></div>
+                    <div class="faq-answer">
+                        <p>O lembrete de atraso é enviado aos colaboradores (não gestores). O gestor entra nos e-mails como <strong>cópia</strong>, para acompanhar a equipe das áreas que lhe foram atribuídas.</p>
                     </div>
                 </div>
             </div>
@@ -541,7 +586,7 @@
                         <div class="config-icon" style="background:#f0fdf4;color:#166534;"><i class="bi bi-person-check-fill"></i></div>
                         <div class="config-info">
                             <h5>Gestor de Área</h5>
-                            <p>Quando marcado, o usuário é definido como gestor da sua área. Todos os colaboradores da mesma área que ficarem mais de 48 horas sem lançar horas receberão um email de alerta, com <strong>cópia (CC) para o gestor</strong>. Isso permite o acompanhamento e gestão da equipe.</p>
+                            <p>Quando marcado, abre a lista de <strong>áreas que o gestor acompanha</strong> (pode selecionar mais de uma). Os colaboradores dessas áreas que ficarem atrasados nos lançamentos geram um e-mail de alerta com <strong>cópia (CC) para o gestor</strong>. Uma área também pode ter vários gestores. Veja a seção "Alertas por Email" para as regras completas.</p>
                         </div>
                     </div>
                     <div class="config-card">
@@ -586,7 +631,7 @@
             <div class="section-content">
                 <div class="faq-item">
                     <div class="faq-question" onclick="toggleFaq(this)"><span>Recebo alertas de lançamentos pendentes?</span><i class="bi bi-plus-lg"></i></div>
-                    <div class="faq-answer"><p>Sim. Se ficar mais de 48 horas sem lançar, você recebe um email com os dias pendentes. O gestor da sua área é copiado.</p></div>
+                    <div class="faq-answer"><p>Sim. Se ficar mais de 2 dias úteis sem lançar, você recebe um e-mail com os dias pendentes. Os gestores que acompanham a sua área são copiados.</p></div>
                 </div>
                 <div class="faq-item">
                     <div class="faq-question" onclick="toggleFaq(this)"><span>O que é o campo "Solicitante"?</span><i class="bi bi-plus-lg"></i></div>
