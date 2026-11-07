@@ -138,13 +138,8 @@ namespace WebAppSystems.Services
                 Mensagem = bloqueados > 0
                     ? $"Não é possível mover: o cliente de origem possui {bloqueados} lançamento(s) em faturamento ou aprovação."
                     : null,
-                Lancamentos = await _context.ProcessRecord.CountAsync(p => p.ClientId == origemId),
-                Valores = await _context.ValorCliente!.CountAsync(v => v.ClientId == origemId),
-                PercentuaisArea = await _context.PercentualArea!.CountAsync(p => p.ClientId == origemId),
-                Mensalistas = await _context.Mensalista.CountAsync(m => m.ClientId == origemId),
-                Lotes = await _context.LoteAprovacao.CountAsync(l => l.ClienteId == origemId),
-                Documentos = await _context.DocumentAnalysis.CountAsync(d => d.ClientId == origemId),
-                Solicitantes = await _context.ClienteSolicitante.CountAsync(s => s.ClientId == origemId)
+                // Só os lançamentos são movidos; os demais vínculos permanecem no cliente de origem
+                Lancamentos = await _context.ProcessRecord.CountAsync(p => p.ClientId == origemId)
             };
         }
 
@@ -164,63 +159,25 @@ namespace WebAppSystems.Services
             if (bloqueados > 0)
                 return (false, $"Não é possível mover: o cliente de origem possui {bloqueados} lançamento(s) em faturamento ou aprovação.");
 
-            await using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                await _context.ProcessRecord
+                // Move apenas os lançamentos (atividades). Demais vínculos (percentual, mensalista,
+                // valores, solicitantes, lotes, documentos) permanecem no cliente de origem.
+                var movidos = await _context.ProcessRecord
                     .Where(p => p.ClientId == origemId)
-                    .ForEachAsync(p => p.ClientId = destinoId);
-
-                await _context.ValorCliente!
-                    .Where(v => v.ClientId == origemId)
-                    .ForEachAsync(v => v.ClientId = destinoId);
-
-                await _context.PercentualArea!
-                    .Where(p => p.ClientId == origemId)
-                    .ForEachAsync(p => p.ClientId = destinoId);
-
-                await _context.Mensalista
-                    .Where(m => m.ClientId == origemId)
-                    .ForEachAsync(m => m.ClientId = destinoId);
-
-                await _context.LoteAprovacao
-                    .Where(l => l.ClienteId == origemId)
-                    .ForEachAsync(l => l.ClienteId = destinoId);
-
-                await _context.DocumentAnalysis
-                    .Where(d => d.ClientId == origemId)
-                    .ForEachAsync(d => d.ClientId = destinoId);
-
-                // Solicitantes: move evitando duplicar nomes já existentes no destino
-                var nomesDestino = await _context.ClienteSolicitante
-                    .Where(s => s.ClientId == destinoId)
-                    .Select(s => s.Nome.ToLower())
                     .ToListAsync();
 
-                var solicitantesOrigem = await _context.ClienteSolicitante
-                    .Where(s => s.ClientId == origemId)
-                    .ToListAsync();
-
-                foreach (var s in solicitantesOrigem)
-                {
-                    if (nomesDestino.Contains(s.Nome.ToLower()))
-                        _context.ClienteSolicitante.Remove(s);
-                    else
-                    {
-                        s.ClientId = destinoId;
-                        s.Padrao = false; // preserva o padrão do destino
-                    }
-                }
+                foreach (var p in movidos)
+                    p.ClientId = destinoId;
 
                 await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
 
-                return (true, $"Registros movidos de \"{origem.Name}\" para \"{destino.Name}\" com sucesso. " +
-                              $"Lembre-se de inativar o cliente de origem \"{origem.Name}\" se ele não for mais utilizado.");
+                return (true, $"{movidos.Count} lançamento(s) movido(s) de \"{origem.Name}\" para \"{destino.Name}\" com sucesso. " +
+                              $"Os demais cadastros (percentuais, valores, mensalidade, solicitantes) permanecem no cliente de origem. " +
+                              $"Lembre-se de inativar o cliente \"{origem.Name}\" se ele não for mais utilizado.");
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync();
                 return (false, $"Erro ao mover: {ex.Message}");
             }
         }

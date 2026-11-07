@@ -25,7 +25,8 @@
     <div class="info-note">
         <i class="bi bi-info-circle"></i>
         <span>
-            Selecione o <strong>cliente de origem</strong> (que terá os registros movidos) e o <strong>cliente de destino</strong>.
+            Selecione o <strong>cliente de origem</strong> (que terá os <strong>lançamentos</strong> movidos) e o <strong>cliente de destino</strong>.
+            Apenas os lançamentos são movidos; os demais cadastros (percentuais, valores, mensalidade, solicitantes) <strong>permanecem no cliente de origem</strong>.
             Após mover, <strong>inative manualmente</strong> o cliente de origem se ele não for mais usado.
             Clientes com lançamentos em <strong>faturamento ou aprovação</strong> não podem ser usados como origem.
         </span>
@@ -179,7 +180,7 @@
                     if (!d.sucesso) { resumoEl.innerHTML = '<span class="previa erro">' + (d.mensagem || 'Erro') + '</span>'; return; }
                     selecao[tipo] = { id: d.clienteId, nome: d.nome, bloqueados: d.lancamentosBloqueados };
 
-                    // Discrimina cada tipo de vínculo (mostra só os que têm quantidade > 0)
+                    // Discrimina cada tipo de vínculo (apenas informativo; estes NÃO são movidos, permanecem no cliente)
                     const vinculos = [
                         { n: d.valores, label: 'valor(es)' },
                         { n: d.percentuaisArea, label: 'percentual(is) de área' },
@@ -255,9 +256,9 @@
                         previaEl.classList.add('erro');
                         return;
                     }
-                    previaEl.innerHTML = 'Mover de <strong>' + d.clienteDuplicadoNome + '</strong> para <strong>' + d.clienteCorretoNome + '</strong>: ' +
-                        d.lancamentos + ' lançamento(s), ' + d.valores + ' valor(es), ' + d.percentuaisArea + ' percentual(is), ' +
-                        d.mensalistas + ' mensalista(s), ' + d.lotes + ' lote(s), ' + d.documentos + ' documento(s), ' + d.solicitantes + ' solicitante(s).';
+                    previaEl.innerHTML = 'Serão movidos <strong>' + d.lancamentos + ' lançamento(s)</strong> de <strong>' +
+                        d.clienteDuplicadoNome + '</strong> para <strong>' + d.clienteCorretoNome + '</strong>. ' +
+                        'Os demais cadastros (percentuais, valores, mensalidade, solicitantes) permanecem no cliente de origem.';
                     btn.disabled = false;
                 });
         }
@@ -267,7 +268,7 @@
 
         document.getElementById('btnMover').addEventListener('click', function () {
             if (!selecao.origem || !selecao.destino) return;
-            if (!confirm('Mover todos os registros de "' + selecao.origem.nome + '" para "' + selecao.destino.nome + '"?\n\nDepois, inative o cliente de origem se ele não for mais usado.')) return;
+            if (!confirm('Mover os lançamentos de "' + selecao.origem.nome + '" para "' + selecao.destino.nome + '"?\n\nOs demais cadastros permanecem no cliente de origem. Depois, inative o cliente de origem se ele não for mais usado.')) return;
             document.getElementById('hdnOrigem').value = selecao.origem.id;
             document.getElementById('hdnDestino').value = selecao.destino.id;
             document.getElementById('formMover').submit();
