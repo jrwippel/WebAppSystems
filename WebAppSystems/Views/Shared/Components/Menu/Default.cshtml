@@ -492,12 +492,17 @@
                         <a class="gerenciar-item" asp-controller="Clients" asp-action="Index">
                             <i class="bi bi-person-badge"></i><span data-i18n="menu.clientes">Clientes</span>
                         </a>
-                        <a class="gerenciar-item" asp-controller="ClientesDuplicados" asp-action="Index">
-                            <i class="bi bi-union"></i><span>Unificar Clientes</span>
-                        </a>
                         <a class="gerenciar-item" asp-controller="Departments" asp-action="Index">
                             <i class="bi bi-building"></i><span data-i18n="menu.area">Área</span>
                         </a>
+                        @if (showAdminItems)
+                        {
+                            <div class="dd-divider"></div>
+                            <div class="gerenciar-section-label">Configurações</div>
+                            <a class="gerenciar-item" asp-controller="ClientesDuplicados" asp-action="Index">
+                                <i class="bi bi-union"></i><span>Unificar Clientes</span>
+                            </a>
+                        }
                         @if (isAdmin)
                         {
                             <div class="dd-divider"></div>

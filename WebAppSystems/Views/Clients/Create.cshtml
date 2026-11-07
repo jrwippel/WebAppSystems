@@ -7,10 +7,12 @@
 
 <div class="page-container">
     <div class="page-header">
-        <div class="page-header-icon"><i class="bi bi-person-badge"></i></div>
-        <div>
-            <h2>Cadastro de Cliente</h2>
-            <p>Preencha os dados do novo cliente</p>
+        <div class="header-content">
+            <div class="header-icon"><i class="bi bi-person-badge"></i></div>
+            <div class="header-text">
+                <h1 class="page-title">Cadastro de Cliente</h1>
+                <p class="page-subtitle">Preencha os dados do novo cliente</p>
+            </div>
         </div>
     </div>
 
@@ -63,7 +65,10 @@
                 </div>
                 <div class="form-field">
                     <label asp-for="ImageData">Logo</label>
-                    <input asp-for="ImageData" name="imageData" type="file" class="form-control" />
+                    <input asp-for="ImageData" name="imageData" type="file" id="logoInput" class="form-control" accept="image/*" />
+                    <div id="logoPreviewWrap" class="logo-preview-wrap" style="display:none;">
+                        <img id="logoPreview" class="logo-preview" alt="Prévia da logo" />
+                    </div>
                 </div>
             </div>
 
@@ -104,6 +109,28 @@
             document.getElementById('forcarSalvar').value = 'true';
             document.getElementById('formCreateCliente').submit();
         }
+
+        // Prévia da logo selecionada
+        (function () {
+            var input = document.getElementById('logoInput');
+            var wrap = document.getElementById('logoPreviewWrap');
+            var img = document.getElementById('logoPreview');
+            if (!input) return;
+            input.addEventListener('change', function () {
+                var file = input.files && input.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        img.src = e.target.result;
+                        wrap.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    img.src = '';
+                    wrap.style.display = 'none';
+                }
+            });
+        })();
 
         (function () {
             const inputEl = document.getElementById('novoSolicitanteCreate');
@@ -202,6 +229,23 @@
 }
 
 <style>
+    /* Cabeçalho padrão (banner), igual ao Registro de Atividades */
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        padding: 24px 28px;
+        margin-bottom: 24px;
+        box-shadow: 0 6px 25px rgba(102, 126, 234, 0.25);
+    }
+    .page-header .header-content { display: flex; align-items: center; gap: 16px; }
+    .page-header .header-icon {
+        width: 50px; height: 50px; background: rgba(255,255,255,0.2); border-radius: 12px;
+        display: flex; align-items: center; justify-content: center; font-size: 24px; color: #fff; flex-shrink: 0;
+    }
+    .page-header .header-text { flex: 1; }
+    .page-header .page-title { font-size: 24px; font-weight: 700; color: #fff; margin: 0 0 6px 0; letter-spacing: -0.5px; }
+    .page-header .page-subtitle { font-size: 14px; color: rgba(255,255,255,0.9); margin: 0; }
+
     .solicitantes-box { margin-top: 20px; padding-top: 16px; border-top: 1px solid #e2e8f0; }
     .solicitantes-title { font-size: 14px; font-weight: 600; color: #4a5568; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
     .solicitantes-title i { color: #667eea; }
@@ -213,6 +257,8 @@
     .solicitante-chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px 6px 12px; background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 16px; font-size: 13px; color: #3730a3; }
     .solicitante-chip button { background: transparent; border: none; color: #6366f1; cursor: pointer; padding: 0; line-height: 1; }
     .solicitante-chip button:hover { color: #e53e3e; }
+    .logo-preview-wrap { margin-top: 10px; }
+    .logo-preview { max-width: 140px; max-height: 140px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px; background: #fff; object-fit: contain; }
     .solicitante-chip .chip-star { color: #a0aec0; }
     .solicitante-chip .chip-star:hover { color: #d97706; }
     .solicitante-chip.is-padrao { background: #fffbeb; border-color: #fcd34d; color: #92400e; }

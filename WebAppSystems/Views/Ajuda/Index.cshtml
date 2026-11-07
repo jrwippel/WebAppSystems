@@ -59,7 +59,7 @@
         <a href="#sec-primeiros" class="nav-btn" onclick="navegar(event, 'sec-primeiros')"><i class="bi bi-rocket-takeoff"></i> Primeiros Passos</a>
         <a href="#sec-timetracker" class="nav-btn" onclick="navegar(event, 'sec-timetracker')"><i class="bi bi-stopwatch"></i> Time Tracker</a>
         <a href="#sec-atividades" class="nav-btn" onclick="navegar(event, 'sec-atividades')"><i class="bi bi-list-check"></i> Atividades</a>
-        <a href="#sec-solicitantes" class="nav-btn" onclick="navegar(event, 'sec-solicitantes')"><i class="bi bi-person-lines-fill"></i> Solicitantes</a>
+        <a href="#sec-clientes" class="nav-btn" onclick="navegar(event, 'sec-clientes')"><i class="bi bi-person-badge"></i> Clientes</a>
         <a href="#sec-calendario" class="nav-btn" onclick="navegar(event, 'sec-calendario')"><i class="bi bi-calendar-week"></i> Calendário</a>
         <a href="#sec-relatorios" class="nav-btn" onclick="navegar(event, 'sec-relatorios')"><i class="bi bi-bar-chart"></i> Relatórios</a>
         <a href="#sec-painel" class="nav-btn" onclick="navegar(event, 'sec-painel')"><i class="bi bi-speedometer2"></i> Painel de Gestão</a>
@@ -160,7 +160,7 @@
 
                 <div class="faq-item">
                     <div class="faq-question" onclick="toggleFaq(this)"><span>Como criar um lançamento manual?</span><i class="bi bi-plus-lg"></i></div>
-                    <div class="faq-answer"><p>Clique em <strong>"Novo Registro"</strong>, preencha data, horários, cliente, área, <strong>solicitante</strong> e descrição. Ao selecionar o cliente, o solicitante padrão dele já vem preenchido — veja a seção <strong>"Solicitantes do Cliente"</strong> para mais detalhes. Clique em Salvar.</p></div>
+                    <div class="faq-answer"><p>Clique em <strong>"Novo Registro"</strong>, preencha data, horários, cliente, área, <strong>solicitante</strong> e descrição. Ao selecionar o cliente, o solicitante padrão dele já vem preenchido — veja a seção <strong>"Clientes"</strong> para mais detalhes. Clique em Salvar.</p></div>
                 </div>
                 <div class="faq-item">
                     <div class="faq-question" onclick="toggleFaq(this)"><span>Por que não consigo alterar o cliente?</span><i class="bi bi-plus-lg"></i></div>
@@ -173,22 +173,67 @@
             </div>
         </div>
 
-        <!-- ──── SOLICITANTES ──── -->
-        <div class="faq-section" id="sec-solicitantes">
+        <!-- ──── CLIENTES ──── -->
+        <div class="faq-section" id="sec-clientes">
             <div class="section-header" onclick="toggleSection(this)">
-                <div class="section-title"><i class="bi bi-person-lines-fill"></i><h2>Solicitantes do Cliente</h2></div>
+                <div class="section-title"><i class="bi bi-person-badge"></i><h2>Clientes</h2></div>
                 <i class="bi bi-chevron-down section-chevron"></i>
             </div>
             <div class="section-content">
                 <p style="font-size:14px;color:#4a5568;line-height:1.7;margin-bottom:16px;">
-                    Cada cliente pode ter <strong>vários solicitantes</strong> — as pessoas que costumam pedir trabalhos para aquele cliente.
-                    Um deles pode ser marcado como <strong>padrão</strong>, que é o sugerido automaticamente ao selecionar o cliente nos lançamentos.
+                    Em <strong>Gerenciar → Clientes</strong> você cadastra e edita os clientes do escritório. No cadastro é possível
+                    informar nome, documento (CPF/CNPJ), logo, os <strong>solicitantes</strong> do cliente, e marcar as opções
+                    <strong>Cliente Interno</strong> e <strong>Cliente Inativo</strong>.
                 </p>
 
                 <div class="help-screenshot">
-                    <img src="~/images/ajuda/solicitantes.png" alt="Cadastro de solicitantes do cliente" />
-                    <p class="screenshot-caption">Seção de solicitantes no cadastro do cliente — adicione vários e marque o padrão com a estrela</p>
+                    <img src="~/images/ajuda/TelaClientes.png" alt="Tela de cadastro de clientes" />
+                    <p class="screenshot-caption">Listagem de clientes — cadastre, edite, veja detalhes ou inative cada cliente</p>
                 </div>
+
+                <div class="help-flow">
+                    <h4><i class="bi bi-building"></i> Cliente Interno</h4>
+                    <p style="font-size:13px;color:#4a5568;margin:0 0 12px;">
+                        Marque <strong>"Cliente Interno"</strong> para cadastros que representam <strong>trabalhos internos do escritório</strong>,
+                        e não clientes externos. Foi pensado para que o pessoal que não atua diretamente em clientes também possa registrar suas horas.
+                        Ao marcar, dois comportamentos mudam:
+                    </p>
+                    <div class="flow-steps">
+                        <div class="flow-step"><span class="step-num">1</span><span>No <strong>lançamento de horas</strong>, o campo Solicitante é preenchido automaticamente com o <strong>nome do próprio usuário</strong>, já que não há um cliente externo solicitando</span></div>
+                        <div class="flow-step"><span class="step-num">2</span><span>Nos <strong>indicadores gerenciais</strong>, esses clientes ficam de fora do ranking de "Top Clientes" e do cálculo de horas por cliente, para não distorcer a análise de quais clientes externos mais consomem horas</span></div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)"><span>O que é a opção "Cliente Inativo"?</span><i class="bi bi-plus-lg"></i></div>
+                    <div class="faq-answer">
+                        <p>Ao marcar <strong>"Cliente Inativo"</strong>, o cliente deixa de aparecer para seleção nos lançamentos (Time Tracker, Atividades e Calendário) e nos relatórios/indicadores — ou seja, <strong>não aparece mais para o usuário escolher nem é contabilizado</strong>. O histórico dele é <strong>preservado</strong> e a ação pode ser revertida a qualquer momento, bastando desmarcar a opção.</p>
+                        <p>É a forma recomendada de "aposentar" um cadastro que não será mais usado, sem apagar os dados.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)"><span>Qual a diferença entre inativar e excluir um cliente?</span><i class="bi bi-plus-lg"></i></div>
+                    <div class="faq-answer">
+                        <p><strong>Inativar</strong> apenas oculta o cliente das listas e dos novos lançamentos, preservando todo o histórico — e pode ser revertido. <strong>Excluir</strong> remove o cadastro definitivamente e não pode ser desfeito.</p>
+                        <p>Na prática, recomendamos <strong>inativar</strong> na maioria dos casos. A exclusão só é possível para cadastros totalmente limpos (sem nenhuma hora e sem nenhum vínculo como valores, solicitantes ou mensalidade) e deve ser reservada para cadastros criados por engano ou teste.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)"><span>Tenho cadastros duplicados do mesmo cliente. Como resolver?</span><i class="bi bi-plus-lg"></i></div>
+                    <div class="faq-answer">
+                        <p>Use <strong>Configurações → Unificar Clientes</strong>. Selecione o <strong>cliente de origem</strong> e o <strong>cliente de destino</strong>. Os <strong>lançamentos</strong> da origem são transferidos para o destino. Os demais cadastros (percentuais, valores, mensalidade e solicitantes) <strong>permanecem no cliente de origem</strong>. Ao final, <strong>inative</strong> o cliente de origem, que ficará sem lançamentos.</p>
+                        <p>Atenção: a movimentação <strong>não pode ser desfeita</strong>, e clientes com lançamentos em faturamento ou aprovação não podem ser usados como origem.</p>
+                    </div>
+                </div>
+
+                <!-- Solicitantes (dentro da seção Clientes) -->
+                <h3 style="font-size:16px;color:#2d3748;margin:28px 0 12px;border-top:1px solid #e2e8f0;padding-top:20px;">
+                    <i class="bi bi-person-lines-fill" style="color:#667eea;"></i> Solicitantes do Cliente
+                </h3>
+                <p style="font-size:14px;color:#4a5568;line-height:1.7;margin-bottom:16px;">
+                    Cada cliente pode ter <strong>vários solicitantes</strong> — as pessoas que costumam pedir trabalhos para aquele cliente.
+                    Um deles pode ser marcado como <strong>padrão</strong>, que é o sugerido automaticamente ao selecionar o cliente nos lançamentos.
+                </p>
 
                 <div class="help-flow">
                     <h4><i class="bi bi-diagram-3"></i> Como funciona</h4>
@@ -229,12 +274,6 @@
                     <div class="faq-question" onclick="toggleFaq(this)"><span>Como remover ou trocar o solicitante padrão?</span><i class="bi bi-plus-lg"></i></div>
                     <div class="faq-answer">
                         <p>No cadastro do cliente, clique na estrela do solicitante que deseja tornar padrão — o anterior é desmarcado automaticamente. Para remover um solicitante da lista, use o botão de <strong>lixeira</strong> ao lado dele.</p>
-                    </div>
-                </div>
-                <div class="faq-item">
-                    <div class="faq-question" onclick="toggleFaq(this)"><span>Clientes internos têm solicitante?</span><i class="bi bi-plus-lg"></i></div>
-                    <div class="faq-answer">
-                        <p>Para <strong>clientes internos</strong>, o solicitante é preenchido automaticamente com o <strong>nome do próprio usuário</strong> que está lançando, sem usar a lista de solicitantes.</p>
                     </div>
                 </div>
             </div>

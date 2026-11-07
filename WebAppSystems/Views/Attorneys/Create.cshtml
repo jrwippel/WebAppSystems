@@ -8,10 +8,12 @@
 
 <div class="page-container">
     <div class="page-header">
-        <div class="page-header-icon"><i class="bi bi-person-plus"></i></div>
-        <div>
-            <h2>Cadastro de Usuário</h2>
-            <p>Preencha os dados do novo usuário</p>
+        <div class="header-content">
+            <div class="header-icon"><i class="bi bi-person-plus"></i></div>
+            <div class="header-text">
+                <h1 class="page-title">Cadastro de Usuário</h1>
+                <p class="page-subtitle">Preencha os dados do novo usuário</p>
+            </div>
         </div>
     </div>
 
@@ -154,6 +156,23 @@
 }
 
 <style>
+    /* Cabeçalho padrão (banner), igual ao Registro de Atividades */
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        padding: 24px 28px;
+        margin-bottom: 24px;
+        box-shadow: 0 6px 25px rgba(102, 126, 234, 0.25);
+    }
+    .page-header .header-content { display: flex; align-items: center; gap: 16px; }
+    .page-header .header-icon {
+        width: 50px; height: 50px; background: rgba(255,255,255,0.2); border-radius: 12px;
+        display: flex; align-items: center; justify-content: center; font-size: 24px; color: #fff; flex-shrink: 0;
+    }
+    .page-header .header-text { flex: 1; }
+    .page-header .page-title { font-size: 24px; font-weight: 700; color: #fff; margin: 0 0 6px 0; letter-spacing: -0.5px; }
+    .page-header .page-subtitle { font-size: 14px; color: rgba(255,255,255,0.9); margin: 0; }
+
     .form-section-approval {
         margin: 25px 0;
         padding: 20px;
